@@ -1,0 +1,89 @@
+Sandbox_EN = {
+    Sandbox_HousingCareSystem = "Housing Care System (Living Home)",
+
+    -- General
+    Sandbox_HousingCareSystem_SystemEnabled = "Enable Living Home System",
+    Sandbox_HousingCareSystem_SystemEnabled_tooltip = "Completely enables or disables the base comfort, organization, and squalor system.",
+
+    Sandbox_HousingCareSystem_ComfortCheckIntervalHours = "Scan Interval (In-Game Hours)",
+    Sandbox_HousingCareSystem_ComfortCheckIntervalHours_tooltip = "Sets how frequently the system re-evaluates the environment around the player.\nDefault: 6 hours.\nLower values: More frequent updates.\nHigher values: Better performance for busy multiplayer servers.",
+
+    Sandbox_HousingCareSystem_ComfortRadiusTiles = "Base Scan Radius (Tiles)",
+    Sandbox_HousingCareSystem_ComfortRadiusTiles_tooltip = "Distance in tiles around the player inspected to assess furniture and decor in player-built structures.\nDefault: 15 tiles.",
+
+    Sandbox_HousingCareSystem_RequireRoofedRoom = "Require Fully Roofed Room",
+    Sandbox_HousingCareSystem_RequireRoofedRoom_tooltip = "When enabled, only enclosed buildings with a valid roof grant comfort buffs. When disabled, open-air camps can also generate comfort.",
+
+    Sandbox_HousingCareSystem_RequireSafehouseClaim = "Require Claimed Safehouse (Multiplayer)",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "On multiplayer servers, only players standing inside an officially claimed safehouse receive comfort bonuses. Ideal for balanced multiplayer gameplay.",
+
+    -- Comfort Tiers
+    Sandbox_HousingCareSystem_Tier1Threshold = "Tier 1 Comfort Threshold (Coziness)",
+    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "Minimum comfort score required to unlock Tier 1 (Basic Coziness: -10% Panic Buildup).\nDefault: 20 points.",
+
+    Sandbox_HousingCareSystem_Tier2Threshold = "Tier 2 Comfort Threshold (Organized Home)",
+    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "Minimum comfort score required for Tier 2 (Organized Home: -20% Panic Buildup, +10% Endurance Recovery).\nDefault: 40 points.",
+
+    Sandbox_HousingCareSystem_Tier3Threshold = "Tier 3 Comfort Threshold (Comfortable Refuge)",
+    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "Minimum comfort score required for Tier 3 (Refuge: -25% Unhappiness, +15% Endurance Regen, Aim Stability).\nDefault: 60 points.",
+
+    Sandbox_HousingCareSystem_Tier4Threshold = "Tier 4 Comfort Threshold (Sanctuary)",
+    Sandbox_HousingCareSystem_Tier4Threshold_tooltip = "Minimum comfort score for the ultimate level (Sanctuary: Near panic immunity, robust stamina, accelerated healing).\nDefault: 80 points.",
+
+    -- Buff Duration and Scaling
+    Sandbox_HousingCareSystem_BuffDurationBaseHours = "Base Buff Duration (Hours)",
+    Sandbox_HousingCareSystem_BuffDurationBaseHours_tooltip = "Base in-game hours that comfort bonuses remain active after the player leaves their base.\nDefault: 2.0 hours.",
+
+    Sandbox_HousingCareSystem_BuffDurationPerComfortPoint = "Extra Duration per Comfort Point",
+    Sandbox_HousingCareSystem_BuffDurationPerComfortPoint_tooltip = "Fraction of an hour added to buff duration for each comfort point scored.\nDefault: 0.05 (100 comfort points = +5 extra hours).",
+
+    Sandbox_HousingCareSystem_BuffDurationMaxHours = "Max Buff Duration Ceiling (Hours)",
+    Sandbox_HousingCareSystem_BuffDurationMaxHours_tooltip = "Absolute maximum duration that any comfort buff can accumulate.\nDefault: 12.0 hours.",
+
+    Sandbox_HousingCareSystem_BuffMagnitudeMultiplier = "Buff Power Multiplier",
+    Sandbox_HousingCareSystem_BuffMagnitudeMultiplier_tooltip = "Scales the potency of all positive effects (e.g., stamina regeneration and stress reduction).\n1.0 = Balanced default, 2.0 = Double strength.",
+
+    -- Specific Buffs
+    Sandbox_HousingCareSystem_Enable_Energizado = "Enable Buff: Energized",
+    Sandbox_HousingCareSystem_Enable_Energizado_tooltip = "When enabled, players with Tier 2+ comfort accumulate physical fatigue and drowsiness slower.",
+
+    Sandbox_HousingCareSystem_Enable_Aquecido = "Enable Buff: Warm & Cozy",
+    Sandbox_HousingCareSystem_Enable_Aquecido_tooltip = "When enabled, home comfort helps the character maintain better thermal balance against the cold.",
+
+    Sandbox_HousingCareSystem_Enable_Saciado = "Enable Buff: Satiated",
+    Sandbox_HousingCareSystem_Enable_Saciado_tooltip = "When enabled, hunger builds up noticeably slower at Tier 3+ comfort.",
+
+    Sandbox_HousingCareSystem_Enable_CicatrizacaoRapida = "Enable Buff: Rapid Healing",
+    Sandbox_HousingCareSystem_Enable_CicatrizacaoRapida_tooltip = "When enabled, accelerates natural healing of minor cuts and scratches at Tier 3+ comfort.",
+
+    Sandbox_HousingCareSystem_Enable_Alerta = "Enable Buff: Combat Alertness",
+    Sandbox_HousingCareSystem_Enable_Alerta_tooltip = "When enabled, reduces stress spikes during combat at Tier 4 (Disabled by default).",
+
+    Sandbox_HousingCareSystem_AllowLootLuckBuff = "Enable Buff: Scavenger Luck",
+    Sandbox_HousingCareSystem_AllowLootLuckBuff_tooltip = "Enables subtle bonuses to scavenging chances (Disabled by default to preserve vanilla balance).",
+
+    -- Squalor System
+    Sandbox_HousingCareSystem_SqualorSystemEnabled = "Enable Squalor System (Filth & Blood)",
+    Sandbox_HousingCareSystem_SqualorSystemEnabled_tooltip = "When enabled, messy bases with blood splatter, zombie corpses, rotten food, or cluttered trash inflict debuffs and health penalties.",
+
+    Sandbox_HousingCareSystem_SqualorOverrideThreshold = "Squalor Comfort Suppression Threshold",
+    Sandbox_HousingCareSystem_SqualorOverrideThreshold_tooltip = "If filth score reaches this number, all positive comfort benefits are immediately suppressed.\nDefault: 50 points.",
+
+    Sandbox_HousingCareSystem_SqualorTier1Threshold = "Squalor Tier 1 Threshold",
+    Sandbox_HousingCareSystem_SqualorTier1Threshold_tooltip = "Filth points needed for initial discomfort (Mild unhappiness buildup).\nDefault: 20 points.",
+
+    Sandbox_HousingCareSystem_SqualorTier2Threshold = "Squalor Tier 2 Threshold",
+    Sandbox_HousingCareSystem_SqualorTier2Threshold_tooltip = "Filth points needed for Tier 2 (Stress increase and stamina drain).\nDefault: 40 points.",
+
+    Sandbox_HousingCareSystem_SqualorTier3Threshold = "Squalor Tier 3 Threshold (Filthy Den)",
+    Sandbox_HousingCareSystem_SqualorTier3Threshold_tooltip = "Filth points needed for Tier 3 (Nausea, bad smell, and mental fatigue).\nDefault: 60 points.",
+
+    Sandbox_HousingCareSystem_SqualorTier4Threshold = "Squalor Tier 4 Threshold (Disease Hotspot)",
+    Sandbox_HousingCareSystem_SqualorTier4Threshold_tooltip = "Filth points for the critical state (High risk of fever, infections, and continuous illness).\nDefault: 80 points.",
+
+    Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier = "Squalor Severity Multiplier",
+    Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier_tooltip = "Scales the negative impact of all filth and blood debuffs.\n1.0 = Default.",
+
+    Sandbox_HousingCareSystem_SqualorLingerHours = "Filth Contamination Linger (Hours)",
+    Sandbox_HousingCareSystem_SqualorLingerHours_tooltip = "How long mild contamination effects persist after leaving a filthy base.\nDefault: 1.0 hour.",
+}

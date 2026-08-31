@@ -1,0 +1,89 @@
+Sandbox_PTBR = {
+    Sandbox_HousingCareSystem = "Sistema de Cuidados da Base (Lar Vivo)",
+
+    -- Geral
+    Sandbox_HousingCareSystem_SystemEnabled = "Ativar Sistema Lar Vivo",
+    Sandbox_HousingCareSystem_SystemEnabled_tooltip = "Ativa ou desativa completamente todo o sistema de conforto, organizacao e insalubridade da base.",
+
+    Sandbox_HousingCareSystem_ComfortCheckIntervalHours = "Intervalo de Verificacao (Horas de Jogo)",
+    Sandbox_HousingCareSystem_ComfortCheckIntervalHours_tooltip = "Define a cada quantas horas in-game o sistema reavalia a base ao redor do jogador.\nPadrao: 6 horas.\nValores menores: Avaliacao mais frequente.\nValores maiores: Menor processamento em servidores.",
+
+    Sandbox_HousingCareSystem_ComfortRadiusTiles = "Raio de Varredura da Base (Blocos)",
+    Sandbox_HousingCareSystem_ComfortRadiusTiles_tooltip = "Distancia em blocos (tiles) ao redor do jogador que sera inspecionada para calcular mobilias e itens em bases construidas por jogadores.\nPadrao: 15 blocos.",
+
+    Sandbox_HousingCareSystem_RequireRoofedRoom = "Exigir Ambiente Fechado com Teto",
+    Sandbox_HousingCareSystem_RequireRoofedRoom_tooltip = "Se ativado, apenas construcoes fechadas e com teto valido concedem buffs de conforto. Se desativado, acampamentos ao ar livre tambem podem pontuar.",
+
+    Sandbox_HousingCareSystem_RequireSafehouseClaim = "Exigir Reivindicacao de Safehouse (Multiplayer)",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "Se ativado em servidores Multiplayer, apenas jogadores dentro de uma Safehouse oficialmente reivindicada recebem buffs. Ideal para servidores competitivos.",
+
+    -- Tiers de Conforto
+    Sandbox_HousingCareSystem_Tier1Threshold = "Pontos para Tier 1 (Aconchego)",
+    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "Pontuacao minima de conforto necessaria para desbloquear o Tier 1 (Aconchego Basico: -10% Panico).\nPadrao: 20 pontos.",
+
+    Sandbox_HousingCareSystem_Tier2Threshold = "Pontos para Tier 2 (Lar Organizado)",
+    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "Pontuacao minima para desbloquear o Tier 2 (Lar Organizado: -20% Panico, +10% Regeneracao de Resistencia).\nPadrao: 40 pontos.",
+
+    Sandbox_HousingCareSystem_Tier3Threshold = "Pontos para Tier 3 (Refugio Confortavel)",
+    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "Pontuacao minima para desbloquear o Tier 3 (Refugio: -25% Infelicidade, +15% Resistencia, Estabilidade).\nPadrao: 60 pontos.",
+
+    Sandbox_HousingCareSystem_Tier4Threshold = "Pontos para Tier 4 (Santuario)",
+    Sandbox_HousingCareSystem_Tier4Threshold_tooltip = "Pontuacao minima para o nivel maximo (Santuario: Quase imunidade a panico, alta resistencia, cura acelerada).\nPadrao: 80 pontos.",
+
+    -- Duracao e Escala dos Buffs
+    Sandbox_HousingCareSystem_BuffDurationBaseHours = "Duracao Minima dos Buffs (Horas)",
+    Sandbox_HousingCareSystem_BuffDurationBaseHours_tooltip = "Tempo base em horas de jogo que os efeitos de conforto permanecem ativos apos o jogador sair de casa.\nPadrao: 2.0 horas.",
+
+    Sandbox_HousingCareSystem_BuffDurationPerComfortPoint = "Tempo Adicional por Ponto de Conforto",
+    Sandbox_HousingCareSystem_BuffDurationPerComfortPoint_tooltip = "Fracao de hora somada a duracao do buff para cada ponto de conforto alcancado na base.\nPadrao: 0.05 (100 pontos = +5 horas extras).",
+
+    Sandbox_HousingCareSystem_BuffDurationMaxHours = "Duracao Maxima dos Buffs (Horas)",
+    Sandbox_HousingCareSystem_BuffDurationMaxHours_tooltip = "Teto maximo absoluto de duracao que qualquer buff de conforto pode acumular.\nPadrao: 12.0 horas.",
+
+    Sandbox_HousingCareSystem_BuffMagnitudeMultiplier = "Multiplicador de Forca dos Buffs",
+    Sandbox_HousingCareSystem_BuffMagnitudeMultiplier_tooltip = "Multiplica a intensidade de todos os efeitos positivos (ex: recuperacao de resistencia e reducao de estresse).\n1.0 = Padrao equilibrado, 2.0 = Dobro de efeito.",
+
+    -- Buffs Especificos
+    Sandbox_HousingCareSystem_Enable_Energizado = "Ativar Efeito: Energizado",
+    Sandbox_HousingCareSystem_Enable_Energizado_tooltip = "Quando ativo, jogadores no Tier 2 ou superior demoram mais para acumular cansaco fisico e sono.",
+
+    Sandbox_HousingCareSystem_Enable_Aquecido = "Ativar Efeito: Aquecido",
+    Sandbox_HousingCareSystem_Enable_Aquecido_tooltip = "Quando ativo, o conforto da base ajuda o personagem a manter o equilibrio termico em dias frios.",
+
+    Sandbox_HousingCareSystem_Enable_Saciado = "Ativar Efeito: Saciado",
+    Sandbox_HousingCareSystem_Enable_Saciado_tooltip = "Quando ativo, reduz a velocidade com que o personagem ganha fome no Tier 3 ou superior.",
+
+    Sandbox_HousingCareSystem_Enable_CicatrizacaoRapida = "Ativar Efeito: Cicatrizacao Rapida",
+    Sandbox_HousingCareSystem_Enable_CicatrizacaoRapida_tooltip = "Quando ativo, acelera a recuperacao de pequenos arranhoes e cortes no Tier 3 ou superior.",
+
+    Sandbox_HousingCareSystem_Enable_Alerta = "Ativar Efeito: Alerta",
+    Sandbox_HousingCareSystem_Enable_Alerta_tooltip = "Quando ativo, reduz ganhos de estresse durante situacoes de combate no Tier 4 (Desativado por padrao).",
+
+    Sandbox_HousingCareSystem_AllowLootLuckBuff = "Ativar Efeito: Sorte de Loot",
+    Sandbox_HousingCareSystem_AllowLootLuckBuff_tooltip = "Permite modificacao sutil em chances de encontrar itens raros (Desativado por padrao para nao alterar o balanceamento vanilla).",
+
+    -- Sistema de Insalubridade (Squalor)
+    Sandbox_HousingCareSystem_SqualorSystemEnabled = "Ativar Sistema de Insalubridade (Sujeira/Sangue)",
+    Sandbox_HousingCareSystem_SqualorSystemEnabled_tooltip = "Se ativado, bases sujas com sangue, cadaveres zumbis, restos de comida estragada ou lixo acumulado geram debuffs e penalidades ao jogador.",
+
+    Sandbox_HousingCareSystem_SqualorOverrideThreshold = "Limite de Anulacao de Conforto por Sujeira",
+    Sandbox_HousingCareSystem_SqualorOverrideThreshold_tooltip = "Se a pontuacao de sujeira atingir este valor, todos os beneficios de conforto sao imediatamente cancelados.\nPadrao: 50 pontos.",
+
+    Sandbox_HousingCareSystem_SqualorTier1Threshold = "Pontos para Insalubridade Nivel 1",
+    Sandbox_HousingCareSystem_SqualorTier1Threshold_tooltip = "Pontos de sujeira para o primeiro nivel de incomodo (Leve ganho de infelicidade).\nPadrao: 20 pontos.",
+
+    Sandbox_HousingCareSystem_SqualorTier2Threshold = "Pontos para Insalubridade Nivel 2",
+    Sandbox_HousingCareSystem_SqualorTier2Threshold_tooltip = "Pontos de sujeira para o nivel 2 (Aumento de estresse e perda de stamina).\nPadrao: 40 pontos.",
+
+    Sandbox_HousingCareSystem_SqualorTier3Threshold = "Pontos para Insalubridade Nivel 3 (Antro Imundo)",
+    Sandbox_HousingCareSystem_SqualorTier3Threshold_tooltip = "Pontos de sujeira para o nivel 3 (Nausea e fadiga mental pelo cheiro de podridao).\nPadrao: 60 pontos.",
+
+    Sandbox_HousingCareSystem_SqualorTier4Threshold = "Pontos para Insalubridade Nivel 4 (Foco de Doenca)",
+    Sandbox_HousingCareSystem_SqualorTier4Threshold_tooltip = "Pontos de sujeira para o estado critico (Alto risco de febre, infeccoes e mal-estar continuo).\nPadrao: 80 pontos.",
+
+    Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier = "Multiplicador de Severidade da Insalubridade",
+    Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier_tooltip = "Multiplica o impacto negativo de todos os debuffs causados por sujeira e sangue.\n1.0 = Padrao.",
+
+    Sandbox_HousingCareSystem_SqualorLingerHours = "Duracao do Debuff ao Sair da Base Suja (Horas)",
+    Sandbox_HousingCareSystem_SqualorLingerHours_tooltip = "Tempo que o jogador continua sentindo os efeitos leves da contaminacao apos deixar uma area imunda.\nPadrao: 1.0 hora.",
+}

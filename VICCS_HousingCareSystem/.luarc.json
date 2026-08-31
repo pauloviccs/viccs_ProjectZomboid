@@ -1,0 +1,40 @@
+{
+    "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+    "runtime": {
+        "version": "Lua 5.1"
+    },
+    "workspace": {
+        "ignoreDir": [
+            "42.0",
+            "common",
+            ".agent"
+        ]
+    },
+    "diagnostics": {
+        "globals": [
+            "Events",
+            "getPlayer",
+            "getPlayers",
+            "getGameTime",
+            "getCell",
+            "SandboxVars",
+            "instanceof",
+            "isClient",
+            "isServer",
+            "Safehouse",
+            "IsoFlagType",
+            "HaloTextHelper",
+            "ISPanel",
+            "UIFont",
+            "getCore",
+            "getTextOrNull",
+            "getText",
+            "LV_Config",
+            "LV_BuffManager",
+            "LV_ComfortScanner",
+            "LV_ItemScoreData",
+            "LV_MoodleDefs",
+            "LV_HUD"
+        ]
+    }
+}

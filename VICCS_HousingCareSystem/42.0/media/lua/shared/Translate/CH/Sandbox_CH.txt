@@ -1,0 +1,89 @@
+Sandbox_CH = {
+    Sandbox_HousingCareSystem = "房屋關懷系統 (宜居之家)",
+
+    -- 常規
+    Sandbox_HousingCareSystem_SystemEnabled = "啟用房屋關懷系統",
+    Sandbox_HousingCareSystem_SystemEnabled_tooltip = "完全啟用或禁用基地的舒適度、整潔度與污穢度系統。",
+
+    Sandbox_HousingCareSystem_ComfortCheckIntervalHours = "環境檢測間隔 (遊戲內小時)",
+    Sandbox_HousingCareSystem_ComfortCheckIntervalHours_tooltip = "系統重新評估玩家周圍基地舒適度的頻率。\n默認: 6小時。\n較小值: 評估更頻繁。\n較大值: 提高多人聯機伺服器性能。",
+
+    Sandbox_HousingCareSystem_ComfortRadiusTiles = "基地掃描半徑 (地塊)",
+    Sandbox_HousingCareSystem_ComfortRadiusTiles_tooltip = "在玩家自建建築中，用於評估家具和裝飾品的地塊掃描距離。\n默認: 15格。",
+
+    Sandbox_HousingCareSystem_RequireRoofedRoom = "要求必須有完整屋頂",
+    Sandbox_HousingCareSystem_RequireRoofedRoom_tooltip = "啟用後，僅有封閉且有屋頂的房間可提供舒適度加成。禁用後，露天營地也可獲得積分。",
+
+    Sandbox_HousingCareSystem_RequireSafehouseClaim = "要求必須佔領安全屋 (多人聯機)",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "在多人伺服器中，僅位於官方佔領安全屋內的玩家可獲得加成。適合競技/平衡伺服器。",
+
+    -- 舒適度等級閾值
+    Sandbox_HousingCareSystem_Tier1Threshold = "1級舒適度閾值 (溫馨)",
+    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "解鎖1級舒適度所需的最低積分 (溫馨庇護: 恐慌積累減少10%)。\n默認: 20分。",
+
+    Sandbox_HousingCareSystem_Tier2Threshold = "2級舒適度閾值 (整潔居所)",
+    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "解鎖2級舒適度所需的最低積分 (整潔居所: 恐慌-20%，耐力恢復加速10%)。\n默認: 40分。",
+
+    Sandbox_HousingCareSystem_Tier3Threshold = "3級舒適度閾值 (舒適避難所)",
+    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "解鎖3級舒適度所需的最低積分 (舒適避難所: 不適度-25%，耐力+15%，提高瞄準穩定性)。\n默認: 60分。",
+
+    Sandbox_HousingCareSystem_Tier4Threshold = "4級舒適度閾值 (避風聖所)",
+    Sandbox_HousingCareSystem_Tier4Threshold_tooltip = "最高級別所需積分 (避風聖所: 近乎免疫恐慌，極高耐力，傷口加速癒合)。\n默認: 80分。",
+
+    -- Buff 持續時間與倍率
+    Sandbox_HousingCareSystem_BuffDurationBaseHours = "Buff基礎持續時間 (小時)",
+    Sandbox_HousingCareSystem_BuffDurationBaseHours_tooltip = "離開基地後，舒適度增益效果在身上保留的基礎遊戲時間。\n默認: 2.0小時。",
+
+    Sandbox_HousingCareSystem_BuffDurationPerComfortPoint = "每點積分額外延長時長",
+    Sandbox_HousingCareSystem_BuffDurationPerComfortPoint_tooltip = "基地每多1點舒適度積分所額外增加的Buff持續小時數。\n默認: 0.05 (100分 = +5小時)。",
+
+    Sandbox_HousingCareSystem_BuffDurationMaxHours = "Buff最大持續時間上限 (小時)",
+    Sandbox_HousingCareSystem_BuffDurationMaxHours_tooltip = "舒適度增益可累積的最大持續時間上限。\n默認: 12.0小時。",
+
+    Sandbox_HousingCareSystem_BuffMagnitudeMultiplier = "增益強度倍率",
+    Sandbox_HousingCareSystem_BuffMagnitudeMultiplier_tooltip = "縮放所有正面舒適度效果的強度 (如耐力回復、減壓速度)。\n1.0 = 平衡默認，2.0 = 雙倍效果。",
+
+    -- 擴展Buff
+    Sandbox_HousingCareSystem_Enable_Energizado = "啟用效果: 精力充沛",
+    Sandbox_HousingCareSystem_Enable_Energizado_tooltip = "啟用後，達到2級以上舒適度的玩家積累疲勞和睡意的速度變慢。",
+
+    Sandbox_HousingCareSystem_Enable_Aquecido = "啟用效果: 溫暖舒適",
+    Sandbox_HousingCareSystem_Enable_Aquecido_tooltip = "啟用後，居家的舒適感能幫助角色在寒冷天氣保持更好的體溫平衡。",
+
+    Sandbox_HousingCareSystem_Enable_Saciado = "啟用效果: 飽腹延緩",
+    Sandbox_HousingCareSystem_Enable_Saciado_tooltip = "啟用後，在3級以上舒適度下，角色飢餓增長速度變慢。",
+
+    Sandbox_HousingCareSystem_Enable_CicatrizacaoRapida = "啟用效果: 快速癒合",
+    Sandbox_HousingCareSystem_Enable_CicatrizacaoRapida_tooltip = "啟用後，在3級以上舒適度下，輕微劃傷和割傷的自然癒合速度加快。",
+
+    Sandbox_HousingCareSystem_Enable_Alerta = "啟用效果: 警惕沉著",
+    Sandbox_HousingCareSystem_Enable_Alerta_tooltip = "啟用後，在4級舒適度下減輕戰鬥中的壓力上升 (默認禁用)。",
+
+    Sandbox_HousingCareSystem_AllowLootLuckBuff = "啟用效果: 拾荒幸運",
+    Sandbox_HousingCareSystem_AllowLootLuckBuff_tooltip = "微幅提升搜刮到稀有物資的幾率 (默認禁用以保持原版平衡)。",
+
+    -- 污穢與環境惡化系統 (Squalor)
+    Sandbox_HousingCareSystem_SqualorSystemEnabled = "啟用污穢與髒亂懲罰系統",
+    Sandbox_HousingCareSystem_SqualorSystemEnabled_tooltip = "啟用後，如果基地布滿血跡、喪屍屍體、腐爛食物或堆滿垃圾，將對玩家施加負面狀態和健康懲罰。",
+
+    Sandbox_HousingCareSystem_SqualorOverrideThreshold = "污穢壓制舒適度閾值",
+    Sandbox_HousingCareSystem_SqualorOverrideThreshold_tooltip = "當污穢度達到此數值時，所有正面舒適度增益將被立即強制清零。\n默認: 50分。",
+
+    Sandbox_HousingCareSystem_SqualorTier1Threshold = "1級污穢閾值 (輕微不適)",
+    Sandbox_HousingCareSystem_SqualorTier1Threshold_tooltip = "觸發初始輕微不適 (輕微增加不快感) 所需的髒亂點數。\n默認: 20分。",
+
+    Sandbox_HousingCareSystem_SqualorTier2Threshold = "2級污穢閾值 (惡劣環境)",
+    Sandbox_HousingCareSystem_SqualorTier2Threshold_tooltip = "觸發2級污穢 (增加壓力並降低耐力恢復) 所需的髒亂點數。\n默認: 40分。",
+
+    Sandbox_HousingCareSystem_SqualorTier3Threshold = "3級污穢閾值 (惡臭巢穴)",
+    Sandbox_HousingCareSystem_SqualorTier3Threshold_tooltip = "觸發3級污穢 (腐臭噁心與精神疲憊) 所需的髒亂點數。\n默認: 60分。",
+
+    Sandbox_HousingCareSystem_SqualorTier4Threshold = "4級污穢閾值 (疫病源頭)",
+    Sandbox_HousingCareSystem_SqualorTier4Threshold_tooltip = "嚴重污染狀態 (高發熱風險、傷口感染與持續健康惡化)。\n默認: 80分。",
+
+    Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier = "污穢懲罰嚴重度倍率",
+    Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier_tooltip = "縮放髒亂環境所有負面懲罰的強度。\n1.0 = 默認。",
+
+    Sandbox_HousingCareSystem_SqualorLingerHours = "離開髒亂基地後的殘留持續時間 (小時)",
+    Sandbox_HousingCareSystem_SqualorLingerHours_tooltip = "離開惡劣髒亂環境後，輕微污染狀態持續留存的時間。\n默認: 1.0小時。",
+}
