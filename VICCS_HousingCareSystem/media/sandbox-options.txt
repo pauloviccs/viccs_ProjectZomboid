@@ -5,7 +5,17 @@ option HousingCareSystem.SystemEnabled
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SystemEnabled,
+    translation = SystemEnabled,
+}
+
+option HousingCareSystem.AcclimatizationMinutes
+{
+    type = integer,
+    min = 0,
+    max = 120,
+    default = 30,
+    page = HousingCareSystem,
+    translation = AcclimatizationMinutes,
 }
 
 option HousingCareSystem.ComfortCheckIntervalHours
@@ -15,7 +25,7 @@ option HousingCareSystem.ComfortCheckIntervalHours
     max = 24,
     default = 6,
     page = HousingCareSystem,
-    translation = HousingCareSystem_ComfortCheckIntervalHours,
+    translation = ComfortCheckIntervalHours,
 }
 
 option HousingCareSystem.ComfortRadiusTiles
@@ -25,7 +35,7 @@ option HousingCareSystem.ComfortRadiusTiles
     max = 40,
     default = 15,
     page = HousingCareSystem,
-    translation = HousingCareSystem_ComfortRadiusTiles,
+    translation = ComfortRadiusTiles,
 }
 
 option HousingCareSystem.RequireRoofedRoom
@@ -33,7 +43,7 @@ option HousingCareSystem.RequireRoofedRoom
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_RequireRoofedRoom,
+    translation = RequireRoofedRoom,
 }
 
 option HousingCareSystem.RequireSafehouseClaim
@@ -41,7 +51,7 @@ option HousingCareSystem.RequireSafehouseClaim
     type = boolean,
     default = false,
     page = HousingCareSystem,
-    translation = HousingCareSystem_RequireSafehouseClaim,
+    translation = RequireSafehouseClaim,
 }
 
 option HousingCareSystem.Tier1Threshold
@@ -51,7 +61,7 @@ option HousingCareSystem.Tier1Threshold
     max = 50,
     default = 20,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Tier1Threshold,
+    translation = Tier1Threshold,
 }
 
 option HousingCareSystem.Tier2Threshold
@@ -61,27 +71,27 @@ option HousingCareSystem.Tier2Threshold
     max = 70,
     default = 40,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Tier2Threshold,
+    translation = Tier2Threshold,
 }
 
 option HousingCareSystem.Tier3Threshold
 {
     type = integer,
     min = 40,
-    max = 85,
+    max = 90,
     default = 60,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Tier3Threshold,
+    translation = Tier3Threshold,
 }
 
 option HousingCareSystem.Tier4Threshold
 {
     type = integer,
     min = 60,
-    max = 95,
+    max = 100,
     default = 80,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Tier4Threshold,
+    translation = Tier4Threshold,
 }
 
 option HousingCareSystem.BuffDurationBaseHours
@@ -89,9 +99,9 @@ option HousingCareSystem.BuffDurationBaseHours
     type = double,
     min = 0.5,
     max = 24.0,
-    default = 2.0,
+    default = 8.0,
     page = HousingCareSystem,
-    translation = HousingCareSystem_BuffDurationBaseHours,
+    translation = BuffDurationBaseHours,
 }
 
 option HousingCareSystem.BuffDurationPerComfortPoint
@@ -101,27 +111,27 @@ option HousingCareSystem.BuffDurationPerComfortPoint
     max = 0.5,
     default = 0.05,
     page = HousingCareSystem,
-    translation = HousingCareSystem_BuffDurationPerComfortPoint,
+    translation = BuffDurationPerComfortPoint,
 }
 
 option HousingCareSystem.BuffDurationMaxHours
 {
     type = double,
     min = 1.0,
-    max = 48.0,
+    max = 72.0,
     default = 12.0,
     page = HousingCareSystem,
-    translation = HousingCareSystem_BuffDurationMaxHours,
+    translation = BuffDurationMaxHours,
 }
 
 option HousingCareSystem.BuffMagnitudeMultiplier
 {
     type = double,
     min = 0.1,
-    max = 3.0,
+    max = 5.0,
     default = 1.0,
     page = HousingCareSystem,
-    translation = HousingCareSystem_BuffMagnitudeMultiplier,
+    translation = BuffMagnitudeMultiplier,
 }
 
 option HousingCareSystem.Enable_Energizado
@@ -129,7 +139,7 @@ option HousingCareSystem.Enable_Energizado
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Enable_Energizado,
+    translation = Enable_Energizado,
 }
 
 option HousingCareSystem.Enable_Aquecido
@@ -137,7 +147,7 @@ option HousingCareSystem.Enable_Aquecido
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Enable_Aquecido,
+    translation = Enable_Aquecido,
 }
 
 option HousingCareSystem.Enable_Saciado
@@ -145,7 +155,7 @@ option HousingCareSystem.Enable_Saciado
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Enable_Saciado,
+    translation = Enable_Saciado,
 }
 
 option HousingCareSystem.Enable_CicatrizacaoRapida
@@ -153,7 +163,7 @@ option HousingCareSystem.Enable_CicatrizacaoRapida
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Enable_CicatrizacaoRapida,
+    translation = Enable_CicatrizacaoRapida,
 }
 
 option HousingCareSystem.Enable_Alerta
@@ -161,7 +171,7 @@ option HousingCareSystem.Enable_Alerta
     type = boolean,
     default = false,
     page = HousingCareSystem,
-    translation = HousingCareSystem_Enable_Alerta,
+    translation = Enable_Alerta,
 }
 
 option HousingCareSystem.AllowLootLuckBuff
@@ -169,7 +179,7 @@ option HousingCareSystem.AllowLootLuckBuff
     type = boolean,
     default = false,
     page = HousingCareSystem,
-    translation = HousingCareSystem_AllowLootLuckBuff,
+    translation = AllowLootLuckBuff,
 }
 
 option HousingCareSystem.SqualorSystemEnabled
@@ -177,7 +187,7 @@ option HousingCareSystem.SqualorSystemEnabled
     type = boolean,
     default = true,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorSystemEnabled,
+    translation = SqualorSystemEnabled,
 }
 
 option HousingCareSystem.SqualorOverrideThreshold
@@ -187,65 +197,65 @@ option HousingCareSystem.SqualorOverrideThreshold
     max = 90,
     default = 50,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorOverrideThreshold,
+    translation = SqualorOverrideThreshold,
 }
 
 option HousingCareSystem.SqualorTier1Threshold
 {
     type = integer,
     min = 10,
-    max = 40,
+    max = 50,
     default = 20,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorTier1Threshold,
+    translation = SqualorTier1Threshold,
 }
 
 option HousingCareSystem.SqualorTier2Threshold
 {
     type = integer,
-    min = 25,
-    max = 60,
+    min = 20,
+    max = 70,
     default = 40,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorTier2Threshold,
+    translation = SqualorTier2Threshold,
 }
 
 option HousingCareSystem.SqualorTier3Threshold
 {
     type = integer,
-    min = 45,
-    max = 80,
+    min = 40,
+    max = 90,
     default = 60,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorTier3Threshold,
+    translation = SqualorTier3Threshold,
 }
 
 option HousingCareSystem.SqualorTier4Threshold
 {
     type = integer,
-    min = 65,
-    max = 95,
+    min = 60,
+    max = 100,
     default = 80,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorTier4Threshold,
+    translation = SqualorTier4Threshold,
 }
 
 option HousingCareSystem.SqualorMagnitudeMultiplier
 {
     type = double,
     min = 0.1,
-    max = 3.0,
+    max = 5.0,
     default = 1.0,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorMagnitudeMultiplier,
+    translation = SqualorMagnitudeMultiplier,
 }
 
 option HousingCareSystem.SqualorLingerHours
 {
     type = double,
     min = 0.1,
-    max = 8.0,
+    max = 24.0,
     default = 1.0,
     page = HousingCareSystem,
-    translation = HousingCareSystem_SqualorLingerHours,
+    translation = SqualorLingerHours,
 }

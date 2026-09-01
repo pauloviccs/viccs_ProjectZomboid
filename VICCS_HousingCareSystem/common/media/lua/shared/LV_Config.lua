@@ -12,21 +12,24 @@ LV_Config = LV_Config or {}
 
 --- Valores padrão (fallback) caso o jogo ou servidor não defina SandboxVars
 local DEFAULTS = {
-    -- Geral
+    -- Geral & Aclimatação
     SystemEnabled = true,
+    AcclimatizationMinutes = 30,
     ComfortCheckIntervalHours = 6,
-    ComfortRadiusTiles = 8,
+    ComfortRadiusTiles = 15,
     RequireRoofedRoom = true,
     RequireSafehouseClaim = false,
 
     -- Tiers de Conforto
-    ComfortTier1Threshold = 25,
-    ComfortTier2Threshold = 50,
-    ComfortTier3Threshold = 75,
-    ComfortTier4Threshold = 90,
+    Tier1Threshold = 20,
+    Tier2Threshold = 40,
+    Tier3Threshold = 60,
+    Tier4Threshold = 80,
 
     -- Duração e Força dos Buffs
-    BuffBaseDurationHours = 8,
+    BuffDurationBaseHours = 8.0,
+    BuffDurationPerComfortPoint = 0.05,
+    BuffDurationMaxHours = 12.0,
     BuffMagnitudeMultiplier = 1.0,
 
     -- Catálogo Estendido de Buffs (Habilitados por padrão)
@@ -40,11 +43,12 @@ local DEFAULTS = {
     -- Sistema de Squalor (Insalubridade)
     SqualorSystemEnabled = true,
     SqualorOverrideThreshold = 50,
-    SqualorTier1Threshold = 25,
-    SqualorTier2Threshold = 50,
-    SqualorTier3Threshold = 75,
-    SqualorTier4Threshold = 90,
+    SqualorTier1Threshold = 20,
+    SqualorTier2Threshold = 40,
+    SqualorTier3Threshold = 60,
+    SqualorTier4Threshold = 80,
     SqualorMagnitudeMultiplier = 1.0,
+    SqualorLingerHours = 1.0,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.

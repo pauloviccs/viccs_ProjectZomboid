@@ -1,12 +1,11 @@
 -- =============================================================================
--- Housing Care System (Lar Vivo) - Draggable The Sims-Style HUD (LV_HUD.lua)
+-- Housing Care System (Lar Vivo) - Custom HUD Component (LV_HUD.lua)
 -- =============================================================================
 -- Autor: VICCS
 -- Descrição:
---   Interface gráfica sutil, limpa, arrastável por drag & drop pelo mouse.
---   Renderiza a barra verde quando há conforto ativo e barra de alerta quando
---   o ambiente for insalubre. Exibe o nome da Safehouse / Base do jogador.
---   Atalho padrão de visibilidade: Tecla 'K'.
+--   Painel de interface moderno, discreto e translúcido para exibição em tempo
+--   real dos índices de Conforto, Squalor e Aclimatação na Base.
+--   Suporta arrasto livre com o mouse (Drag & Drop) e limites de tela.
 -- =============================================================================
 
 require "ISUI/ISPanel"
@@ -15,23 +14,27 @@ LV_HUD = ISPanel:derive("LV_HUD")
 
 local instance = nil
 
---- Construtor do painel do HUD.
+--- Cria uma nova instância do painel HUD.
 function LV_HUD:new(x, y, width, height)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.backgroundColor = {r=0.06, g=0.08, b=0.10, a=0.88}
-    o.borderColor = {r=0.25, g=0.35, b=0.30, a=0.90}
-    o.visible = true
-    o.userHidden = false
+
+    o.backgroundColor = {r = 0.08, g = 0.10, b = 0.12, a = 0.78}
+    o.borderColor = {r = 0.25, g = 0.35, b = 0.45, a = 0.85}
+    o.anchorLeft = true
+    o.anchorRight = false
+    o.anchorTop = true
+    o.anchorBottom = false
     o.moveWithMouse = true
+    o.userHidden = false
     o.isDragging = false
     o.dragStartX = 0
     o.dragStartY = 0
     return o
 end
 
---- Suporte a arrastar a barra livremente pela tela com o botão esquerdo do mouse.
+--- Eventos de clique e arrasto com o mouse (Drag and Drop)
 function LV_HUD:onMouseDown(x, y)
     self.isDragging = true
     self.dragStartX = x
@@ -86,9 +89,10 @@ function LV_HUD:render()
 
     local hasComfort = (data.comfortTier and data.comfortTier > 0)
     local hasSqualor = (data.squalorTier and data.squalorTier > 0)
+    local isAcclimatizing = (data.isInShelter and data.comfortTier == 0 and data.targetComfortScore and data.targetComfortScore > 0)
 
-    -- Se não houver nenhum status ativo, o HUD fica 100% oculto e transparente
-    if not hasComfort and not hasSqualor then return end
+    -- Se não houver nenhum status ativo e não estiver aclimatando, o HUD fica 100% oculto
+    if not hasComfort and not hasSqualor and not isAcclimatizing then return end
 
     local currentHour = getGameTime():getWorldAgeHours()
     local margin = 8
@@ -107,56 +111,92 @@ function LV_HUD:render()
     self:drawRect(self.width - 8, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
     self:drawRect(self.width - 4, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
 
-    local baseName = (data.baseName and data.baseName ~= "" and data.baseName ~= "Lar") and data.baseName or nil
+    -- Determina textos a serem exibidos
+    local title = ""
+    local statusText = ""
+    local barColor = {r = 0.20, g = 0.85, b = 0.40, a = 0.95}
+    local barBgColor = {r = 0.10, g = 0.20, b = 0.12, a = 0.60}
+    local barBorderColor = {r = 0.25, g = 0.50, b = 0.30, a = 0.80}
+    local titleColor = {r = 0.95, g = 0.95, b = 0.95}
+    local statusColor = {r = 0.70, g = 0.90, b = 0.70}
+    local fillProgress = 1.0
 
-    -- 2. Renderização de Estado: Squalor ou Comfort
     if hasSqualor then
         local score = math.max(0, math.min(100, data.squalorScore or 0))
-        local fillWidth = math.max(2, barWidth * (score / 100))
+        fillProgress = score / 100
         local remainingHours = math.max(0, (data.squalorExpiryWorldHour or 0) - currentHour)
+        barColor = {r = 0.90, g = 0.35, b = 0.15, a = 0.95}
+        barBgColor = {r = 0.25, g = 0.08, b = 0.08, a = 0.60}
+        barBorderColor = {r = 0.45, g = 0.20, b = 0.15, a = 0.80}
+        titleColor = {r = 0.95, g = 0.65, b = 0.50}
+        statusColor = {r = 0.85, g = 0.45, b = 0.35}
 
-        -- Barra de Fundo e Preenchimento Âmbar/Tóxico
-        self:drawRect(margin, margin + 2, barWidth, barHeight, 0.6, 0.25, 0.08, 0.08)
-        self:drawRect(margin, margin + 2, fillWidth, barHeight, 0.95, 0.90, 0.35, 0.15)
-        self:drawRectBorder(margin, margin + 2, barWidth, barHeight, 0.8, 0.45, 0.20, 0.15)
-
-        -- Título do Nível de Insalubridade
         local def = LV_MoodleDefs and LV_MoodleDefs.SqualorTiers and LV_MoodleDefs.SqualorTiers[data.squalorTier]
-        local title = def and LV_MoodleDefs.getText(def.titleKey, def.defaultTitle) or "Ambiente Insalubre"
+        title = def and LV_MoodleDefs.getText(def.titleKey, def.defaultTitle) or "Ambiente Insalubre"
         if baseName then title = baseName .. " | " .. title end
-        self:drawText(title, margin, 22, 0.95, 0.65, 0.50, 1.0, UIFont.Small)
-
-        -- Texto de Status
-        local statusText = ""
         if data.isInSqualorArea then
             statusText = LV_MoodleDefs and LV_MoodleDefs.getText("UI_LV_HUD_Exposed", "Exposto a Sujeira") or "Exposto a Sujeira"
         else
-            local fmt = LV_MoodleDefs and LV_MoodleDefs.getText("UI_LV_HUD_Contaminated", "Contaminado: %sh") or "Contaminado: %sh"
-            statusText = string.format(fmt, string.format("%.1f", remainingHours))
+            statusText = string.format("Contaminado: %.1fh", remainingHours)
         end
-        self:drawText(statusText, margin, 36, 0.85, 0.45, 0.35, 1.0, UIFont.Small)
+
+    elseif isAcclimatizing then
+        local req = (LV_Config and LV_Config.get and LV_Config.get("AcclimatizationMinutes")) or 30
+        local cur = math.max(0, math.min(req, data.shelterDwellMinutes or 0))
+        fillProgress = req > 0 and (cur / req) or 1.0
+        barColor = {r = 0.25, g = 0.70, b = 0.95, a = 0.95}
+        barBgColor = {r = 0.08, g = 0.18, b = 0.28, a = 0.60}
+        barBorderColor = {r = 0.20, g = 0.50, b = 0.75, a = 0.80}
+        titleColor = {r = 0.85, g = 0.92, b = 1.0}
+        statusColor = {r = 0.65, g = 0.85, b = 0.95}
+
+        title = baseName and (baseName .. " | Relaxando...") or "Relaxando no Lar..."
+        statusText = string.format("Aclimatando: %d%% (%d/%d min)", math.floor(fillProgress * 100), math.floor(cur), math.floor(req))
 
     elseif hasComfort then
         local score = math.max(0, math.min(100, data.comfortScore or 0))
-        local fillWidth = math.max(2, barWidth * (score / 100))
+        fillProgress = score / 100
         local remainingHours = math.max(0, (data.comfortExpiryWorldHour or 0) - currentHour)
 
-        -- Barra de Fundo e Preenchimento Verde Esmeralda
-        self:drawRect(margin, margin + 2, barWidth, barHeight, 0.6, 0.10, 0.20, 0.12)
-        self:drawRect(margin, margin + 2, fillWidth, barHeight, 0.95, 0.20, 0.85, 0.40)
-        self:drawRectBorder(margin, margin + 2, barWidth, barHeight, 0.8, 0.25, 0.50, 0.30)
-
-        -- Título do Tier de Conforto
         local def = LV_MoodleDefs and LV_MoodleDefs.ComfortTiers and LV_MoodleDefs.ComfortTiers[data.comfortTier]
-        local title = def and LV_MoodleDefs.getText(def.titleKey, def.defaultTitle) or "Lar Aconchegante"
+        title = def and LV_MoodleDefs.getText(def.titleKey, def.defaultTitle) or "Lar Aconchegante"
         if baseName then title = baseName .. " | " .. title end
-        self:drawText(title, margin, 22, 0.95, 0.95, 0.95, 1.0, UIFont.Small)
-
-        -- Tempo Restante / Status na Base
-        local fmt = LV_MoodleDefs and LV_MoodleDefs.getText("UI_LV_HUD_Remaining", "Restante: %sh") or "Restante: %sh"
-        local statusText = string.format(fmt, string.format("%.1f", remainingHours))
-        self:drawText(statusText, margin, 36, 0.70, 0.90, 0.70, 1.0, UIFont.Small)
+        statusText = string.format("Restante: %.1fh (In-Game)", remainingHours)
     end
+
+    -- Ajuste dinâmico de largura para ZERO vazamento de texto
+    local textMgr = getTextManager()
+    local titleW = textMgr and textMgr:MeasureStringX(UIFont.Small, title) or 120
+    local statusW = textMgr and textMgr:MeasureStringX(UIFont.Small, statusText) or 100
+    local neededW = math.max(220, math.max(titleW, statusW) + (margin * 2) + 20)
+
+    if self.width ~= neededW then
+        self:setWidth(neededW)
+    end
+
+    local actualBarWidth = self.width - (margin * 2)
+
+    -- 1. Moldura e Fundo Translúcido Moderno
+    self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
+    self:drawRectBorder(0, 0, self.width, self.height, self.borderColor.a, self.borderColor.r, self.borderColor.g, self.borderColor.b)
+
+    -- Alça sutil de arrasto no canto superior direito
+    self:drawRect(self.width - 12, 3, 2, 2, 0.6, 0.8, 0.8, 0.8)
+    self:drawRect(self.width - 8, 3, 2, 2, 0.6, 0.8, 0.8, 0.8)
+    self:drawRect(self.width - 4, 3, 2, 2, 0.6, 0.8, 0.8, 0.8)
+    self:drawRect(self.width - 12, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
+    self:drawRect(self.width - 8, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
+    self:drawRect(self.width - 4, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
+
+    -- Barra de Progresso
+    local fillW = math.max(2, actualBarWidth * math.max(0.02, math.min(1.0, fillProgress)))
+    self:drawRect(margin, margin + 2, actualBarWidth, barHeight, barBgColor.a, barBgColor.r, barBgColor.g, barBgColor.b)
+    self:drawRect(margin, margin + 2, fillW, barHeight, barColor.a, barColor.r, barColor.g, barColor.b)
+    self:drawRectBorder(margin, margin + 2, actualBarWidth, barHeight, barBorderColor.a, barBorderColor.r, barBorderColor.g, barBorderColor.b)
+
+    -- Textos perfeitamente contidos
+    self:drawText(title, margin, 22, titleColor.r, titleColor.g, titleColor.b, 1.0, UIFont.Small)
+    self:drawText(statusText, margin, 36, statusColor.r, statusColor.g, statusColor.b, 1.0, UIFont.Small)
 end
 
 --- Alterna a visibilidade manual do HUD via tecla 'K'.
@@ -174,7 +214,9 @@ local function initHUD()
     instance:initialise()
     instance:instantiate()
     instance:addToUIManager()
+    instance:setVisible(true)
+    instance.userHidden = false
 end
 
 Events.OnGameStart.Add(initHUD)
-Events.OnCreatePlayer.Add(function() initHUD() end)
+Events.OnCreatePlayer.Add(initHUD)

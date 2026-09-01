@@ -3,8 +3,9 @@
 -- =============================================================================
 -- Autor: VICCS
 -- Descrição:
---   Gerencia os estados de Conforto e Squalor no cliente e servidor.
+--   Gerencia os estados de Conforto, Squalor e Aclimatação na Base.
 --   Aplica buffs/debuffs nas estatísticas do personagem de forma 100% segura.
+--   Garante persistência de 8 horas in-game fora da base.
 -- =============================================================================
 
 LV_BuffManager = LV_BuffManager or {}
@@ -18,6 +19,11 @@ local localPlayerData = {
     squalorTier = 0,
     squalorExpiryWorldHour = 0,
     isInSqualorArea = false,
+    isInShelter = false,
+    shelterDwellMinutes = 0,
+    targetComfortScore = 0,
+    targetSqualorScore = 0,
+    lastDwellWorldHour = -1,
     baseName = "Lar",
     lastScanHour = -1
 }
@@ -71,10 +77,10 @@ end
 function LV_BuffManager.getComfortTierFromScore(score)
     if not score or score <= 0 then return 0 end
 
-    local t1 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier1Threshold")) or 25
-    local t2 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier2Threshold")) or 50
-    local t3 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier3Threshold")) or 75
-    local t4 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier4Threshold")) or 90
+    local t1 = (LV_Config and LV_Config.get and LV_Config.get("Tier1Threshold")) or 20
+    local t2 = (LV_Config and LV_Config.get and LV_Config.get("Tier2Threshold")) or 40
+    local t3 = (LV_Config and LV_Config.get and LV_Config.get("Tier3Threshold")) or 60
+    local t4 = (LV_Config and LV_Config.get and LV_Config.get("Tier4Threshold")) or 80
 
     if score >= t4 then return 4
     elseif score >= t3 then return 3
@@ -87,10 +93,10 @@ end
 function LV_BuffManager.getSqualorTierFromScore(score)
     if not score or score <= 0 then return 0 end
 
-    local t1 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier1Threshold")) or 25
-    local t2 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier2Threshold")) or 50
-    local t3 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier3Threshold")) or 75
-    local t4 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier4Threshold")) or 90
+    local t1 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier1Threshold")) or 20
+    local t2 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier2Threshold")) or 40
+    local t3 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier3Threshold")) or 60
+    local t4 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier4Threshold")) or 80
 
     if score >= t4 then return 4
     elseif score >= t3 then return 3
@@ -99,32 +105,26 @@ function LV_BuffManager.getSqualorTierFromScore(score)
     else return 0 end
 end
 
---- Aplica o resultado consolidado da varredura de ambiente no jogador.
-function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, baseName)
-    if not player then return end
-
+--- Ativação dos benefícios após aclimatação ou trigger manual
+local function activateBuffs(player, comfortScore, squalorScore, duration)
+    local currentHour = getGameTime():getWorldAgeHours()
     local newComfortTier = LV_BuffManager.getComfortTierFromScore(comfortScore)
     local newSqualorTier = LV_BuffManager.getSqualorTierFromScore(squalorScore)
-
-    local currentHour = getGameTime():getWorldAgeHours()
-    local duration = (LV_Config and LV_Config.get and LV_Config.get("BuffBaseDurationHours")) or 8
     local oldComfortTier = localPlayerData.comfortTier
     local oldSqualorTier = localPlayerData.squalorTier
 
-    -- 1. Atualização de Conforto
     localPlayerData.comfortScore = comfortScore
     localPlayerData.comfortTier = newComfortTier
-    if baseName and baseName ~= "" then
-        localPlayerData.baseName = baseName
-    end
-
     if newComfortTier > 0 then
-        localPlayerData.comfortExpiryWorldHour = currentHour + duration
+        local extraPerPt = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationPerComfortPoint")) or 0.05
+        local extraTime = comfortScore * extraPerPt
+        local maxDuration = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationMaxHours")) or 12.0
+        local totalDuration = math.min(maxDuration, duration + extraTime)
+        localPlayerData.comfortExpiryWorldHour = currentHour + totalDuration
     else
         localPlayerData.comfortExpiryWorldHour = 0
     end
 
-    -- 2. Atualização de Insalubridade (Squalor)
     localPlayerData.squalorScore = squalorScore
     localPlayerData.squalorTier = newSqualorTier
     if newSqualorTier > 0 then
@@ -135,9 +135,6 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
         localPlayerData.squalorExpiryWorldHour = 0
     end
 
-    localPlayerData.lastScanHour = currentHour
-
-    -- 3. Notificações seguras ao mudar de Tier
     if newComfortTier > oldComfortTier and newComfortTier >= 2 then
         pcall(function()
             local text = LV_MoodleDefs.getText("UI_LV_Notification_Comfort", "Lar Aconchegante") .. " (" .. newComfortTier .. ")"
@@ -145,23 +142,58 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
                 player:setHaloNote(text, 80, 240, 120, 250)
             end
         end)
-    elseif newSqualorTier > oldSqualorTier and newSqualorTier >= 2 then
-        pcall(function()
-            local text = LV_MoodleDefs.getText("UI_LV_Notification_Squalor", "Ambiente Insalubre") .. " (" .. newSqualorTier .. ")"
-            if player.setHaloNote then
-                player:setHaloNote(text, 240, 90, 70, 250)
-            end
-        end)
     end
 end
 
---- Disparado quando o jogador está em área externa/selvagem sem abrigo.
+--- Aplica o resultado consolidado da varredura de ambiente no jogador.
+function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, baseName, isManualTrigger)
+    if not player then return end
+
+    local currentHour = getGameTime():getWorldAgeHours()
+    local duration = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationBaseHours")) or 8.0
+    local reqAcclimatization = (LV_Config and LV_Config.get and LV_Config.get("AcclimatizationMinutes")) or 30
+
+    if baseName and baseName ~= "" then
+        localPlayerData.baseName = baseName
+    end
+
+    if comfortScore > 0 then
+        localPlayerData.isInShelter = true
+        localPlayerData.targetComfortScore = comfortScore
+        localPlayerData.targetSqualorScore = squalorScore
+
+        -- Se a aclimatação for 0 ou se for trigger manual (K) ou se já estiver aclimatado
+        if reqAcclimatization <= 0 or isManualTrigger or localPlayerData.shelterDwellMinutes >= reqAcclimatization or localPlayerData.comfortTier > 0 then
+            localPlayerData.shelterDwellMinutes = reqAcclimatization
+            activateBuffs(player, comfortScore, squalorScore, duration)
+        else
+            -- Inicializa contador de aclimatação
+            if localPlayerData.lastDwellWorldHour == -1 then
+                localPlayerData.lastDwellWorldHour = currentHour
+            end
+        end
+    else
+        localPlayerData.isInShelter = false
+        localPlayerData.shelterDwellMinutes = 0
+        localPlayerData.lastDwellWorldHour = -1
+    end
+
+    localPlayerData.lastScanHour = currentHour
+end
+
+--- Disparado quando o jogador está em área externa/selvagem fora de abrigo.
 function LV_BuffManager.onUnsafeEnvironment(player)
-    localPlayerData.comfortScore = 0
-    localPlayerData.comfortTier = 0
-    localPlayerData.comfortExpiryWorldHour = 0
-    localPlayerData.squalorScore = 0
-    localPlayerData.squalorTier = 0
+    local currentHour = getGameTime():getWorldAgeHours()
+    localPlayerData.isInShelter = false
+    localPlayerData.shelterDwellMinutes = 0
+    localPlayerData.lastDwellWorldHour = -1
+
+    -- Se o tempo do buff ainda está ativo no relógio do jogo, preserva os bônus!
+    if currentHour >= localPlayerData.comfortExpiryWorldHour then
+        localPlayerData.comfortScore = 0
+        localPlayerData.comfortTier = 0
+        localPlayerData.comfortExpiryWorldHour = 0
+    end
     localPlayerData.isInSqualorArea = false
 end
 
@@ -201,6 +233,29 @@ local function onPlayerUpdateBuffs(player)
     if not data then return end
 
     local currentHour = getGameTime():getWorldAgeHours()
+
+    -- 1. Gerenciamento de Aclimatação Contínua na Base
+    if data.isInShelter and data.comfortTier == 0 and data.targetComfortScore > 0 then
+        local reqAcclimatization = (LV_Config and LV_Config.get and LV_Config.get("AcclimatizationMinutes")) or 30
+        if data.lastDwellWorldHour ~= -1 then
+            local deltaHours = math.max(0, currentHour - data.lastDwellWorldHour)
+            data.shelterDwellMinutes = data.shelterDwellMinutes + (deltaHours * 60.0)
+            data.lastDwellWorldHour = currentHour
+
+            if data.shelterDwellMinutes >= reqAcclimatization then
+                local duration = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationBaseHours")) or 8.0
+                activateBuffs(player, data.targetComfortScore, data.targetSqualorScore, duration)
+                pcall(function()
+                    if player.setHaloNote then
+                        player:setHaloNote("Lar Vivo: Corpo Relaxado! Bônus de Lar Ativado", 80, 255, 140, 250)
+                    end
+                end)
+            end
+        else
+            data.lastDwellWorldHour = currentHour
+        end
+    end
+
     local stats = player:getStats()
     local bodyDamage = player:getBodyDamage()
     if not stats or not bodyDamage then return end
@@ -209,7 +264,7 @@ local function onPlayerUpdateBuffs(player)
     local squalorMult = (LV_Config and LV_Config.get and LV_Config.get("SqualorMagnitudeMultiplier")) or 1.0
 
     -- =========================================================================
-    -- A. EFEITOS POSITIVOS (BUFFS DE CONFORTO)
+    -- A. EFEITOS POSITIVOS (BUFFS DE CONFORTO DURANTE O RELÓGIO DO JOGO)
     -- =========================================================================
     if data.comfortTier > 0 and currentHour < data.comfortExpiryWorldHour then
         local cTier = data.comfortTier
@@ -254,23 +309,19 @@ local function onPlayerUpdateBuffs(player)
     if data.squalorTier > 0 and (data.isInSqualorArea or currentHour < data.squalorExpiryWorldHour) then
         local sTier = data.squalorTier
 
-        -- Squalor Tier 1: Enojado I (Leve ganho de infelicidade)
         if sTier >= 1 then
             modifyUnhappiness(bodyDamage, (0.02 * squalorMult))
         end
 
-        -- Squalor Tier 2: Ambiente Insalubre (Infelicidade + Estresse + Queda de Stamina)
         if sTier >= 2 then
             modifyStat(stats, "Stress", (0.0003 * squalorMult), 0.0, 1.0)
             modifyStat(stats, "Endurance", -(0.0001 * squalorMult), 0.0, 1.0)
         end
 
-        -- Squalor Tier 3: Antro Imundo (Náusea e Cansaço)
         if sTier >= 3 then
             modifyStat(stats, "Sickness", (0.03 * squalorMult), 0.0, 50.0)
         end
 
-        -- Squalor Tier 4: Foco de Doença (Penalidade severa de saúde geral)
         if sTier >= 4 then
             modifyStat(stats, "Sickness", (0.08 * squalorMult), 0.0, 90.0)
         end
@@ -282,4 +333,4 @@ end
 
 Events.OnPlayerUpdate.Add(onPlayerUpdateBuffs)
 
-print("[LarVivo] LV_BuffManager carregado e ativo!")
+print("[LarVivo] LV_BuffManager carregado e ativo com sistema de aclimatação e persistência in-game!")
