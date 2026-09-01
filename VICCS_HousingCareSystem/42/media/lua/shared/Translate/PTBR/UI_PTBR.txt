@@ -30,4 +30,11 @@ UI_PTBR = {
     UI_LV_Squalor3_Desc = "O cheiro de podridao e sangue causa enjoo frequente e cansaco mental.",
     UI_LV_Squalor4_Title = "Foco de Doenca (Nivel IV)",
     UI_LV_Squalor4_Desc = "Ambiente altamente contaminado! Risco severo de febre e infeccoes continuas.",
+
+    UI_LV_Halo_Cleaning = "+15% Duracao do Lar (Limpeza)",
+    UI_LV_Halo_Cooking = "+20% Duracao do Lar (Culinaria)",
+    UI_LV_Halo_Farming = "+15% Duracao do Lar (Jardinagem)",
+    UI_LV_Halo_Building = "+25% Duracao do Lar (Construcao)",
+    UI_LV_Halo_Decorating = "+15% Duracao do Lar (Decoracao)",
+    UI_LV_HUD_HomemakingBonus = "Bonus de Tarefas: +%sh",
 }

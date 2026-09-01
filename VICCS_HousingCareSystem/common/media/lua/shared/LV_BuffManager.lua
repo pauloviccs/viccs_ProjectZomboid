@@ -25,11 +25,38 @@ local localPlayerData = {
     targetSqualorScore = 0,
     lastDwellWorldHour = -1,
     baseName = "Lar",
-    lastScanHour = -1
+    lastScanHour = -1,
+
+    -- Dados do Motor de Tarefas Domésticas (Homemaking)
+    homemakingBonusHours = 0.0,
+    homemakingDailyHours = 0.0,
+    homemakingDailyActions = 0,
+    homemakingLastDay = -1
 }
+
+local isModDataLoaded = false
+local function ensureModDataLoaded(player)
+    if isModDataLoaded or not player then return end
+    pcall(function()
+        local md = player:getModData()
+        if md and md.LV_Homemaking then
+            local hm = md.LV_Homemaking
+            local currentHour = getGameTime():getWorldAgeHours()
+            localPlayerData.homemakingBonusHours = hm.bonusHours or 0
+            localPlayerData.homemakingDailyHours = hm.dailyHours or 0
+            localPlayerData.homemakingDailyActions = hm.dailyActions or 0
+            localPlayerData.homemakingLastDay = hm.lastDay or -1
+            if hm.comfortExpiryWorldHour and hm.comfortExpiryWorldHour > currentHour then
+                localPlayerData.comfortExpiryWorldHour = hm.comfortExpiryWorldHour
+            end
+        end
+    end)
+    isModDataLoaded = true
+end
 
 --- Retorna os dados do jogador ativo de forma segura.
 function LV_BuffManager.getPlayerData(player)
+    ensureModDataLoaded(player)
     return localPlayerData
 end
 
@@ -196,6 +223,90 @@ function LV_BuffManager.onUnsafeEnvironment(player)
     end
     localPlayerData.isInSqualorArea = false
 end
+
+--- Concede bônus de extensão de tempo e reforço de conforto por tarefas domésticas no lar.
+function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
+    if not player or not LV_Config or not LV_Config.isHomemakingEnabled() then return 0 end
+    bonusPercent = bonusPercent or 15
+
+    local currentHour = getGameTime():getWorldAgeHours()
+    local scale = (LV_Config and LV_Config.get and LV_Config.get("HomemakingBonusScale")) or 1.0
+    local maxBonusCap = (LV_Config and LV_Config.get and LV_Config.get("HomemakingMaxBonusHours")) or 8.0
+    local baseDuration = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationBaseHours")) or 8.0
+
+    -- 1. Verifica virada de dia in-game para reset do cap diário
+    local currentDay = math.floor(currentHour / 24)
+    if localPlayerData.homemakingLastDay ~= currentDay then
+        localPlayerData.homemakingLastDay = currentDay
+        localPlayerData.homemakingDailyHours = 0.0
+        localPlayerData.homemakingDailyActions = 0
+    end
+
+    -- 2. Se já atingiu o teto diário de bônus por tarefas
+    if localPlayerData.homemakingDailyHours >= maxBonusCap then
+        return 0
+    end
+
+    -- 3. Calcula o incremento em horas
+    local rawIncrement = baseDuration * (bonusPercent / 100.0) * scale
+    local allowedIncrement = math.min(rawIncrement, maxBonusCap - localPlayerData.homemakingDailyHours)
+    if allowedIncrement <= 0 then return 0 end
+
+    -- 4. Se o jogador ainda não tem expiração ativa, mas está em abrigo com pontuação
+    if localPlayerData.comfortExpiryWorldHour <= currentHour then
+        if localPlayerData.targetComfortScore > 0 or localPlayerData.comfortScore > 0 then
+            local score = math.max(localPlayerData.targetComfortScore, localPlayerData.comfortScore)
+            activateBuffs(player, score, localPlayerData.squalorScore, baseDuration)
+        elseif localPlayerData.comfortTier > 0 then
+            localPlayerData.comfortExpiryWorldHour = currentHour + baseDuration
+        else
+            -- Ativa ao menos Tier 1 temporário pelo cuidado com a base
+            activateBuffs(player, 25, 0, baseDuration)
+        end
+    end
+
+    -- 5. Estende a expiração com teto seguro
+    local maxDurationAbsolute = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationMaxHours")) or 12.0
+    local maxAllowedExpiry = currentHour + maxDurationAbsolute + maxBonusCap
+    local baseExpiry = math.max(currentHour, localPlayerData.comfortExpiryWorldHour)
+    local newExpiry = math.min(maxAllowedExpiry, baseExpiry + allowedIncrement)
+    local actualAdded = math.max(0, newExpiry - baseExpiry)
+
+    if actualAdded > 0 then
+        localPlayerData.comfortExpiryWorldHour = newExpiry
+        localPlayerData.homemakingBonusHours = (localPlayerData.homemakingBonusHours or 0) + actualAdded
+        localPlayerData.homemakingDailyHours = (localPlayerData.homemakingDailyHours or 0) + actualAdded
+        localPlayerData.homemakingDailyActions = (localPlayerData.homemakingDailyActions or 0) + 1
+
+        -- Sincroniza com ModData do personagem para persistência universal
+        pcall(function()
+            local modData = player:getModData()
+            if modData then
+                modData.LV_Homemaking = {
+                    bonusHours = localPlayerData.homemakingBonusHours,
+                    dailyHours = localPlayerData.homemakingDailyHours,
+                    dailyActions = localPlayerData.homemakingDailyActions,
+                    lastDay = localPlayerData.homemakingLastDay,
+                    comfortExpiryWorldHour = localPlayerData.comfortExpiryWorldHour
+                }
+            end
+        end)
+        return actualAdded
+    end
+
+    return 0
+end
+
+--- Retorna os dados consolidados de Homemaking para UI e diagnósticos.
+function LV_BuffManager.getHomemakingData(player)
+    return {
+        bonusHours = localPlayerData.homemakingBonusHours or 0,
+        dailyHours = localPlayerData.homemakingDailyHours or 0,
+        dailyActions = localPlayerData.homemakingDailyActions or 0,
+        maxDailyCap = (LV_Config and LV_Config.get and LV_Config.get("HomemakingMaxBonusHours")) or 8.0
+    }
+end
+
 
 --- Acelera cicatrização natural de ferimentos leves em tiers altos.
 local function applyHealingBuff(player)

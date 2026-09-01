@@ -30,4 +30,11 @@ UI_CN = {
     UI_LV_Squalor3_Desc = "血腥与腐臭令人作呕，导致频繁恶心与精神疲乏。",
     UI_LV_Squalor4_Title = "疫病源头 (4级)",
     UI_LV_Squalor4_Desc = "高度污染危险环境：极高发热与持续患病风险。",
+
+    UI_LV_Halo_Cleaning = "+15% 居所增益持续时间 (清扫)",
+    UI_LV_Halo_Cooking = "+20% 居所增益持续时间 (烹饪)",
+    UI_LV_Halo_Farming = "+15% 居所增益持续时间 (农艺)",
+    UI_LV_Halo_Building = "+25% 居所增益持续时间 (建造)",
+    UI_LV_Halo_Decorating = "+15% 居所增益持续时间 (装饰)",
+    UI_LV_HUD_HomemakingBonus = "家务加成: +%sh",
 }

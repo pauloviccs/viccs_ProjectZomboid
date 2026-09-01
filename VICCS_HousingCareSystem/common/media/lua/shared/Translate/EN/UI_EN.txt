@@ -30,4 +30,11 @@ UI_EN = {
     UI_LV_Squalor3_Desc = "The stench of rot and blood causes frequent nausea and mental fatigue.",
     UI_LV_Squalor4_Title = "Disease Hotspot (Level IV)",
     UI_LV_Squalor4_Desc = "Highly contaminated! Severe risk of illness and continuous health drag.",
+
+    UI_LV_Halo_Cleaning = "+15% Home Duration (Cleaning)",
+    UI_LV_Halo_Cooking = "+20% Home Duration (Cooking)",
+    UI_LV_Halo_Farming = "+15% Home Duration (Farming)",
+    UI_LV_Halo_Building = "+25% Home Duration (Building)",
+    UI_LV_Halo_Decorating = "+15% Home Duration (Decorating)",
+    UI_LV_HUD_HomemakingBonus = "Chores Bonus: +%sh",
 }

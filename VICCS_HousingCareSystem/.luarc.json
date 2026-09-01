@@ -34,7 +34,8 @@
             "LV_ComfortScanner",
             "LV_ItemScoreData",
             "LV_MoodleDefs",
-            "LV_HUD"
+            "LV_HUD",
+            "LV_HomemakingActions"
         ]
     }
 }

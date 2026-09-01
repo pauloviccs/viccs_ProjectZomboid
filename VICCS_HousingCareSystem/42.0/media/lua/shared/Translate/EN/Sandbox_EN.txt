@@ -55,6 +55,14 @@ Sandbox_EN = {
     Sandbox_SqualorMagnitudeMultiplier_tooltip = "Multiplies the strength of dirt penalties.",
     Sandbox_SqualorLingerHours = "Contamination Linger (In-Game Hours)",
     Sandbox_SqualorLingerHours_tooltip = "Duration of nausea effects after leaving dirty areas.",
+    Sandbox_HomemakingEnabled = "Enable Daily Chores & Homemaking System",
+    Sandbox_HomemakingEnabled_tooltip = "Rewards the player with extra buff duration when cleaning, cooking, farming, building, or decorating at base.",
+    Sandbox_HomemakingBonusScale = "Chores Efficiency Multiplier",
+    Sandbox_HomemakingBonusScale_tooltip = "Scales the bonus duration percentage granted by household tasks.",
+    Sandbox_HomemakingMaxBonusHours = "Daily Max Bonus Hours from Chores",
+    Sandbox_HomemakingMaxBonusHours_tooltip = "Maximum extra buff hours that can be earned per in-game day.",
+    Sandbox_HomemakingCooldownSeconds = "Anti-Spam Cooldown per Category (Seconds)",
+    Sandbox_HomemakingCooldownSeconds_tooltip = "Cooldown between consecutive tasks of the same type to grant bonuses.",
 
     -- Page Prefix Keys
     Sandbox_HousingCareSystem_SystemEnabled = "Enable Living Home System",
@@ -111,4 +119,12 @@ Sandbox_EN = {
     Sandbox_HousingCareSystem_SqualorMagnitudeMultiplier_tooltip = "Multiplies the strength of dirt penalties.",
     Sandbox_HousingCareSystem_SqualorLingerHours = "Contamination Linger (In-Game Hours)",
     Sandbox_HousingCareSystem_SqualorLingerHours_tooltip = "Duration of contamination after leaving.",
+    Sandbox_HousingCareSystem_HomemakingEnabled = "Enable Daily Chores & Homemaking System",
+    Sandbox_HousingCareSystem_HomemakingEnabled_tooltip = "Rewards the player with extra buff duration when cleaning, cooking, farming, building, or decorating at base.",
+    Sandbox_HousingCareSystem_HomemakingBonusScale = "Chores Efficiency Multiplier",
+    Sandbox_HousingCareSystem_HomemakingBonusScale_tooltip = "Scales the bonus duration percentage granted by household tasks.",
+    Sandbox_HousingCareSystem_HomemakingMaxBonusHours = "Daily Max Bonus Hours from Chores",
+    Sandbox_HousingCareSystem_HomemakingMaxBonusHours_tooltip = "Maximum extra buff hours that can be earned per in-game day.",
+    Sandbox_HousingCareSystem_HomemakingCooldownSeconds = "Anti-Spam Cooldown per Category (Seconds)",
+    Sandbox_HousingCareSystem_HomemakingCooldownSeconds_tooltip = "Cooldown between consecutive tasks of the same type to grant bonuses.",
 }

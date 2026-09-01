@@ -30,4 +30,11 @@ UI_ES = {
     UI_LV_Squalor3_Desc = "El hedor a putrefaccion y sangre causa nauseas y fatiga mental continua.",
     UI_LV_Squalor4_Title = "Foco de Enfermedad (Nivel IV)",
     UI_LV_Squalor4_Desc = "Entorno sumamente contaminado: riesgo severo de fiebre e infecciones continuas.",
+
+    UI_LV_Halo_Cleaning = "+15% Duracion del Hogar (Limpieza)",
+    UI_LV_Halo_Cooking = "+20% Duracion del Hogar (Cocina)",
+    UI_LV_Halo_Farming = "+15% Duracion del Hogar (Agricultura)",
+    UI_LV_Halo_Building = "+25% Duracion del Hogar (Construccion)",
+    UI_LV_Halo_Decorating = "+15% Duracion del Hogar (Decoracion)",
+    UI_LV_HUD_HomemakingBonus = "Bonus de Tareas: +%sh",
 }

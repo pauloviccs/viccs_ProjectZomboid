@@ -49,6 +49,12 @@ local DEFAULTS = {
     SqualorTier4Threshold = 80,
     SqualorMagnitudeMultiplier = 1.0,
     SqualorLingerHours = 1.0,
+
+    -- Tarefas Domesticas & Vida Ativa no Lar (Homemaking Engine)
+    HomemakingEnabled = true,
+    HomemakingBonusScale = 1.0,
+    HomemakingMaxBonusHours = 8.0,
+    HomemakingCooldownSeconds = 45,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.
@@ -81,3 +87,9 @@ end
 function LV_Config.isSqualorEnabled()
     return LV_Config.isEnabled() and (LV_Config.get("SqualorSystemEnabled") == true)
 end
+
+--- Verifica se o sistema de tarefas domésticas (Homemaking) está ativo.
+function LV_Config.isHomemakingEnabled()
+    return LV_Config.isEnabled() and (LV_Config.get("HomemakingEnabled") == true)
+end
+

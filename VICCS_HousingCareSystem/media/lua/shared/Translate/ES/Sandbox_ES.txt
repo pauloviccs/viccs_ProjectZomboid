@@ -86,4 +86,23 @@ Sandbox_ES = {
 
     Sandbox_HousingCareSystem_SqualorLingerHours = "Duracion del Efecto Residual de Suciedad (Horas)",
     Sandbox_HousingCareSystem_SqualorLingerHours_tooltip = "Tiempo que el jugador sigue sintiendo la contaminacion tras abandonar una base insalubre.\nPredeterminado: 1.0 hora.",
+
+    -- Sistema de Tareas del Hogar (Homemaking)
+    Sandbox_HousingCareSystem_HomemakingEnabled = "Activar Sistema de Tareas Domesticas (Cuidado del Hogar)",
+    Sandbox_HousingCareSystem_HomemakingEnabled_tooltip = "Recompensa al sobreviviente con duracion adicional de mejoras al limpiar, cocinar, cultivar, construir o decorar.",
+    Sandbox_HousingCareSystem_HomemakingBonusScale = "Multiplicador de Eficiencia de Tareas",
+    Sandbox_HousingCareSystem_HomemakingBonusScale_tooltip = "Aumenta o disminuye el porcentaje de bonificacion otorgado por cada tarea.",
+    Sandbox_HousingCareSystem_HomemakingMaxBonusHours = "Limite Maximo Diario de Horas por Tareas (Horas)",
+    Sandbox_HousingCareSystem_HomemakingMaxBonusHours_tooltip = "Maximo de horas de mejora adicionales acumulables al dia cuidando del refugio.",
+    Sandbox_HousingCareSystem_HomemakingCooldownSeconds = "Intervalo Anti-Spam por Categoria (Segundos)",
+    Sandbox_HousingCareSystem_HomemakingCooldownSeconds_tooltip = "Tiempo minimo entre tareas consecutivas del mismo tipo para otorgar nueva bonificacion.",
+
+    Sandbox_HomemakingEnabled = "Activar Sistema de Tareas Domesticas (Cuidado del Hogar)",
+    Sandbox_HomemakingEnabled_tooltip = "Recompensa al sobreviviente con duracion adicional de mejoras al limpiar, cocinar, cultivar, construir o decorar.",
+    Sandbox_HomemakingBonusScale = "Multiplicador de Eficiencia de Tareas",
+    Sandbox_HomemakingBonusScale_tooltip = "Aumenta o disminuye el porcentaje de bonificacion otorgado por cada tarea.",
+    Sandbox_HomemakingMaxBonusHours = "Limite Maximo Diario de Horas por Tareas (Horas)",
+    Sandbox_HomemakingMaxBonusHours_tooltip = "Maximo de horas de mejora adicionales acumulables al dia cuidando del refugio.",
+    Sandbox_HomemakingCooldownSeconds = "Intervalo Anti-Spam por Categoria (Segundos)",
+    Sandbox_HomemakingCooldownSeconds_tooltip = "Tiempo minimo entre tareas consecutivas del mesmo tipo para otorgar nueva bonificacion.",
 }

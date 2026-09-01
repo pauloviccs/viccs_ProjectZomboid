@@ -86,4 +86,23 @@ Sandbox_CN = {
 
     Sandbox_HousingCareSystem_SqualorLingerHours = "离开脏乱基地后的残留持续时间 (小时)",
     Sandbox_HousingCareSystem_SqualorLingerHours_tooltip = "离开恶劣脏乱环境后，轻微污染状态持续留存的时间。\n默认: 1.0小时。",
+
+    -- 家务与日常打理系统 (Homemaking)
+    Sandbox_HousingCareSystem_HomemakingEnabled = "启用家务与居所打理系统 (Homemaking)",
+    Sandbox_HousingCareSystem_HomemakingEnabled_tooltip = "在基地内进行打扫、烹饪、耕作、建造或装饰布置时，奖励额外增益留存时间。",
+    Sandbox_HousingCareSystem_HomemakingBonusScale = "家务效率倍率",
+    Sandbox_HousingCareSystem_HomemakingBonusScale_tooltip = "缩放各项家务劳动所给予的额外持续时间百分比。",
+    Sandbox_HousingCareSystem_HomemakingMaxBonusHours = "每日家务额外时间上限 (游戏内小时)",
+    Sandbox_HousingCareSystem_HomemakingMaxBonusHours_tooltip = "每天通过打理基地所能额外获取的增益留存最大上限。",
+    Sandbox_HousingCareSystem_HomemakingCooldownSeconds = "同类家务防刷冷却间隔 (秒)",
+    Sandbox_HousingCareSystem_HomemakingCooldownSeconds_tooltip = "相同类型的家务动作之间必须间隔的冷却秒数以获得加成。",
+
+    Sandbox_HomemakingEnabled = "启用家务与居所打理系统 (Homemaking)",
+    Sandbox_HomemakingEnabled_tooltip = "在基地内进行打扫、烹饪、耕作、建造或装饰布置时，奖励额外增益留存时间。",
+    Sandbox_HomemakingBonusScale = "家务效率倍率",
+    Sandbox_HomemakingBonusScale_tooltip = "缩放各项家务劳动所给予的额外持续时间百分比。",
+    Sandbox_HomemakingMaxBonusHours = "每日家务额外时间上限 (游戏内小时)",
+    Sandbox_HomemakingMaxBonusHours_tooltip = "每天通过打理基地所能额外获取的增益留存最大上限。",
+    Sandbox_HomemakingCooldownSeconds = "同类家务防刷冷却间隔 (秒)",
+    Sandbox_HomemakingCooldownSeconds_tooltip = "相同类型的家务动作之间必须间隔的冷却秒数以获得加成。",
 }

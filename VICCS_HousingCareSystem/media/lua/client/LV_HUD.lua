@@ -161,7 +161,10 @@ function LV_HUD:render()
         local def = LV_MoodleDefs and LV_MoodleDefs.ComfortTiers and LV_MoodleDefs.ComfortTiers[data.comfortTier]
         title = def and LV_MoodleDefs.getText(def.titleKey, def.defaultTitle) or "Lar Aconchegante"
         if baseName then title = baseName .. " | " .. title end
-        statusText = string.format("Restante: %.1fh (In-Game)", remainingHours)
+
+        local hmData = LV_BuffManager.getHomemakingData and LV_BuffManager.getHomemakingData(player)
+        local hmBonus = (hmData and hmData.dailyHours and hmData.dailyHours > 0) and string.format(" (+%.1fh Tarefas)", hmData.dailyHours) or ""
+        statusText = string.format("Restante: %.1fh%s", remainingHours, hmBonus)
     end
 
     -- Ajuste dinâmico de largura para ZERO vazamento de texto
