@@ -42,10 +42,10 @@ Este repositório foi arquitetado para abrigar múltiplos mods modulares. Conhe�
 | Categoria | Mod ID | Status | Descrição Curta |
 | :--- | :--- | :---: | :--- |
 | **🏠 Base Building & Imersão** | `VICCS_HousingCareSystem` | **Pronto / Estável** | Sistema orgânico de conforto, tarefas domésticas, higiene e sono reparador para lares. |
-| **🎒 Sobrevivência & Inventário** | *Em breve* | 🔨 Planejamento | Módulos voltados para ergonomia de loot, organização de mochilas e preservação. |
+<!-- | **🎒 Sobrevivência & Inventário** | *Em breve* | 🔨 Planejamento | Módulos voltados para ergonomia de loot, organização de mochilas e preservação. |
 | **🚗 Veículos & Manutenção** | *Em breve* | 🔨 Planejamento | Mecânicas avançadas de customização, desgaste e acampamento veicular. |
 | **🧟 Combate & Sanidade** | *Em breve* | 🔨 Planejamento | Resposta psicológica ao combate prolongado, estresse pós-traumático e moral. |
-| **⚙️ Utilitários de Servidor** | *Em breve* | 🔨 Planejamento | Ferramentas de telemetria, moderação e balanceamento de economia comunitária. |
+| **⚙️ Utilitários de Servidor** | *Em breve* | 🔨 Planejamento | Ferramentas de telemetria, moderação e balanceamento de economia comunitária. | -->
 
 ---
 
