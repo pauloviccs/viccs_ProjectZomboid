@@ -1,124 +1,148 @@
 -- =============================================================================
--- Housing Care System (Lar Vivo) - Buff & State Lifecycle (LV_BuffManager.lua)
+-- Housing Care System (Lar Vivo) - Buff & Moodlet Engine (LV_BuffManager.lua)
 -- =============================================================================
 -- Autor: VICCS
 -- Descrição:
---   Módulo responsável por gerenciar a aplicação, persistência e decaimento de
---   todos os Tiers de Conforto (1 a 4) e Insalubridade/Squalor (1 a 4).
---
--- Persistência Resiliente (WorldAgeHours):
---   Salva no ModData do jogador os timestamps universais para cálculo de expiração,
---   imune a fast-forward, sono ou desconexão em Multiplayer.
+--   Gerencia os estados de Conforto e Squalor no cliente e servidor.
+--   Aplica buffs/debuffs nas estatísticas do personagem de forma 100% segura.
 -- =============================================================================
 
 LV_BuffManager = LV_BuffManager or {}
 
-local MODDATA_KEY = "LV_HousingCare"
+--- Tabela interna com dados de sessão do jogador local
+local localPlayerData = {
+    comfortScore = 0,
+    comfortTier = 0,
+    comfortExpiryWorldHour = 0,
+    squalorScore = 0,
+    squalorTier = 0,
+    squalorExpiryWorldHour = 0,
+    isInSqualorArea = false,
+    baseName = "Lar",
+    lastScanHour = -1
+}
 
---- Obtém ou inicializa a tabela de ModData persistente do jogador.
--- @param player (IsoPlayer): Personagem do jogador
--- @return table: Estrutura de dados persistente
+--- Retorna os dados do jogador ativo de forma segura.
 function LV_BuffManager.getPlayerData(player)
-    if not player then return nil end
-    local modData = player:getModData()
-    if not modData[MODDATA_KEY] then
-        modData[MODDATA_KEY] = {
-            comfortScore = 0,
-            comfortTier = 0,
-            comfortExpiryWorldHour = 0,
-            squalorScore = 0,
-            squalorTier = 0,
-            squalorExpiryWorldHour = 0,
-            isInSqualorArea = false,
-            lastScanWorldHour = 0,
-        }
-    end
-    return modData[MODDATA_KEY]
+    return localPlayerData
 end
 
---- Aplica os resultados consolidados de uma varredura (Comfort e Squalor).
--- @param player (IsoPlayer): Personagem avaliado
--- @param comfortScore (number): Score de 0 a 100
--- @param squalorScore (number): Score de 0 a 100
-function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore)
+--- Auxiliar seguro para ler e ajustar campos de Stats no PZ B42.
+local function modifyStat(stats, name, delta, minVal, maxVal)
+    if not stats then return end
+    minVal = minVal or 0.0
+    maxVal = maxVal or 1.0
+
+    pcall(function()
+        if stats[name] ~= nil then
+            local current = stats[name]
+            local newval = math.max(minVal, math.min(maxVal, current + delta))
+            stats[name] = newval
+            return
+        end
+
+        local getter = stats["get" .. name]
+        local setter = stats["set" .. name]
+        if getter and setter then
+            local current = getter(stats)
+            local newval = math.max(minVal, math.min(maxVal, current + delta))
+            setter(stats, newval)
+        end
+    end)
+end
+
+--- Auxiliar seguro para ajustar o nível de infelicidade (Unhappiness) sem quebrar no B42.
+local function modifyUnhappiness(bodyDamage, delta)
+    if not bodyDamage then return end
+    pcall(function()
+        if bodyDamage.getUnhappinessLevel and bodyDamage.setUnhappinessLevel then
+            local cur = bodyDamage:getUnhappinessLevel()
+            bodyDamage:setUnhappinessLevel(math.max(0, math.min(100, cur + delta)))
+        elseif bodyDamage.getUnhappynessLevel and bodyDamage.setUnhappynessLevel then
+            local cur = bodyDamage:getUnhappynessLevel()
+            bodyDamage:setUnhappynessLevel(math.max(0, math.min(100, cur + delta)))
+        elseif bodyDamage.UnhappynessLevel ~= nil then
+            bodyDamage.UnhappynessLevel = math.max(0, math.min(100, bodyDamage.UnhappynessLevel + delta))
+        end
+    end)
+end
+
+--- Converte uma pontuação de Conforto (0-100) no Tier correspondente (0-4).
+function LV_BuffManager.getComfortTierFromScore(score)
+    if not score or score <= 0 then return 0 end
+
+    local t1 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier1Threshold")) or 25
+    local t2 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier2Threshold")) or 50
+    local t3 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier3Threshold")) or 75
+    local t4 = (LV_Config and LV_Config.get and LV_Config.get("ComfortTier4Threshold")) or 90
+
+    if score >= t4 then return 4
+    elseif score >= t3 then return 3
+    elseif score >= t2 then return 2
+    elseif score >= t1 then return 1
+    else return 0 end
+end
+
+--- Converte uma pontuação de Squalor (0-100) no Tier de Debuff correspondente (0-4).
+function LV_BuffManager.getSqualorTierFromScore(score)
+    if not score or score <= 0 then return 0 end
+
+    local t1 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier1Threshold")) or 25
+    local t2 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier2Threshold")) or 50
+    local t3 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier3Threshold")) or 75
+    local t4 = (LV_Config and LV_Config.get and LV_Config.get("SqualorTier4Threshold")) or 90
+
+    if score >= t4 then return 4
+    elseif score >= t3 then return 3
+    elseif score >= t2 then return 2
+    elseif score >= t1 then return 1
+    else return 0 end
+end
+
+--- Aplica o resultado consolidado da varredura de ambiente no jogador.
+function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, baseName)
     if not player then return end
-    local data = LV_BuffManager.getPlayerData(player)
+
+    local newComfortTier = LV_BuffManager.getComfortTierFromScore(comfortScore)
+    local newSqualorTier = LV_BuffManager.getSqualorTierFromScore(squalorScore)
+
     local currentHour = getGameTime():getWorldAgeHours()
+    local duration = (LV_Config and LV_Config.get and LV_Config.get("BuffBaseDurationHours")) or 8
+    local oldComfortTier = localPlayerData.comfortTier
+    local oldSqualorTier = localPlayerData.squalorTier
 
-    data.lastScanWorldHour = currentHour
-    data.comfortScore = comfortScore
-    data.squalorScore = squalorScore
-
-    local oldComfortTier = data.comfortTier
-    local oldSqualorTier = data.squalorTier
-
-    -- 1. Determina o Tier de Conforto (1 a 4)
-    local cT1 = LV_Config.get("Tier1Threshold") or 20
-    local cT2 = LV_Config.get("Tier2Threshold") or 40
-    local cT3 = LV_Config.get("Tier3Threshold") or 60
-    local cT4 = LV_Config.get("Tier4Threshold") or 80
-
-    local newComfortTier = 0
-    if comfortScore >= cT4 then
-        newComfortTier = 4
-    elseif comfortScore >= cT3 then
-        newComfortTier = 3
-    elseif comfortScore >= cT2 then
-        newComfortTier = 2
-    elseif comfortScore >= cT1 then
-        newComfortTier = 1
+    -- 1. Atualização de Conforto
+    localPlayerData.comfortScore = comfortScore
+    localPlayerData.comfortTier = newComfortTier
+    if baseName and baseName ~= "" then
+        localPlayerData.baseName = baseName
     end
-
-    data.comfortTier = newComfortTier
 
     if newComfortTier > 0 then
-        -- Calcula duração com teto
-        local baseHours = LV_Config.get("BuffDurationBaseHours") or 2.0
-        local perPoint = LV_Config.get("BuffDurationPerComfortPoint") or 0.05
-        local maxHours = LV_Config.get("BuffDurationMaxHours") or 12.0
-        local duration = math.min(maxHours, baseHours + (comfortScore * perPoint))
-        data.comfortExpiryWorldHour = currentHour + duration
+        localPlayerData.comfortExpiryWorldHour = currentHour + duration
     else
-        data.comfortExpiryWorldHour = 0
+        localPlayerData.comfortExpiryWorldHour = 0
     end
 
-    -- 2. Determina o Tier de Squalor (1 a 4)
-    local newSqualorTier = 0
-    if LV_Config.isSqualorEnabled() then
-        local sT1 = LV_Config.get("SqualorTier1Threshold") or 20
-        local sT2 = LV_Config.get("SqualorTier2Threshold") or 40
-        local sT3 = LV_Config.get("SqualorTier3Threshold") or 60
-        local sT4 = LV_Config.get("SqualorTier4Threshold") or 80
-
-        if squalorScore >= sT4 then
-            newSqualorTier = 4
-        elseif squalorScore >= sT3 then
-            newSqualorTier = 3
-        elseif squalorScore >= sT2 then
-            newSqualorTier = 2
-        elseif squalorScore >= sT1 then
-            newSqualorTier = 1
-        end
-    end
-
-    data.squalorTier = newSqualorTier
-    data.isInSqualorArea = (newSqualorTier > 0)
-
+    -- 2. Atualização de Insalubridade (Squalor)
+    localPlayerData.squalorScore = squalorScore
+    localPlayerData.squalorTier = newSqualorTier
     if newSqualorTier > 0 then
-        local linger = LV_Config.get("SqualorLingerHours") or 1.0
-        data.squalorExpiryWorldHour = currentHour + linger
+        localPlayerData.isInSqualorArea = true
+        localPlayerData.squalorExpiryWorldHour = currentHour + math.floor(duration * 0.5)
     else
-        data.squalorExpiryWorldHour = 0
+        localPlayerData.isInSqualorArea = false
+        localPlayerData.squalorExpiryWorldHour = 0
     end
 
-    -- 3. Notificações e Animações ao mudar de Tier
+    localPlayerData.lastScanHour = currentHour
+
+    -- 3. Notificações seguras ao mudar de Tier
     if newComfortTier > oldComfortTier and newComfortTier >= 2 then
         pcall(function()
             local text = LV_MoodleDefs.getText("UI_LV_Notification_Comfort", "Lar Aconchegante") .. " (" .. newComfortTier .. ")"
             if player.setHaloNote then
                 player:setHaloNote(text, 80, 240, 120, 250)
-            elseif HaloTextHelper and HaloTextHelper.addText then
-                HaloTextHelper.addText(player, text)
             end
         end)
     elseif newSqualorTier > oldSqualorTier and newSqualorTier >= 2 then
@@ -126,27 +150,24 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore)
             local text = LV_MoodleDefs.getText("UI_LV_Notification_Squalor", "Ambiente Insalubre") .. " (" .. newSqualorTier .. ")"
             if player.setHaloNote then
                 player:setHaloNote(text, 240, 90, 70, 250)
-            elseif HaloTextHelper and HaloTextHelper.addText then
-                HaloTextHelper.addText(player, text)
             end
         end)
     end
 end
 
---- Reseta imediatamente os buffs caso o jogador esteja em ambiente violado ou inseguro.
--- @param player (IsoPlayer): Personagem afetado
+--- Disparado quando o jogador está em área externa/selvagem sem abrigo.
 function LV_BuffManager.onUnsafeEnvironment(player)
-    local data = LV_BuffManager.getPlayerData(player)
-    if not data then return end
-    data.comfortScore = 0
-    data.comfortTier = 0
-    data.comfortExpiryWorldHour = 0
-    data.isInSqualorArea = false
+    localPlayerData.comfortScore = 0
+    localPlayerData.comfortTier = 0
+    localPlayerData.comfortExpiryWorldHour = 0
+    localPlayerData.squalorScore = 0
+    localPlayerData.squalorTier = 0
+    localPlayerData.isInSqualorArea = false
 end
 
---- Aplica aceleração na cicatrização de ferimentos leves (Buff Cicatrização Rápida / Resiliente).
--- @param player (IsoPlayer): Personagem
+--- Acelera cicatrização natural de ferimentos leves em tiers altos.
 local function applyHealingBuff(player)
+    if not player then return end
     local bodyDamage = player:getBodyDamage()
     if not bodyDamage then return end
     local bodyParts = bodyDamage:getBodyParts()
@@ -174,10 +195,9 @@ local function applyHealingBuff(player)
 end
 
 --- Loop de atualização contínua dos efeitos no jogador (Events.OnPlayerUpdate).
--- @param player (IsoPlayer): Personagem ativo
 local function onPlayerUpdateBuffs(player)
-    if not LV_Config.isEnabled() or not player then return end
-    local data = LV_BuffManager.getPlayerData(player)
+    if not LV_Config or not LV_Config.isEnabled() or not player then return end
+    local data = localPlayerData
     if not data then return end
 
     local currentHour = getGameTime():getWorldAgeHours()
@@ -185,8 +205,8 @@ local function onPlayerUpdateBuffs(player)
     local bodyDamage = player:getBodyDamage()
     if not stats or not bodyDamage then return end
 
-    local buffMult = LV_Config.get("BuffMagnitudeMultiplier") or 1.0
-    local squalorMult = LV_Config.get("SqualorMagnitudeMultiplier") or 1.0
+    local buffMult = (LV_Config and LV_Config.get and LV_Config.get("BuffMagnitudeMultiplier")) or 1.0
+    local squalorMult = (LV_Config and LV_Config.get and LV_Config.get("SqualorMagnitudeMultiplier")) or 1.0
 
     -- =========================================================================
     -- A. EFEITOS POSITIVOS (BUFFS DE CONFORTO)
@@ -194,55 +214,34 @@ local function onPlayerUpdateBuffs(player)
     if data.comfortTier > 0 and currentHour < data.comfortExpiryWorldHour then
         local cTier = data.comfortTier
 
-        -- Tier 1+: Redução de Pânico (Confiante I)
-        local panic = stats:getPanic()
-        if panic > 0 then
-            stats:setPanic(math.max(0, panic - (0.15 * buffMult)))
-        end
+        -- Tier 1+: Redução de Pânico
+        modifyStat(stats, "Panic", -(0.15 * buffMult), 0.0, 100.0)
 
-        -- Tier 2+: Regeneração de Endurance (Descansado I)
+        -- Tier 2+: Regeneração de Endurance & Menor Cansaço
         if cTier >= 2 then
-            local endurance = stats:getEndurance()
-            if endurance < 1.0 then
-                stats:setEndurance(math.min(1.0, endurance + (0.0002 * buffMult)))
-            end
+            modifyStat(stats, "Endurance", (0.0002 * buffMult), 0.0, 1.0)
 
-            -- Catálogo Estendido: Energizado (Menor cansaço)
             if LV_Config.get("Enable_Energizado") then
-                local fatigue = stats:getFatigue()
-                if fatigue > 0 then
-                    stats:setFatigue(math.max(0, fatigue - (0.00005 * buffMult)))
-                end
+                modifyStat(stats, "Fatigue", -(0.00005 * buffMult), 0.0, 1.0)
             end
         end
 
-        -- Tier 3+: Redução de Infelicidade / Estabilização (Focado)
+        -- Tier 3+: Redução de Infelicidade & Saciado
         if cTier >= 3 then
-            local unhap = bodyDamage:getUnhappynessLevel()
-            if unhap > 0 then
-                bodyDamage:setUnhappynessLevel(math.max(0, unhap - (0.05 * buffMult)))
-            end
+            modifyUnhappiness(bodyDamage, -(0.05 * buffMult))
 
-            -- Catálogo Estendido: Saciado (Menor ganho de fome)
             if LV_Config.get("Enable_Saciado") then
-                local hunger = stats:getHunger()
-                if hunger > 0 then
-                    stats:setHunger(math.max(0, hunger - (0.00004 * buffMult)))
-                end
+                modifyStat(stats, "Hunger", -(0.00004 * buffMult), 0.0, 1.0)
             end
 
-            -- Catálogo Estendido: Cicatrização Rápida
             if LV_Config.get("Enable_CicatrizacaoRapida") then
                 applyHealingBuff(player)
             end
         end
 
-        -- Tier 4: Santuário (Resiliente / Imunidade a estresse)
+        -- Tier 4: Santuário (Redução contínua de Estresse & Cura Avançada)
         if cTier >= 4 then
-            local stress = stats:getStress()
-            if stress > 0 then
-                stats:setStress(math.max(0, stress - (0.02 * buffMult)))
-            end
+            modifyStat(stats, "Stress", -(0.02 * buffMult), 0.0, 1.0)
             applyHealingBuff(player)
         end
     else
@@ -257,38 +256,30 @@ local function onPlayerUpdateBuffs(player)
 
         -- Squalor Tier 1: Enojado I (Leve ganho de infelicidade)
         if sTier >= 1 then
-            local unhap = bodyDamage:getUnhappynessLevel()
-            if unhap < 100 then
-                bodyDamage:setUnhappynessLevel(math.min(100, unhap + (0.02 * squalorMult)))
-            end
+            modifyUnhappiness(bodyDamage, (0.02 * squalorMult))
         end
 
         -- Squalor Tier 2: Ambiente Insalubre (Infelicidade + Estresse + Queda de Stamina)
         if sTier >= 2 then
-            local stress = stats:getStress()
-            if stress < 1.0 then
-                stats:setStress(math.min(1.0, stress + (0.0003 * squalorMult)))
-            end
+            modifyStat(stats, "Stress", (0.0003 * squalorMult), 0.0, 1.0)
+            modifyStat(stats, "Endurance", -(0.0001 * squalorMult), 0.0, 1.0)
         end
 
         -- Squalor Tier 3: Antro Imundo (Náusea e Cansaço)
         if sTier >= 3 then
-            local sickness = stats:getSickness()
-            if sickness < 50 then
-                stats:setSickness(math.min(50, sickness + (0.03 * squalorMult)))
-            end
+            modifyStat(stats, "Sickness", (0.03 * squalorMult), 0.0, 50.0)
         end
 
         -- Squalor Tier 4: Foco de Doença (Penalidade severa de saúde geral)
         if sTier >= 4 then
-            local sickness = stats:getSickness()
-            if sickness < 90 then
-                stats:setSickness(math.min(90, sickness + (0.06 * squalorMult)))
-            end
+            modifyStat(stats, "Sickness", (0.08 * squalorMult), 0.0, 90.0)
         end
     else
         data.squalorTier = 0
+        data.isInSqualorArea = false
     end
 end
 
 Events.OnPlayerUpdate.Add(onPlayerUpdateBuffs)
+
+print("[LarVivo] LV_BuffManager carregado e ativo!")

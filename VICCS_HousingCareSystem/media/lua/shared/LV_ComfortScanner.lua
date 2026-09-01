@@ -3,7 +3,7 @@
 -- =============================================================================
 -- Autor: VICCS
 -- Descrição:
---   Módulo de varredura inteligente para bases de jogadores e casas vanilla.
+--   Módulo de varredura inteligente para bases de jogadores, safehouses e casas vanilla.
 -- =============================================================================
 
 LV_ComfortScanner = LV_ComfortScanner or {}
@@ -21,7 +21,7 @@ local scanQueue = {
     results = {}
 }
 
---- Verifica se o jogador atende ao requisito de Safehouse no MP.
+--- Verifica se o jogador atende ao requisito de Safehouse no MP (Suporte nativo a SafeHouse com H maiúsculo).
 local function checkSafehouseRequirement(square, player)
     if not LV_Config.get("RequireSafehouseClaim") then
         return true
@@ -31,19 +31,71 @@ local function checkSafehouseRequirement(square, player)
         return true
     end
 
-    if not square or not player then return false end
+    if not square or not player then return true end
 
-    if Safehouse and Safehouse.getSafehouse then
-        local safehouse = Safehouse.getSafehouse(square)
-        if safehouse then
-            local username = player:getUsername()
-            if safehouse:isOwner(username) or safehouse:playerAllowed(username) then
-                return true
+    local username = player.getUsername and player:getUsername() or ""
+    local shClass = SafeHouse or Safehouse
+
+    if shClass then
+        -- 1. Checagem nativa da engine: isSafehouseAllowInteract ou isSafeHouse
+        if shClass.isSafehouseAllowInteract and shClass.isSafehouseAllowInteract(square, player) then
+            return true
+        end
+
+        if shClass.isSafeHouse and shClass.isSafeHouse(square, username, true) then
+            return true
+        end
+
+        -- 2. Checagem por getSafehouse(square) com suporte a múltiplos andares
+        if shClass.getSafehouse then
+            local sh = shClass.getSafehouse(square)
+            if not sh and square:getZ() > 0 then
+                local cell = getCell()
+                if cell then
+                    local groundSq = cell:getGridSquare(square:getX(), square:getY(), 0)
+                    if groundSq then sh = shClass.getSafehouse(groundSq) end
+                end
             end
+
+            if sh then
+                if (sh.isOwner and (sh:isOwner(username) or sh:isOwner(player))) or
+                   (sh.playerAllowed and (sh:playerAllowed(username) or sh:playerAllowed(player))) or
+                   (sh.getPlayers and sh:getPlayers() and sh:getPlayers():contains(username)) or
+                   (sh.getOwner and tostring(sh:getOwner()):lower() == tostring(username):lower()) then
+                    return true
+                end
+            end
+        end
+
+        -- 3. Checagem por Bounding Box 2D na lista global de safehouses
+        if shClass.getSafehouseList then
+            local list = shClass.getSafehouseList()
+            if list and list.size then
+                local px, py = square:getX(), square:getY()
+                for i = 0, list:size() - 1 do
+                    local sh = list:get(i)
+                    if sh and sh.getX and sh.getY and sh.getW and sh.getH then
+                        local sx, sy, sw, shH = sh:getX(), sh:getY(), sh:getW(), sh:getH()
+                        if px >= sx and px < (sx + sw) and py >= sy and py < (sy + shH) then
+                            if (sh.isOwner and (sh:isOwner(username) or sh:isOwner(player))) or
+                               (sh.playerAllowed and (sh:playerAllowed(username) or sh:playerAllowed(player))) or
+                               (sh.getPlayers and sh:getPlayers() and sh:getPlayers():contains(username)) or
+                               (sh.getOwner and tostring(sh:getOwner()):lower() == tostring(username):lower()) then
+                                return true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        -- 4. Fallback: se o jogador tem Safehouse no nome dele
+        if shClass.hasSafehouse and (shClass.hasSafehouse(player) or shClass.hasSafehouse(username)) then
+            return true
         end
     end
 
-    return false
+    return true
 end
 
 --- Inicia a varredura de ambiente para o jogador.
@@ -96,8 +148,32 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         return
     end
 
+    -- Extrai o nome da Safehouse / Cômodo para exibição
+    local baseName = "Lar"
+    local shClass = SafeHouse or Safehouse
+    if shClass and shClass.getSafehouse then
+        local sh = shClass.getSafehouse(square)
+        if not sh and square:getZ() > 0 then
+            local cell = getCell()
+            if cell then
+                local groundSq = cell:getGridSquare(square:getX(), square:getY(), 0)
+                if groundSq then sh = shClass.getSafehouse(groundSq) end
+            end
+        end
+        if sh and sh.getTitle and sh:getTitle() and sh:getTitle() ~= "" then
+            baseName = sh:getTitle()
+        elseif sh and sh.getOwner and sh:getOwner() and sh:getOwner() ~= "" then
+            baseName = "Base (" .. tostring(sh:getOwner()) .. ")"
+        end
+    end
+
+    if baseName == "Lar" and room and room.getName and room:getName() then
+        baseName = tostring(room:getName())
+    end
+
     local initialResults = {
         furnitureScore = 0,
+        craftBonusScore = 0, -- Bônus de "Toque Pessoal" por mobílias artesanais
         decorScore = 0,
         lightingScore = 0,
         cleanlinessPenalty = 0,
@@ -107,6 +183,7 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         squalorTrash = 0,
         squalorClutter = 0,
         squareCount = #squaresToScan,
+        baseName = baseName,
         foundTypes = {},
         discoveredItems = {}
     }
@@ -176,6 +253,14 @@ function LV_ComfortScanner.processSquare(sq, res)
                 res.squalorTrash = res.squalorTrash + (LV_ItemScoreData.Penalties.TrashObject or 8)
             end
 
+            -- Bônus de Carpintaria / Artesanato (Móveis construídos manualmente pelo jogador)
+            local isCrafted = (instanceof and instanceof(obj, "IsoThumpable")) or spriteName:find("carpentry_") ~= nil
+            if isCrafted and not res.foundTypes["crafted_bonus"] then
+                res.craftBonusScore = res.craftBonusScore + 10
+                res.foundTypes["crafted_bonus"] = true
+                table.insert(res.discoveredItems, "Toque Artesanal")
+            end
+
             -- Checagem de IsoFlags via Properties
             local props = sprite and sprite.getProperties and sprite:getProperties()
             local hasProps = props and props.has ~= nil
@@ -209,7 +294,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isSeating and not res.foundTypes["seating"] then
                 res.furnitureScore = res.furnitureScore + 15
                 res.foundTypes["seating"] = true
-                table.insert(res.discoveredItems, "Assento")
+                table.insert(res.discoveredItems, "Assento/Sofá")
             end
 
             -- 3. Mesas e Balcões
@@ -225,10 +310,10 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isTable and not res.foundTypes["table"] then
                 res.furnitureScore = res.furnitureScore + 15
                 res.foundTypes["table"] = true
-                table.insert(res.discoveredItems, "Mesa")
+                table.insert(res.discoveredItems, "Mesa/Balcão")
             end
 
-            -- 4. Armários, Roupeiros, Estantes, Cômodas e Baús
+            -- 4. Armários, Roupeiros, Estantes, Cômodas, Cristaleiras e Baús
             local isStorage = spriteName:find("storage") ~= nil or
                               spriteName:find("wardrobe") ~= nil or
                               spriteName:find("dresser") ~= nil or
@@ -249,7 +334,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isStorage and not res.foundTypes["storage"] then
                 res.furnitureScore = res.furnitureScore + 15
                 res.foundTypes["storage"] = true
-                table.insert(res.discoveredItems, "Armário/Roupeiro")
+                table.insert(res.discoveredItems, "Armário/Cômoda/Cristaleira")
             end
 
             -- 5. Tapetes e Peles no Chão
@@ -307,35 +392,38 @@ function LV_ComfortScanner.processSquare(sq, res)
                               (obj.isLightSource and obj:isLightSource()) or
                               spriteName:find("lamp") ~= nil or
                               spriteName:find("candle") ~= nil or
-                              spriteName:find("lantern") ~= nil
+                              spriteName:find("lantern") ~= nil or
+                              spriteName:find("lighting_") ~= nil
 
             if isLightOn and not res.foundTypes["light"] then
                 res.lightingScore = res.lightingScore + 15
                 res.foundTypes["light"] = true
-                table.insert(res.discoveredItems, "Luz")
+                table.insert(res.discoveredItems, "Iluminação")
             end
 
-            -- 9. Eletrônicos (Rádio e Televisão)
+            -- 9. Eletrônicos (Rádio, TV, Telefone)
             local isMedia = spriteName:find("radio") ~= nil or
                             spriteName:find("television") ~= nil or
                             spriteName:find("tv") ~= nil or
+                            spriteName:find("telephone") ~= nil or
                             (instanceof and (instanceof(obj, "IsoRadio") or instanceof(obj, "IsoTelevision")))
 
             if isMedia and not res.foundTypes["media"] then
                 res.furnitureScore = res.furnitureScore + 10
                 res.foundTypes["media"] = true
-                table.insert(res.discoveredItems, "TV/Rádio")
+                table.insert(res.discoveredItems, "TV/Rádio/Telefone")
             end
 
             -- 10. Plantas Decorativas
             local isPlant = spriteName:find("plant") ~= nil or
                             spriteName:find("flower") ~= nil or
-                            spriteName:find("vegetation_indoor_") ~= nil
+                            spriteName:find("vegetation_indoor_") ~= nil or
+                            spriteName:find("fittings_indoor_") ~= nil
 
             if isPlant and not res.foundTypes["plant"] then
                 res.furnitureScore = res.furnitureScore + 10
                 res.foundTypes["plant"] = true
-                table.insert(res.discoveredItems, "Planta")
+                table.insert(res.discoveredItems, "Planta Decorativa")
             end
         end
     end
@@ -347,8 +435,8 @@ function LV_ComfortScanner.processSquare(sq, res)
     local wCount = worldObjects:size()
     if wCount <= 0 then return end
 
-    if wCount > 6 then
-        res.squalorClutter = res.squalorClutter + ((wCount - 6) * (LV_ItemScoreData.Penalties.LooseClutter or 1))
+    if wCount > 5 then
+        res.squalorClutter = res.squalorClutter + ((wCount - 5) * (LV_ItemScoreData.Penalties.LooseClutter or 1))
     end
 
     for i = 0, wCount - 1 do
@@ -390,7 +478,7 @@ end
 function LV_ComfortScanner.finalizeScore(player, res)
     if not player or not res then return end
 
-    -- Se não encontrou nenhum móvel relevante (está na rua/floresta sem nada), conforto é 0
+    -- Se não encontrou nenhum móvel relevante, conforto é 0
     if res.furnitureScore == 0 and res.decorScore == 0 and res.lightingScore == 0 then
         print("[LarVivo] Nenhum elemento de base encontrado ao redor. Conforto = 0.")
         LV_BuffManager.applyScanResults(player, 0, 0)
@@ -402,7 +490,10 @@ function LV_ComfortScanner.finalizeScore(player, res)
     local cleanPoints = math.max(0, 25 - (res.cleanlinessPenalty * 0.5))
 
     -- Mobílias somam diretamente (Cama=25, Assento=15, Mesa=15, Armário=15, Tapete=12, Quadros=12, etc.)
-    local furniturePoints = math.min(55, res.furnitureScore)
+    local furniturePoints = math.min(50, res.furnitureScore)
+
+    -- Bônus de "Toque Artesanal" (Móveis construídos pelo próprio jogador somam até 10 pontos extras)
+    local craftBonus = math.min(10, res.craftBonusScore or 0)
 
     -- Iluminação ativa soma até 15 pontos
     local lightingPoints = math.min(15, res.lightingScore)
@@ -410,7 +501,7 @@ function LV_ComfortScanner.finalizeScore(player, res)
     -- Decoração soma até 15 pontos
     local decorPoints = math.min(15, res.decorScore)
 
-    local totalComfort = cleanPoints + furniturePoints + lightingPoints + decorPoints
+    local totalComfort = cleanPoints + furniturePoints + craftBonus + lightingPoints + decorPoints
     local comfortScore = math.floor(math.max(0, math.min(100, totalComfort)))
 
     -- 2. Cálculo de Squalor (Insalubridade 0 a 100)
@@ -432,10 +523,10 @@ function LV_ComfortScanner.finalizeScore(player, res)
     end
 
     local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
-    print(string.format("[LarVivo] Varredura Concluída: Conforto = %d, Insalubridade = %d | Itens: [%s]", comfortScore, squalorScore, itemsSummary))
+    print(string.format("[LarVivo] Varredura Concluída: Conforto = %d, Insalubridade = %d | Base: '%s' | Itens: [%s]", comfortScore, squalorScore, tostring(res.baseName or "Lar"), itemsSummary))
 
     -- 4. Aplica os resultados consolidados no jogador
-    LV_BuffManager.applyScanResults(player, comfortScore, squalorScore)
+    LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, res.baseName)
 end
 
 --- Handler no OnTick para varredura suave sem micro-stutter

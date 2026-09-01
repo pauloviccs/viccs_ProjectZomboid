@@ -88,8 +88,9 @@ local function onKeyPressed(key)
             LV_HUD.toggleHUD()
 
             local data = LV_BuffManager.getPlayerData(player)
+            local baseStr = (data and data.baseName and data.baseName ~= "" and data.baseName ~= "Lar") and (data.baseName .. " — ") or ""
             if data and data.comfortTier and data.comfortTier > 0 then
-                local msg = string.format("Lar Vivo: Conforto %d pts (Tier %d)", data.comfortScore or 0, data.comfortTier or 0)
+                local msg = string.format("Lar Vivo: %sConforto %d pts (Tier %d)", baseStr, data.comfortScore or 0, data.comfortTier or 0)
                 showNotification(player, msg, 80, 240, 120)
             else
                 showNotification(player, "Lar Vivo: Varredura Concluída (Sem bônus)", 220, 220, 220)

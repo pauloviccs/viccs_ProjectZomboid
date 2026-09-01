@@ -1,0 +1,32 @@
+[31-08-26 22:26:26.148][info] Start chat server initialization....
+[31-08-26 22:26:26.151][info] General chat has id = 0.
+[31-08-26 22:26:26.151][info] Say chat has id = 1.
+[31-08-26 22:26:26.151][info] Shout chat has id = 2.
+[31-08-26 22:26:26.151][info] Radio chat has id = 3.
+[31-08-26 22:26:26.152][info] Admin chat has id = 4.
+[31-08-26 22:26:26.152][info] Server chat has id = 5.
+[31-08-26 22:26:26.152][info] Chat server successfully initialized.
+[31-08-26 22:26:35.537][info] Creating safehouse chat '10076,8250 at 1788225995536'.
+[31-08-26 22:26:35.538][info] Safehouse chat '10076,8250 at 1788225995536' created.
+[31-08-26 22:26:35.538][info] Creating faction chat 'Sea'.
+[31-08-26 22:26:35.539][info] Faction chat 'Sea' created.
+[31-08-26 22:28:56.030][info] Player with id = '0' tries to connect.
+[31-08-26 22:28:56.030][info] Adding player '0' to chat server.
+[31-08-26 22:28:56.031][info] Player joined to default chats.
+[31-08-26 22:28:56.032][info] Player joined to chat of faction 'Sea'.
+[31-08-26 22:28:56.032][info] Player joined to chat of safehouse '10076,8250 at 1788225995536'.
+[31-08-26 22:28:56.032][info] Player 0(0) joined to chat server successfully.
+[31-08-26 22:31:05.972][info] Player 0 disconnecting....
+[31-08-26 22:31:05.973][info] Disconnecting player 0 finished.
+[31-08-26 22:31:05.973][info] Player 0 disconnecting....
+[31-08-26 22:31:05.973][info] Disconnecting player 0 finished.
+[31-08-26 22:33:01.129][info] Player with id = '0' tries to connect.
+[31-08-26 22:33:01.129][info] Adding player '0' to chat server.
+[31-08-26 22:33:01.129][info] Player joined to default chats.
+[31-08-26 22:33:01.129][info] Player joined to chat of faction 'Sea'.
+[31-08-26 22:33:01.129][info] Player joined to chat of safehouse '10076,8250 at 1788225995536'.
+[31-08-26 22:33:01.129][info] Player 0(0) joined to chat server successfully.
+[31-08-26 22:33:53.559][info] Player 0 disconnecting....
+[31-08-26 22:33:53.559][info] Disconnecting player 0 finished.
+[31-08-26 22:33:53.559][info] Player 0 disconnecting....
+[31-08-26 22:33:53.559][info] Disconnecting player 0 finished.

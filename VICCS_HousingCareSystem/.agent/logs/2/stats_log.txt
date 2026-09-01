@@ -1,0 +1,247 @@
+
+
+[2026-08-12 16:32:15] Client version: no bootstrapper found
+[2026-08-12 16:32:15] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-14 12:43:59] Client version: no bootstrapper found
+[2026-08-14 12:43:59] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 12:55:03] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 19:27:35] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-14 20:17:46] Client version: no bootstrapper found
+[2026-08-14 20:17:46] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 20:32:25] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 22:16:20] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 22:21:31] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 22:32:37] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-14 22:44:49] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-15 00:15:05] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-15 00:15:32] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-15 19:58:07] Client version: no bootstrapper found
+[2026-08-15 19:58:07] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-15 20:58:17] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-15 22:05:19] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-24 18:34:51] Client version: no bootstrapper found
+[2026-08-24 18:34:51] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-24 18:35:44] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-24 20:01:53] Client version: no bootstrapper found
+[2026-08-24 20:01:53] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-24 20:36:17] Client version: no bootstrapper found
+[2026-08-24 20:36:17] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-24 20:38:21] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-24 20:39:14] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 10:38:57] Client version: no bootstrapper found
+[2026-08-25 10:38:57] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 11:42:12] Client version: no bootstrapper found
+[2026-08-25 11:42:12] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 12:13:33] Client version: no bootstrapper found
+[2026-08-25 12:13:33] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 12:15:52] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 12:43:13] Client version: no bootstrapper found
+[2026-08-25 12:43:13] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 12:46:31] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 12:49:36] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 13:48:26] Client version: no bootstrapper found
+[2026-08-25 13:48:26] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 13:52:20] Client version: no bootstrapper found
+[2026-08-25 13:52:20] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 15:58:49] Client version: no bootstrapper found
+[2026-08-25 15:58:49] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 16:01:49] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 16:10:16] Client version: no bootstrapper found
+[2026-08-25 16:10:16] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 20:09:43] Client version: no bootstrapper found
+[2026-08-25 20:09:43] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 20:18:22] Client version: no bootstrapper found
+[2026-08-25 20:18:22] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 21:21:05] Client version: no bootstrapper found
+[2026-08-25 21:21:05] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 21:27:19] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 21:27:33] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 21:34:13] Client version: no bootstrapper found
+[2026-08-25 21:34:13] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 21:38:36] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-25 21:49:01] Client version: no bootstrapper found
+[2026-08-25 21:49:01] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-25 21:50:50] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 10:09:58] Client version: no bootstrapper found
+[2026-08-26 10:09:58] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 10:21:09] Client version: no bootstrapper found
+[2026-08-26 10:21:09] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 10:28:33] Client version: no bootstrapper found
+[2026-08-26 10:28:33] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 13:33:54] Client version: no bootstrapper found
+[2026-08-26 13:33:54] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-26 13:34:53] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-26 13:36:41] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 13:49:08] Client version: no bootstrapper found
+[2026-08-26 13:49:08] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 14:02:37] Client version: no bootstrapper found
+[2026-08-26 14:02:37] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 14:15:18] Client version: no bootstrapper found
+[2026-08-26 14:15:18] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 14:24:25] Client version: no bootstrapper found
+[2026-08-26 14:24:25] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 14:39:19] Client version: no bootstrapper found
+[2026-08-26 14:39:19] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 14:52:14] Client version: no bootstrapper found
+[2026-08-26 14:52:14] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 15:03:27] Client version: no bootstrapper found
+[2026-08-26 15:03:27] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 15:10:13] Client version: no bootstrapper found
+[2026-08-26 15:10:13] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-26 15:37:55] Client version: no bootstrapper found
+[2026-08-26 15:37:55] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-26 15:50:08] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-27 09:17:12] Client version: no bootstrapper found
+[2026-08-27 09:17:12] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-28 12:33:35] Client version: no bootstrapper found
+[2026-08-28 12:33:35] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-28 13:54:25] Client version: no bootstrapper found
+[2026-08-28 13:54:25] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-28 15:54:49] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-28 21:21:15] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-28 21:22:08] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-28 21:30:24] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-28 21:30:28] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-28 23:51:29] Client version: no bootstrapper found
+[2026-08-28 23:51:29] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-29 00:32:14] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-29 00:39:59] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-29 23:13:52] Client version: no bootstrapper found
+[2026-08-29 23:13:52] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-29 23:54:14] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 00:06:35] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 00:28:02] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 01:37:24] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 01:37:32] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 17:06:27] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 17:08:39] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 17:10:07] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 17:40:18] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-30 18:09:16] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 00:07:55] Client version: no bootstrapper found
+[2026-08-31 00:07:55] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-31 00:14:29] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-31 00:38:57] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-31 00:40:16] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 02:48:32] Client version: no bootstrapper found
+[2026-08-31 02:48:32] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-31 02:49:26] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+[2026-08-31 06:08:00] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 12:17:44] Client version: no bootstrapper found
+[2026-08-31 12:17:44] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 16:37:53] Client version: no bootstrapper found
+[2026-08-31 16:37:53] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 16:53:01] Client version: no bootstrapper found
+[2026-08-31 16:53:01] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 17:03:52] Client version: no bootstrapper found
+[2026-08-31 17:03:52] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 17:44:56] Client version: no bootstrapper found
+[2026-08-31 17:44:56] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 18:30:07] Client version: no bootstrapper found
+[2026-08-31 18:30:07] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 20:21:10] Client version: no bootstrapper found
+[2026-08-31 20:21:10] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 20:32:41] Client version: no bootstrapper found
+[2026-08-31 20:32:41] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 20:59:20] Client version: no bootstrapper found
+[2026-08-31 20:59:20] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting
+
+
+[2026-08-31 21:22:11] Client version: no bootstrapper found
+[2026-08-31 21:22:11] [AppID 108600] CAPIJobStoreUserStats::BInit() - no stats found, aborting

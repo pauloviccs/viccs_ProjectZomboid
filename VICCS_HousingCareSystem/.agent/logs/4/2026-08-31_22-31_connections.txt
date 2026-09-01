@@ -1,0 +1,17 @@
+[31-08-26 22:32:15.844] event="RakNet" message="connection-request-accepted" guid=562949983121094820.
+[31-08-26 22:32:17.651] event="send-packet" message="login" guid=562949983121094820.
+[31-08-26 22:32:19.306] event="receive-packet" message="connection-details" guid=562949983121094820.
+[31-08-26 22:32:19.307] event="connect-state" message="start" guid=562949983121094820.
+[31-08-26 22:32:19.309] event="connect-state-start" message="testtcp" guid=562949983121094820.
+[31-08-26 22:32:19.312] event="connect-state-testtcp" message="workshopinit" guid=562949983121094820.
+[31-08-26 22:32:19.315] event="connect-state-workshopinit" message="workshopquery" guid=562949983121094820.
+[31-08-26 22:32:19.641] event="connect-state-workshopquery" message="workshopconfirm" guid=562949983121094820.
+[31-08-26 22:32:19.655] event="connect-state-workshopconfirm" message="workshopupdate" guid=562949983121094820.
+[31-08-26 22:32:19.681] event="connect-state-workshopupdate" message="checkmods" guid=562949983121094820.
+[31-08-26 22:32:19.684] event="connect-state-checkmods" message="finish" guid=562949983121094820.
+[31-08-26 22:32:40.423] event="connect-state-finish" message="lua-connected" guid=562949983121094820.
+[31-08-26 22:32:40.627] event="connect-state-finish" message="exit" guid=562949983121094820.
+[31-08-26 22:32:40.931] event="send-packet" message="login-queue-request" guid=562949983121094820.
+[31-08-26 22:32:56.300] event="send-packet" message="login-queue-done" guid=562949983121094820.
+[31-08-26 22:33:01.009] event="send-packet" message="player-connect" guid=562949983121094820.
+[31-08-26 22:33:53.480] event="force-disconnect" message="exit" guid=562949983121094820.

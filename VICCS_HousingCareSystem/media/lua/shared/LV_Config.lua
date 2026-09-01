@@ -5,8 +5,7 @@
 -- Descrição:
 --   Módulo central responsável por isolar a leitura de SandboxVars e preferências
 --   do jogo. Nunca acesse 'SandboxVars' diretamente em outros arquivos; use sempre
---   os getters desta classe para garantir compatibilidade entre Singleplayer,
---   Multiplayer e futuras alterações de API da Build 42.
+--   os getters desta classe para garantir compatibilidade total.
 -- =============================================================================
 
 LV_Config = LV_Config or {}
@@ -16,20 +15,18 @@ local DEFAULTS = {
     -- Geral
     SystemEnabled = true,
     ComfortCheckIntervalHours = 6,
-    ComfortRadiusTiles = 15,
+    ComfortRadiusTiles = 8,
     RequireRoofedRoom = true,
     RequireSafehouseClaim = false,
 
     -- Tiers de Conforto
-    Tier1Threshold = 20,
-    Tier2Threshold = 40,
-    Tier3Threshold = 60,
-    Tier4Threshold = 80,
+    ComfortTier1Threshold = 25,
+    ComfortTier2Threshold = 50,
+    ComfortTier3Threshold = 75,
+    ComfortTier4Threshold = 90,
 
     -- Duração e Força dos Buffs
-    BuffDurationBaseHours = 2.0,
-    BuffDurationPerComfortPoint = 0.05,
-    BuffDurationMaxHours = 12.0,
+    BuffBaseDurationHours = 8,
     BuffMagnitudeMultiplier = 1.0,
 
     -- Catálogo Estendido de Buffs (Habilitados por padrão)
@@ -43,17 +40,14 @@ local DEFAULTS = {
     -- Sistema de Squalor (Insalubridade)
     SqualorSystemEnabled = true,
     SqualorOverrideThreshold = 50,
-    SqualorTier1Threshold = 20,
-    SqualorTier2Threshold = 40,
-    SqualorTier3Threshold = 60,
-    SqualorTier4Threshold = 80,
+    SqualorTier1Threshold = 25,
+    SqualorTier2Threshold = 50,
+    SqualorTier3Threshold = 75,
+    SqualorTier4Threshold = 90,
     SqualorMagnitudeMultiplier = 1.0,
-    SqualorLingerHours = 1.0,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.
--- @param key (string): Nome da chave sem o prefixo LV_ (ex: "RequireSafehouseClaim")
--- @return any: O valor configurado ou o default correspondente
 function LV_Config.get(key)
     -- 1. Tenta formato de página SandboxVars.HousingCareSystem.Opcao (Padrão B42)
     if SandboxVars and SandboxVars.HousingCareSystem and SandboxVars.HousingCareSystem[key] ~= nil then
@@ -69,14 +63,17 @@ function LV_Config.get(key)
     return DEFAULTS[key]
 end
 
---- Atalho de conveniência para verificar se o mod inteiro está ligado.
--- @return boolean: true se o mod estiver ativo
+--- Verifica se o mod inteiro está ligado.
 function LV_Config.isEnabled()
     return LV_Config.get("SystemEnabled") == true
 end
 
+--- Verifica se o sistema de conforto/buffs está ativo.
+function LV_Config.isComfortEnabled()
+    return LV_Config.isEnabled()
+end
+
 --- Verifica se o sistema de squalor/insalubridade está ativo.
--- @return boolean
 function LV_Config.isSqualorEnabled()
     return LV_Config.isEnabled() and (LV_Config.get("SqualorSystemEnabled") == true)
 end
