@@ -14,11 +14,18 @@ LV_ComfortScanner = LV_ComfortScanner or {}
 --- Quantidade de tiles inspecionados por frame (Time-Slicing para performance máxima)
 local TILES_PER_FRAME = 25
 
---- Auxiliar seguro para checar flags sem disparar NullPointerException no PZ B42
+--- Auxiliar seguro para checar flags no PropertyContainer do PZ B42 sem exceções de reflexão
 local function safeHasFlag(props, flag)
     if not props or not flag then return false end
-    local ok, res = pcall(function() return props:has(flag) end)
-    return ok and (res == true)
+    if props.Is then
+        local ok, res = pcall(props.Is, props, flag)
+        if ok and res == true then return true end
+    end
+    if props.have then
+        local ok, res = pcall(props.have, props, flag)
+        if ok and res == true then return true end
+    end
+    return false
 end
 
 --- Fila interna de varredura
@@ -38,28 +45,32 @@ local safehouseCache = {}
 local function checkSafehouseRequirement(square, player)
     if not square or not player then return true, nil end
 
-    local username = player.getUsername and player:getUsername() or ""
+    local username = player.getUsername and tostring(player:getUsername() or "") or ""
     local shClass = SafeHouse or Safehouse
     local activeSafehouse = nil
 
     if shClass then
-        -- 1. Checagem nativa da engine
+        -- 1. Checagem nativa da engine com pcall
         if shClass.getSafehouse then
-            local sh = shClass.getSafehouse(square)
-            if not sh and square:getZ() > 0 then
+            local ok, sh = pcall(shClass.getSafehouse, square)
+            if ok and sh then
+                activeSafehouse = sh
+            elseif square:getZ() > 0 then
                 local cell = getCell()
                 if cell then
                     local groundSq = cell:getGridSquare(square:getX(), square:getY(), 0)
-                    if groundSq then sh = shClass.getSafehouse(groundSq) end
+                    if groundSq then
+                        local ok2, sh2 = pcall(shClass.getSafehouse, groundSq)
+                        if ok2 and sh2 then activeSafehouse = sh2 end
+                    end
                 end
             end
-            if sh then activeSafehouse = sh end
         end
 
         -- 2. Checagem por Bounding Box 2D na lista global
         if not activeSafehouse and shClass.getSafehouseList then
-            local list = shClass.getSafehouseList()
-            if list and list.size then
+            local ok, list = pcall(shClass.getSafehouseList)
+            if ok and list and list.size then
                 local px, py = square:getX(), square:getY()
                 for i = 0, list:size() - 1 do
                     local sh = list:get(i)
@@ -84,12 +95,37 @@ local function checkSafehouseRequirement(square, player)
         return true, activeSafehouse
     end
 
-    if activeSafehouse then
+    if activeSafehouse and username ~= "" then
         local sh = activeSafehouse
-        if (sh.isOwner and (sh:isOwner(username) or sh:isOwner(player))) or
-           (sh.playerAllowed and (sh:playerAllowed(username) or sh:playerAllowed(player))) or
-           (sh.getPlayers and sh:getPlayers() and sh:getPlayers():contains(username)) or
-           (sh.getOwner and tostring(sh:getOwner()):lower() == tostring(username):lower()) then
+        local isOwner = false
+        local isAllowed = false
+
+        if sh.isOwner then
+            local ok, res = pcall(sh.isOwner, sh, username)
+            if ok and res == true then isOwner = true end
+        end
+
+        if not isOwner and sh.getOwner then
+            local ok, ownerName = pcall(sh.getOwner, sh)
+            if ok and ownerName and tostring(ownerName):lower() == username:lower() then
+                isOwner = true
+            end
+        end
+
+        if not isOwner and sh.playerAllowed then
+            local ok, res = pcall(sh.playerAllowed, sh, username)
+            if ok and res == true then isAllowed = true end
+        end
+
+        if not isOwner and not isAllowed and sh.getPlayers then
+            local ok, playersList = pcall(sh.getPlayers, sh)
+            if ok and playersList and playersList.contains then
+                local ok2, res2 = pcall(playersList.contains, playersList, username)
+                if ok2 and res2 == true then isAllowed = true end
+            end
+        end
+
+        if isOwner or isAllowed then
             return true, activeSafehouse
         end
     end
@@ -269,7 +305,6 @@ function LV_ComfortScanner.processSquare(sq, res)
             end
 
             local props = sprite and sprite.getProperties and sprite:getProperties()
-            local hasProps = props and props.has ~= nil
 
             -- 1. Camas e Descanso
             local isBed = (IsoFlagType and IsoFlagType.bed and safeHasFlag(props, IsoFlagType.bed)) or
@@ -454,17 +489,18 @@ function LV_ComfortScanner.processSquare(sq, res)
                     res.cleanlinessPenalty = res.cleanlinessPenalty + (LV_ItemScoreData.Penalties.RottenFood or 12)
                     res.squalorRotten = res.squalorRotten + (LV_ItemScoreData.Penalties.RottenFood or 12)
                 else
-                    local itemType = item.getType and item:getType()
-                    local itemTypeLua = itemType and tostring(itemType) or ""
+                    local itemTypeLua = item.getType and tostring(item:getType() or ""):lower() or ""
+                    local itemCatLua = item.getDisplayCategory and tostring(item:getDisplayCategory() or ""):lower() or ""
+                    local itemNameLua = item.getName and tostring(item:getName() or ""):lower() or ""
+
                     for tag, score in pairs(LV_ItemScoreData.WorldItemTags or {}) do
+                        local tagLower = tag:lower()
                         local matched = false
-                        if item.hasTag then
-                            local tagOk, hasIt = pcall(item.hasTag, item, tag)
-                            matched = tagOk and hasIt
+
+                        if itemCatLua:find(tagLower) or itemTypeLua:find(tagLower) or itemNameLua:find(tagLower) then
+                            matched = true
                         end
-                        if not matched and itemTypeLua ~= "" then
-                            matched = itemTypeLua:find(tag) ~= nil
-                        end
+
                         if matched then
                             local count = res.foundTypes[tag] or 0
                             if count < 3 then

@@ -51,37 +51,32 @@ local function fetchTexture(isComfort, tier)
     return nil
 end
 
---- Conta quantos Moodles vanilla estão atualmente visíveis na tela
+local cachedVanillaCount = 0
+local lastVanillaCheckTime = 0
+
+--- Conta quantos Moodles vanilla estão visíveis com cache de 0.2s para evitar ponte Java/Lua constante
 local function getActiveVanillaMoodlesCount(player)
     if not player then return 0 end
-    local count = 0
-    local moodles = player:getMoodles()
-    if not moodles then return 0 end
+    local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
+    if (now - lastVanillaCheckTime) < 0.2 then
+        return cachedVanillaCount
+    end
+    lastVanillaCheckTime = now
 
-    -- Método 1: Verificação direta por tipo de moodle vanilla
-    for _, typeName in ipairs(VANILLA_MOODLE_TYPES) do
-        if MoodleType and MoodleType[typeName] then
-            pcall(function()
-                local lvl = moodles:getMoodleLevel(MoodleType[typeName])
-                if lvl and lvl > 0 then
-                    count = count + 1
-                end
-            end)
+    local moodles = player:getMoodles()
+    if not moodles or not MoodleType then return cachedVanillaCount end
+
+    local count = 0
+    for i = 1, #VANILLA_MOODLE_TYPES do
+        local mt = MoodleType[VANILLA_MOODLE_TYPES[i]]
+        if mt then
+            local lvl = moodles:getMoodleLevel(mt)
+            if lvl and lvl > 0 then
+                count = count + 1
+            end
         end
     end
-
-    -- Se não conseguiu ler via MoodleType, tenta método alternativo do container
-    if count == 0 and moodles.getNumMoodles then
-        pcall(function()
-            local total = moodles:getNumMoodles()
-            for i = 0, total - 1 do
-                if moodles:getMoodleLevel(i) > 0 then
-                    count = count + 1
-                end
-            end
-        end)
-    end
-
+    cachedVanillaCount = count
     return count
 end
 
@@ -124,10 +119,10 @@ function LV_MoodleUI:render()
     local targetX = screenW - MOODLE_SIZE - MARGIN_RIGHT
     local targetY = BASE_TOP + (vanillaCount * MOODLE_STEP)
 
-    self:setX(targetX)
-    self:setY(targetY)
-    self:setWidth(MOODLE_SIZE)
-    self:setHeight(MOODLE_SIZE)
+    if self:getX() ~= targetX then self:setX(targetX) end
+    if self:getY() ~= targetY then self:setY(targetY) end
+    if self:getWidth() ~= MOODLE_SIZE then self:setWidth(MOODLE_SIZE) end
+    if self:getHeight() ~= MOODLE_SIZE then self:setHeight(MOODLE_SIZE) end
 
     -- 2. Busca e desenha a textura PNG do Moodlet
     local texture = fetchTexture(isComfort, tier)

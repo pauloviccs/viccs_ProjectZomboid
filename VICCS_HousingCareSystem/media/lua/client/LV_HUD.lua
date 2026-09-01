@@ -99,19 +99,7 @@ function LV_HUD:render()
     local barWidth = self.width - (margin * 2)
     local barHeight = 8
 
-    -- 1. Moldura e Fundo Translúcido Moderno
-    self:drawRect(0, 0, self.width, self.height, self.backgroundColor.a, self.backgroundColor.r, self.backgroundColor.g, self.backgroundColor.b)
-    self:drawRectBorder(0, 0, self.width, self.height, self.borderColor.a, self.borderColor.r, self.borderColor.g, self.borderColor.b)
-
-    -- Alça sutil de arrasto no canto superior direito
-    self:drawRect(self.width - 12, 3, 2, 2, 0.6, 0.8, 0.8, 0.8)
-    self:drawRect(self.width - 8, 3, 2, 2, 0.6, 0.8, 0.8, 0.8)
-    self:drawRect(self.width - 4, 3, 2, 2, 0.6, 0.8, 0.8, 0.8)
-    self:drawRect(self.width - 12, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
-    self:drawRect(self.width - 8, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
-    self:drawRect(self.width - 4, 6, 2, 2, 0.6, 0.8, 0.8, 0.8)
-
-    -- Determina textos a serem exibidos
+    local baseName = (data.baseName and data.baseName ~= "" and data.baseName ~= "Lar") and data.baseName or nil
     local title = ""
     local statusText = ""
     local barColor = {r = 0.20, g = 0.85, b = 0.40, a = 0.95}
@@ -167,14 +155,18 @@ function LV_HUD:render()
         statusText = string.format("Restante: %.1fh%s", remainingHours, hmBonus)
     end
 
-    -- Ajuste dinâmico de largura para ZERO vazamento de texto
-    local textMgr = getTextManager()
-    local titleW = textMgr and textMgr:MeasureStringX(UIFont.Small, title) or 120
-    local statusW = textMgr and textMgr:MeasureStringX(UIFont.Small, statusText) or 100
-    local neededW = math.max(220, math.max(titleW, statusW) + (margin * 2) + 20)
+    -- Ajuste dinâmico de largura com Cache para zero overhead por frame
+    if self.cachedTitle ~= title or self.cachedStatusText ~= statusText or not self.cachedNeededW then
+        self.cachedTitle = title
+        self.cachedStatusText = statusText
+        local textMgr = getTextManager()
+        local titleW = textMgr and textMgr:MeasureStringX(UIFont.Small, title) or 120
+        local statusW = textMgr and textMgr:MeasureStringX(UIFont.Small, statusText) or 100
+        self.cachedNeededW = math.max(220, math.max(titleW, statusW) + (margin * 2) + 20)
+    end
 
-    if self.width ~= neededW then
-        self:setWidth(neededW)
+    if self.width ~= self.cachedNeededW then
+        self:setWidth(self.cachedNeededW)
     end
 
     local actualBarWidth = self.width - (margin * 2)

@@ -37,67 +37,78 @@ local localPlayerData = {
 local isModDataLoaded = false
 local function ensureModDataLoaded(player)
     if isModDataLoaded or not player then return end
-    pcall(function()
-        local md = player:getModData()
-        if md and md.LV_Homemaking then
-            local hm = md.LV_Homemaking
-            local currentHour = getGameTime():getWorldAgeHours()
-            localPlayerData.homemakingBonusHours = hm.bonusHours or 0
-            localPlayerData.homemakingDailyHours = hm.dailyHours or 0
-            localPlayerData.homemakingDailyActions = hm.dailyActions or 0
-            localPlayerData.homemakingLastDay = hm.lastDay or -1
-            if hm.comfortExpiryWorldHour and hm.comfortExpiryWorldHour > currentHour then
-                localPlayerData.comfortExpiryWorldHour = hm.comfortExpiryWorldHour
-            end
+    local ok, md = pcall(function() return player:getModData() end)
+    if ok and md and md.LV_Homemaking then
+        local hm = md.LV_Homemaking
+        local currentHour = getGameTime():getWorldAgeHours()
+        localPlayerData.homemakingBonusHours = hm.bonusHours or 0
+        localPlayerData.homemakingDailyHours = hm.dailyHours or 0
+        localPlayerData.homemakingDailyActions = hm.dailyActions or 0
+        localPlayerData.homemakingLastDay = hm.lastDay or -1
+        if hm.comfortExpiryWorldHour and hm.comfortExpiryWorldHour > currentHour then
+            localPlayerData.comfortExpiryWorldHour = hm.comfortExpiryWorldHour
         end
-    end)
+    end
     isModDataLoaded = true
 end
 
---- Retorna os dados do jogador ativo de forma segura.
+--- Retorna os dados do jogador ativo de forma segura (puro e direto para a UI).
 function LV_BuffManager.getPlayerData(player)
-    ensureModDataLoaded(player)
     return localPlayerData
 end
 
---- Auxiliar seguro para ler e ajustar campos de Stats no PZ B42.
-local function modifyStat(stats, name, delta, minVal, maxVal)
-    if not stats then return end
-    minVal = minVal or 0.0
-    maxVal = maxVal or 1.0
+Events.OnGameStart.Add(function()
+    local player = getPlayer()
+    if player then ensureModDataLoaded(player) end
+end)
 
-    pcall(function()
-        if stats[name] ~= nil then
-            local current = stats[name]
-            local newval = math.max(minVal, math.min(maxVal, current + delta))
-            stats[name] = newval
-            return
-        end
+Events.OnCreatePlayer.Add(function(pNum, player)
+    if not player then player = getPlayer() end
+    if player then ensureModDataLoaded(player) end
+end)
 
-        local getter = stats["get" .. name]
-        local setter = stats["set" .. name]
-        if getter and setter then
-            local current = getter(stats)
-            local newval = math.max(minVal, math.min(maxVal, current + delta))
-            setter(stats, newval)
-        end
-    end)
+--- Modificadores diretos e 100% seguros para o PZ B42 sem reflexão dinâmica
+local function modifyPanic(stats, delta)
+    if not stats or not stats.getPanic or not stats.setPanic then return end
+    local cur = stats:getPanic()
+    stats:setPanic(math.max(0.0, math.min(100.0, cur + delta)))
+end
+
+local function modifyEndurance(stats, delta)
+    if not stats or not stats.getEndurance or not stats.setEndurance then return end
+    local cur = stats:getEndurance()
+    stats:setEndurance(math.max(0.0, math.min(1.0, cur + delta)))
+end
+
+local function modifyFatigue(stats, delta)
+    if not stats or not stats.getFatigue or not stats.setFatigue then return end
+    local cur = stats:getFatigue()
+    stats:setFatigue(math.max(0.0, math.min(1.0, cur + delta)))
+end
+
+local function modifyHunger(stats, delta)
+    if not stats or not stats.getHunger or not stats.setHunger then return end
+    local cur = stats:getHunger()
+    stats:setHunger(math.max(0.0, math.min(1.0, cur + delta)))
+end
+
+local function modifyStress(stats, delta)
+    if not stats or not stats.getStress or not stats.setStress then return end
+    local cur = stats:getStress()
+    stats:setStress(math.max(0.0, math.min(1.0, cur + delta)))
+end
+
+local function modifySickness(stats, delta)
+    if not stats or not stats.getSickness or not stats.setSickness then return end
+    local cur = stats:getSickness()
+    stats:setSickness(math.max(0.0, math.min(100.0, cur + delta)))
 end
 
 --- Auxiliar seguro para ajustar o nível de infelicidade (Unhappiness) sem quebrar no B42.
 local function modifyUnhappiness(bodyDamage, delta)
-    if not bodyDamage then return end
-    pcall(function()
-        if bodyDamage.getUnhappinessLevel and bodyDamage.setUnhappinessLevel then
-            local cur = bodyDamage:getUnhappinessLevel()
-            bodyDamage:setUnhappinessLevel(math.max(0, math.min(100, cur + delta)))
-        elseif bodyDamage.getUnhappynessLevel and bodyDamage.setUnhappynessLevel then
-            local cur = bodyDamage:getUnhappynessLevel()
-            bodyDamage:setUnhappynessLevel(math.max(0, math.min(100, cur + delta)))
-        elseif bodyDamage.UnhappynessLevel ~= nil then
-            bodyDamage.UnhappynessLevel = math.max(0, math.min(100, bodyDamage.UnhappynessLevel + delta))
-        end
-    end)
+    if not bodyDamage or not bodyDamage.getUnhappinessLevel or not bodyDamage.setUnhappinessLevel then return end
+    local cur = bodyDamage:getUnhappinessLevel()
+    bodyDamage:setUnhappinessLevel(math.max(0.0, math.min(100.0, cur + delta)))
 end
 
 --- Converte uma pontuação de Conforto (0-100) no Tier correspondente (0-4).
@@ -381,14 +392,14 @@ local function onPlayerUpdateBuffs(player)
         local cTier = data.comfortTier
 
         -- Tier 1+: Redução de Pânico
-        modifyStat(stats, "Panic", -(0.15 * buffMult), 0.0, 100.0)
+        modifyPanic(stats, -(0.15 * buffMult))
 
         -- Tier 2+: Regeneração de Endurance & Menor Cansaço
         if cTier >= 2 then
-            modifyStat(stats, "Endurance", (0.0002 * buffMult), 0.0, 1.0)
+            modifyEndurance(stats, (0.0002 * buffMult))
 
             if LV_Config.get("Enable_Energizado") then
-                modifyStat(stats, "Fatigue", -(0.00005 * buffMult), 0.0, 1.0)
+                modifyFatigue(stats, -(0.00005 * buffMult))
             end
         end
 
@@ -397,7 +408,7 @@ local function onPlayerUpdateBuffs(player)
             modifyUnhappiness(bodyDamage, -(0.05 * buffMult))
 
             if LV_Config.get("Enable_Saciado") then
-                modifyStat(stats, "Hunger", -(0.00004 * buffMult), 0.0, 1.0)
+                modifyHunger(stats, -(0.00004 * buffMult))
             end
 
             if LV_Config.get("Enable_CicatrizacaoRapida") then
@@ -407,7 +418,7 @@ local function onPlayerUpdateBuffs(player)
 
         -- Tier 4: Santuário (Redução contínua de Estresse & Cura Avançada)
         if cTier >= 4 then
-            modifyStat(stats, "Stress", -(0.02 * buffMult), 0.0, 1.0)
+            modifyStress(stats, -(0.02 * buffMult))
             applyHealingBuff(player)
         end
     else
@@ -425,16 +436,16 @@ local function onPlayerUpdateBuffs(player)
         end
 
         if sTier >= 2 then
-            modifyStat(stats, "Stress", (0.0003 * squalorMult), 0.0, 1.0)
-            modifyStat(stats, "Endurance", -(0.0001 * squalorMult), 0.0, 1.0)
+            modifyStress(stats, (0.0003 * squalorMult))
+            modifyEndurance(stats, -(0.0001 * squalorMult))
         end
 
         if sTier >= 3 then
-            modifyStat(stats, "Sickness", (0.03 * squalorMult), 0.0, 50.0)
+            modifySickness(stats, (0.03 * squalorMult))
         end
 
         if sTier >= 4 then
-            modifyStat(stats, "Sickness", (0.08 * squalorMult), 0.0, 90.0)
+            modifySickness(stats, (0.08 * squalorMult))
         end
     else
         data.squalorTier = 0

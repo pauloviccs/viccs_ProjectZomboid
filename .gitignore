@@ -1,0 +1,22 @@
+# =============================================================================
+# VICCS Project Zomboid Suite — .gitignore
+# =============================================================================
+
+# .agent Context & Memory (todas as subpastas e raiz)
+**/.agent/
+.agent/
+
+# IDE & Editor configs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary & Log files
+*.log
+*.tmp

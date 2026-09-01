@@ -23,7 +23,7 @@ local function checkPillowPresence(player, square)
     -- 1. No inventário do jogador ou equipado
     local inv = player:getInventory()
     if inv then
-        if inv:contains("Pillow") or inv:contains("Base.Pillow") or inv:containsTag("Pillow") or inv:containsTag("pillow") then
+        if inv:contains("Pillow", true) or inv:contains("Base.Pillow", true) or (inv.containsTypeRecurse and inv:containsTypeRecurse("Pillow")) then
             return true
         end
         local items = inv:getItems()
@@ -31,9 +31,15 @@ local function checkPillowPresence(player, square)
             for i = 0, items:size() - 1 do
                 local item = items:get(i)
                 if item then
-                    local itemType = tostring(item:getType()):lower()
-                    local itemName = tostring(item:getName()):lower()
-                    if itemType:find("pillow") or itemName:find("travesseiro") or itemName:find("pillow") then
+                    local itemType = item.getType and tostring(item:getType()):lower() or ""
+                    local itemName = item.getName and tostring(item:getName()):lower() or ""
+                    local hasTag = false
+                    if item.hasTag then
+                        local ok1, t1 = pcall(item.hasTag, item, "Pillow")
+                        local ok2, t2 = pcall(item.hasTag, item, "pillow")
+                        hasTag = (ok1 and t1) or (ok2 and t2)
+                    end
+                    if hasTag or itemType:find("pillow") or itemName:find("travesseiro") or itemName:find("pillow") then
                         return true
                     end
                 end
@@ -76,7 +82,6 @@ local function checkBedPresence(square)
             local sprite = obj.getSprite and obj:getSprite()
             local spriteName = (sprite and sprite.getName and sprite:getName()) and tostring(sprite:getName()):lower() or ""
             local props = sprite and sprite.getProperties and sprite:getProperties()
-            local hasProps = props and props.has ~= nil
 
             if spriteName:find("bed") ~= nil or
                spriteName:find("furniture_bedding_") ~= nil or

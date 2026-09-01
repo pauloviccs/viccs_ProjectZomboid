@@ -41,7 +41,9 @@ local function onEveryHoursCheck()
     end
 end
 
---- Monitora movimentação entre cômodos ou deslocamento na base.
+local lastMoveScanTime = 0
+
+--- Monitora movimentação entre cômodos ou deslocamento na base com throttle inteligente.
 local function onPlayerPositionUpdate(player)
     if not LV_Config or not LV_Config.isEnabled() or not player then return end
 
@@ -50,19 +52,23 @@ local function onPlayerPositionUpdate(player)
 
     local px, py, pz = sq:getX(), sq:getY(), sq:getZ()
     local room = sq.getRoom and sq:getRoom()
+    local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
 
     if room ~= lastRoom then
         lastRoom = room
         lastSquareCoord.x = px
         lastSquareCoord.y = py
         lastSquareCoord.z = pz
+        lastMoveScanTime = now
         LV_ComfortScanner.startScan(player)
     else
         local distSq = (px - lastSquareCoord.x)^2 + (py - lastSquareCoord.y)^2
-        if pz ~= lastSquareCoord.z or distSq > 9 then -- Atualiza a cada 3 blocos de movimento
+        -- Só dispara se moveu 6+ tiles (distSq >= 36) e após pelo menos 4 segundos da última varredura
+        if (pz ~= lastSquareCoord.z or distSq >= 36) and (now - lastMoveScanTime >= 4.0) then
             lastSquareCoord.x = px
             lastSquareCoord.y = py
             lastSquareCoord.z = pz
+            lastMoveScanTime = now
             LV_ComfortScanner.startScan(player)
         end
     end

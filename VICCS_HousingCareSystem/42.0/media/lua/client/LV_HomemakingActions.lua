@@ -3,14 +3,11 @@
 -- =============================================================================
 -- Autor: VICCS
 -- Descrição:
---   Escuta de forma 100% segura o encerramento de ações no ISTimedActionQueue
---   (Limpeza, Culinária, Jardinagem, Construção e Decoração).
---   Não modifica perform() de subclasses individuais, eliminando qualquer risco
---   de quebra na pilha Kahlua/Java e garantindo compatibilidade total com NeatUI,
---   CleanUI, Item Arrange e qualquer outro mod de interface/inventário.
+--   Sistema 100% não-invasivo baseado no Padrão Observador (Observer Pattern).
+--   Monitora as ações do jogador em tempo real através de Events.OnPlayerUpdate e
+--   Events.OnCraftComplete sem substituir nenhuma função do jogo ou de outros mods.
+--   Zero risco de quebra na máquina virtual Kahlua e 100% de compatibilidade multiplayer.
 -- =============================================================================
-
-require "TimedActions/ISTimedActionQueue"
 
 LV_HomemakingActions = LV_HomemakingActions or {}
 
@@ -53,40 +50,64 @@ local CATEGORIES = {
     }
 }
 
---- Mapeamento direto de tipos de TimedAction para suas categorias
-local ACTION_TYPE_MAP = {
-    -- 1. Limpeza
-    ["ISCleanBloodAction"] = { category = "Cleaning", percent = 15 },
-    ["ISCleanGraffitiAction"] = { category = "Cleaning", percent = 15 },
-    ["ISTakeTrashAction"] = { category = "Cleaning", percent = 15 },
+--- Mapeamento de palavras-chave para identificar categorias de ações
+local KEYWORD_CATEGORY_MAP = {
+    -- Limpeza
+    clean = "Cleaning",
+    blood = "Cleaning",
+    graffiti = "Cleaning",
+    trash = "Cleaning",
+    wash = "Cleaning",
+    mop = "Cleaning",
 
-    -- 2. Culinária
-    ["ISCookAction"] = { category = "Cooking", percent = 20 },
-    ["ISCraftAction"] = { category = "Cooking", percent = 20 },
+    -- Culinária
+    cook = "Cooking",
+    bake = "Cooking",
+    roast = "Cooking",
+    fry = "Cooking",
+    food = "Cooking",
+    salad = "Cooking",
+    soup = "Cooking",
+    sandwich = "Cooking",
+    meat = "Cooking",
+    stew = "Cooking",
 
-    -- 3. Jardinagem
-    ["ISWaterPlantAction"] = { category = "Farming", percent = 15 },
-    ["ISFertilizeAction"] = { category = "Farming", percent = 15 },
-    ["ISHarvestPlantAction"] = { category = "Farming", percent = 20 },
-    ["ISPlantAction"] = { category = "Farming", percent = 15 },
-    ["ISSeedAction"] = { category = "Farming", percent = 15 },
-    ["ISCureFliesAction"] = { category = "Farming", percent = 15 },
-    ["ISCureMildewAction"] = { category = "Farming", percent = 15 },
+    -- Jardinagem
+    water = "Farming",
+    plant = "Farming",
+    fertilize = "Farming",
+    harvest = "Farming",
+    seed = "Farming",
+    cure = "Farming",
+    crop = "Farming",
+    shovel = "Farming",
 
-    -- 4. Construção & Carpintaria
-    ["ISBuildAction"] = { category = "Building", percent = 25 },
-    ["ISPaintAction"] = { category = "Building", percent = 20 },
-    ["ISPlasterAction"] = { category = "Building", percent = 20 },
-    ["ISBarricadeAction"] = { category = "Building", percent = 15 },
+    -- Construção
+    build = "Building",
+    paint = "Building",
+    plaster = "Building",
+    barricade = "Building",
+    carpentry = "Building",
+    wall = "Building",
+    door = "Building",
+    window = "Building",
 
-    -- 5. Decoração & Arranjo
-    ["ISMoveablesAction"] = { category = "Decorating", percent = 15 },
-    ["ISPlace3DItemAction"] = { category = "Decorating", percent = 15 },
+    -- Decoração & Organização
+    moveable = "Decorating",
+    furniture = "Decorating",
+    place3d = "Decorating",
+    rotate = "Decorating",
+    curtain = "Decorating"
 }
 
 --- Rastreamento de tempo real para cooldowns anti-spam
 local lastActionTimestamps = {}
 
+--- Rastreamento de estado de ação ativa do jogador local
+local lastObservedActionName = nil
+local lastObservedProgress = 0.0
+
+--- Obtém o tempo do sistema em segundos de forma segura.
 local function getSystemSeconds()
     if getTimeInMillis then
         return getTimeInMillis() / 1000.0
@@ -115,59 +136,37 @@ local function isCharacterInValidHomeArea(character)
     end
 
     -- 3. Verifica Safehouse oficial se aplicável
-    if Safehouse and Safehouse.isSafeHouse and sq then
-        local sh = Safehouse.getSafeHouse(sq)
-        if sh then return true end
+    local shClass = SafeHouse or Safehouse
+    if shClass and shClass.getSafehouse and sq then
+        local ok, sh = pcall(shClass.getSafehouse, sq)
+        if ok and sh then return true end
     end
 
     return false
 end
 
---- Processa a conclusão de uma ação doméstica
-function LV_HomemakingActions.handleActionCompleted(action)
-    if not action or not action.character or not LV_Config or not LV_Config.isHomemakingEnabled() then
+--- Identifica a categoria a partir do nome ou tipo de ação
+local function detectCategoryFromActionName(actionStr)
+    if not actionStr or actionStr == "" then return nil end
+    local lower = tostring(actionStr):lower()
+
+    for keyword, catName in pairs(KEYWORD_CATEGORY_MAP) do
+        if lower:find(keyword) then
+            return catName
+        end
+    end
+    return nil
+end
+
+--- Concede o bônus para uma categoria específica após validações completas
+function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, bonusPercent)
+    if not character or not LV_Config or not LV_Config.isHomemakingEnabled() then
         return
     end
 
-    local character = action.character
     local localPlayer = getPlayer()
     if character ~= localPlayer then
         return
-    end
-
-    local actionType = action.Type
-    if not actionType then
-        return
-    end
-
-    local mapped = ACTION_TYPE_MAP[actionType]
-    if not mapped then
-        return
-    end
-
-    local categoryName = mapped.category
-    local bonusPercent = mapped.percent
-
-    -- Tratamento especial para ISCraftAction (distinguir culinária de carpintaria)
-    if actionType == "ISCraftAction" and action.recipe then
-        local rName = tostring(action.recipe:getName() or ""):lower()
-        local rCat = tostring(action.recipe:getCategory() or ""):lower()
-        if rCat:find("cook") or rCat:find("food") or rName:find("salad") or rName:find("soup") or rName:find("sandwich") or rName:find("cook") then
-            categoryName = "Cooking"
-            bonusPercent = 20
-        elseif rCat:find("carpentry") or rCat:find("build") or rName:find("plank") or rName:find("door") then
-            categoryName = "Building"
-            bonusPercent = 20
-        else
-            return
-        end
-    end
-
-    -- Tratamento especial para ISMoveablesAction (apenas pontua colocar/mover)
-    if actionType == "ISMoveablesAction" and action.mode then
-        if action.mode ~= "place" and action.mode ~= "rotate" and action.mode ~= "pickup" then
-            return
-        end
     end
 
     local catDef = CATEGORIES[categoryName]
@@ -191,7 +190,8 @@ function LV_HomemakingActions.handleActionCompleted(action)
     lastActionTimestamps[categoryName] = now
 
     -- Concede o bônus no BuffManager
-    local addedHours = LV_BuffManager.addHomemakingBonus(character, categoryName, bonusPercent)
+    local percent = bonusPercent or catDef.defaultPercent
+    local addedHours = LV_BuffManager.addHomemakingBonus(character, categoryName, percent)
 
     if addedHours and addedHours > 0 then
         local haloText = LV_MoodleDefs and LV_MoodleDefs.getText(catDef.haloKey, catDef.defaultHalo) or catDef.defaultHalo
@@ -204,16 +204,68 @@ function LV_HomemakingActions.handleActionCompleted(action)
 end
 
 -- =============================================================================
--- INTERCEPTAÇÃO CENTRAL E SEGURA VIA ISTimedActionQueue.onCompleted
+-- OBSERVADOR NATIVO DE AÇÕES VIA OnPlayerUpdate (100% SEGURO VIA ISTimedActionQueue)
 -- =============================================================================
-if ISTimedActionQueue and not ISTimedActionQueue._LV_HomemakingHooked then
-    local original_onCompleted = ISTimedActionQueue.onCompleted
-    ISTimedActionQueue.onCompleted = function(action)
-        pcall(function()
-            LV_HomemakingActions.handleActionCompleted(action)
-        end)
-        return original_onCompleted(action)
+local function onPlayerUpdateObserver(player)
+    if not player or not LV_Config or not LV_Config.isHomemakingEnabled() then
+        return
     end
-    ISTimedActionQueue._LV_HomemakingHooked = true
-    print("[LarVivo] LV_HomemakingActions: Hook central em ISTimedActionQueue.onCompleted inicializado com sucesso!")
+
+    local localPlayer = getPlayer()
+    if player ~= localPlayer then
+        return
+    end
+
+    local queue = ISTimedActionQueue and ISTimedActionQueue.getTimedActionQueue(player)
+    local activeAction = (queue and queue.queue and #queue.queue > 0) and queue.queue[1] or nil
+
+    if activeAction then
+        local actName = activeAction.Type or (activeAction.action and tostring(activeAction.action)) or tostring(activeAction)
+        local progress = 0.0
+
+        if activeAction.getJobDelta then
+            local ok, d = pcall(activeAction.getJobDelta, activeAction)
+            if ok and type(d) == "number" then progress = d end
+        elseif activeAction.time and activeAction.time > 0 and activeAction.currentTime then
+            progress = activeAction.currentTime / activeAction.time
+        end
+
+        lastObservedActionName = actName
+        lastObservedProgress = progress
+    else
+        -- Ação acabou de terminar! Se atingiu pelo menos 80% do progresso antes de sair da fila:
+        if lastObservedActionName and lastObservedProgress >= 0.80 then
+            local cat = detectCategoryFromActionName(lastObservedActionName)
+            if cat then
+                LV_HomemakingActions.triggerCompletedCategory(player, cat)
+            end
+        end
+        lastObservedActionName = nil
+        lastObservedProgress = 0.0
+    end
 end
+
+-- =============================================================================
+-- OBSERVADOR DE RECEITAS CULINÁRIAS / CARPINTARIA VIA OnCraftComplete
+-- =============================================================================
+local function onCraftCompleteObserver(recipe, player)
+    if not player or not recipe or not LV_Config or not LV_Config.isHomemakingEnabled() then
+        return
+    end
+
+    local rCat = tostring(recipe.getCategory and recipe:getCategory() or ""):lower()
+    local rName = tostring(recipe.getName and recipe:getName() or ""):lower()
+
+    if rCat:find("cook") or rCat:find("food") or rName:find("salad") or rName:find("soup") or rName:find("sandwich") or rName:find("cook") or rName:find("bake") then
+        LV_HomemakingActions.triggerCompletedCategory(player, "Cooking", 20)
+    elseif rCat:find("carpentry") or rCat:find("build") or rName:find("plank") or rName:find("door") then
+        LV_HomemakingActions.triggerCompletedCategory(player, "Building", 20)
+    end
+end
+
+Events.OnPlayerUpdate.Add(onPlayerUpdateObserver)
+if Events.OnCraftComplete then
+    Events.OnCraftComplete.Add(onCraftCompleteObserver)
+end
+
+print("[LarVivo] LV_HomemakingActions: Motor Observador de Tarefas Domésticas carregado com sucesso!")
