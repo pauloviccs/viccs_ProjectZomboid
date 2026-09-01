@@ -243,13 +243,13 @@ O mod conta com tradução nativa e completa (textos de interface, moodlets, hal
 
 ---
 
-## 🗺️ Roadmap de Futuros Módulos
+<!-- ## 🗺️ Roadmap de Futuros Módulos
 
 Fique atento aos próximos lançamentos planejados para a suíte **VICCS**:
 
 - [ ] **VICCS Advanced Cooking & Preservation:** Mecânica profunda de maturação de queijos, defumação de carnes e despensas frias subterrâneas.
 - [ ] **VICCS Vehicle Living & Campers:** Adaptação do sistema de conforto para motorhomes, vans e acampamentos móveis.
-- [ ] **VICCS Psychological Morale:** Sistema de sanidade e hobbies (leitura aprofundada, pintura, instrumentos musicais).
+- [ ] **VICCS Psychological Morale:** Sistema de sanidade e hobbies (leitura aprofundada, pintura, instrumentos musicais). -->
 
 ---
 
