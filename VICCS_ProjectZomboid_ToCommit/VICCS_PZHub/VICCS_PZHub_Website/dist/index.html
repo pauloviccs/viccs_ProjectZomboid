@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PZHub Community Workshop - Modpack Creator & Platform</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+
+    <script type="module" crossorigin src="/assets/index-1vQn9HJy.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DfROqKMN.css">
+  </head>
+
+  <body>
+    <!-- 1. TOP HEADER NAVBAR -->
+    <header class="site-header">
+      <a href="#workshop" class="site-brand">
+        <div class="brand-icon-box">PZ</div>
+        <div class="brand-title">
+          <span class="brand-title-main">PZHUB WORKSHOP</span>
+          <span class="brand-title-sub">COMMUNITY CREATOR PLATFORM</span>
+        </div>
+      </a>
+
+      <nav class="site-nav-menu">
+        <button class="site-nav-tab active" data-view="workshop">
+          <span>01 // CATÁLOGO DA COMUNIDADE</span>
+        </button>
+        <button class="site-nav-tab" data-view="studio">
+          <span>02 // ESTÚDIO DO CRIADOR (+ NOVO)</span>
+        </button>
+      </nav>
+
+      <div class="site-header-actions">
+        <span id="cloud-status-badge" class="tarkov-tag badge-emerald">CONECTADO</span>
+        
+        <button id="btn-setup-supabase" class="tarkov-btn" title="Configurar credenciais da nuvem Supabase" style="padding: 6px 12px;">
+          ⚙️ API SUPABASE
+        </button>
+
+        <button id="nav-auth-btn" class="tarkov-btn btn-amber" style="padding: 6px 14px;">
+          ENTRAR / CADASTRO
+        </button>
+
+        <div id="nav-user-profile" style="display: none; align-items: center; gap: 8px;">
+          <span id="nav-username" style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-amber); font-weight: bold;">Operador</span>
+          <button id="nav-logout-btn" class="tarkov-btn" style="padding: 4px 8px; font-size: 10px;">SAIR</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. HERO OPERATIONAL BANNER -->
+    <div class="site-hero-wrap">
+      <div class="tarkov-hero-banner">
+        <div class="hero-corner corner-tl"></div>
+        <div class="hero-corner corner-tr"></div>
+        <div class="hero-corner corner-bl"></div>
+        <div class="hero-corner corner-br"></div>
+
+        <div class="hero-tag">PROJECT ZOMBOID // BUILD 42 & 41 ECOSYSTEM</div>
+        <h1 class="hero-title">ECOSSISTEMA TÁTICO DE MODPACKS</h1>
+        <p class="hero-desc">
+          Publique suas coleções de mods com 1 clique através do nosso construtor visual ou explore os modpacks mais populares criados pela comunidade, prontos para sincronizar diretamente com o seu aplicativo desktop <strong>PZHub</strong>.
+        </p>
+
+        <div class="hero-cta-group">
+          <a href="#studio" class="tarkov-btn btn-amber">
+            <span>+ CRIAR NOVO MODPACK</span>
+          </a>
+          <a href="#workshop" class="tarkov-btn">
+            <span>EXPLORAR CATÁLOGO</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. VIEW 1: CATÁLOGO DA COMUNIDADE (WORKSHOP) -->
+    <section id="view-workshop" class="site-view active">
+      <div class="workshop-controls-bar">
+        <!-- Category Filters -->
+        <div class="category-tabs-group">
+          <button class="ws-category-btn active" data-category="all">TODOS OS MODPACKS</button>
+          <button class="ws-category-btn" data-category="Militar">MILITAR & ARMAS</button>
+          <button class="ws-category-btn" data-category="Hardcore">SOBREVIVÊNCIA HARDCORE</button>
+          <button class="ws-category-btn" data-category="Veículos">VEÍCULOS</button>
+          <button class="ws-category-btn" data-category="Roleplay">FACÇÕES & ROLEPLAY</button>
+        </div>
+
+        <!-- Search & Sort -->
+        <div class="workshop-search-group">
+          <input type="text" id="ws-search-input" class="tarkov-input-sm" placeholder="Buscar modpack..." style="width: 220px;" />
+          <select id="ws-sort-select" class="tarkov-select">
+            <option value="downloads">Mais Baixados</option>
+            <option value="likes">Mais Votados</option>
+            <option value="recent">Mais Recentes</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 16px; font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">
+        <span id="workshop-total-count">CARREGANDO...</span>
+      </div>
+
+      <!-- Modpacks Grid -->
+      <div id="workshop-cards-grid" class="ws-cards-grid"></div>
+    </section>
+
+    <!-- 4. VIEW 2: ESTÚDIO DO CRIADOR (VISUAL MODPACK BUILDER) -->
+    <section id="view-studio" class="site-view">
+      <div class="builder-split-grid">
+        <!-- Coluna Esquerda: Formulário do Construtor -->
+        <form id="modpack-builder-form" class="builder-form-card">
+          <div class="builder-section-title">
+            <span>01 // DADOS BÁSICOS DO MODPACK</span>
+            <span class="tarkov-tag badge-amber">BUILDER VISUAL</span>
+          </div>
+
+          <div class="field-group">
+            <label>NOME DO MODPACK:</label>
+            <input type="text" id="builder-name" class="tarkov-input-sm" placeholder="Ex: VICCS Hardcore Survival Pack B42" required />
+          </div>
+
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label>CATEGORIA:</label>
+              <select id="builder-category" class="tarkov-select">
+                <option value="Militar">Militar & Armas</option>
+                <option value="Hardcore">Sobrevivência Hardcore</option>
+                <option value="Veículos">Veículos & Transporte</option>
+                <option value="Roleplay">Facções & Roleplay</option>
+                <option value="Vanilla+">Vanilla+ & QoL</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label>VERSÃO DO PACOTE:</label>
+              <input type="text" id="builder-version" class="tarkov-input-sm" value="1.0.0" required />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="field-group">
+              <label>COMPATIBILIDADE ZOMBOID:</label>
+              <input type="text" id="builder-zomboid-ver" class="tarkov-input-sm" value="42.0+" required />
+            </div>
+
+            <div class="field-group">
+              <label>BANNER / CAPA DO MODPACK (URL):</label>
+              <input type="url" id="builder-banner-url" class="tarkov-input-sm" value="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80" required />
+            </div>
+          </div>
+
+          <!-- Presets Rápidos de Banner -->
+          <div class="field-group">
+            <label>PRESETS RÁPIDOS DE CAPA:</label>
+            <div class="banner-presets-row">
+              <button type="button" class="banner-preset-btn" data-url="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80">Militar Tático</button>
+              <button type="button" class="banner-preset-btn" data-url="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80">Floresta Sombria</button>
+              <button type="button" class="banner-preset-btn" data-url="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=1200&q=80">Cidade Pós-Apocalíptica</button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>DESCRIÇÃO OPERACIONAL:</label>
+            <textarea id="builder-desc" class="tarkov-input-sm" rows="3" placeholder="Explique os objetivos e mecânicas do seu modpack..." required>Modpack balanceado e focado em imersão tática para o Project Zomboid Build 42.</textarea>
+          </div>
+
+          <!-- Seção de Mods Inclusos -->
+          <div class="builder-section-title" style="margin-top: 10px;">
+            <span>02 // LISTA DE MODS INTEGRADOS</span>
+          </div>
+
+          <div class="builder-mods-actions">
+            <button type="button" id="btn-add-workshop-mod" class="tarkov-btn" style="flex: 1; font-size: 10px;">
+              + ADICIONAR MOD STEAM WORKSHOP
+            </button>
+            <button type="button" id="btn-add-direct-mod" class="tarkov-btn" style="flex: 1; font-size: 10px;">
+              + ADICIONAR DOWNLOAD DIRETO (.ZIP)
+            </button>
+            <button type="button" id="btn-add-builtin-mod" class="tarkov-btn" style="flex: 1; font-size: 10px;">
+              + ADICIONAR RADAR VICCS
+            </button>
+          </div>
+
+          <div id="builder-mods-items-container"></div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+            <span id="builder-publish-status" style="font-family: var(--font-mono); font-size: 11px; color: var(--accent-amber);">PRONTO PARA PUBLICAR</span>
+            <button type="submit" id="btn-submit-publish" class="tarkov-btn btn-amber" style="padding: 12px 24px;">
+              🚀 PUBLICAR MODPACK NA COMUNIDADE
+            </button>
+          </div>
+        </form>
+
+        <!-- Coluna Direita: Live Preview Dinâmico do Card -->
+        <div class="builder-preview-sticky">
+          <div class="builder-section-title" style="margin-bottom: 12px;">
+            <span>PREVIEW EM TEMPO REAL // COMO SERÁ VISTO</span>
+          </div>
+
+          <div class="ws-modpack-card preview-card-wrap">
+            <div class="ws-card-banner-wrap">
+              <img id="preview-card-banner" class="ws-card-banner-img" src="https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=1200&q=80" alt="Preview Banner" />
+              <div class="ws-card-banner-overlay"></div>
+              <div class="ws-card-tags">
+                <span id="preview-card-tag-b42" class="tarkov-tag badge-amber">BUILD 42.0+</span>
+                <span id="preview-card-tag-ver" class="tarkov-tag badge-version">v1.0.0</span>
+              </div>
+            </div>
+
+            <div class="ws-card-content">
+              <div class="ws-card-author">CRIADOR: <strong id="preview-card-author">Você</strong></div>
+              <h3 id="preview-card-title" class="ws-card-title">NOME DO MODPACK</h3>
+              <p id="preview-card-desc" class="ws-card-desc">Descrição do pacote...</p>
+              
+              <div id="preview-card-total-mods" class="ws-card-mods-count">1 MOD INCLUSO</div>
+              <div id="preview-card-mods-list" style="margin-top: 6px;"></div>
+            </div>
+
+            <div class="ws-card-actions">
+              <button type="button" class="tarkov-btn-action action-primary" style="pointer-events: none;">
+                <span>INSTALAR NO PZHUB</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL 1: SUCESSO DE PUBLICAÇÃO & LINK DE SYNC -->
+    <div id="publish-success-modal" class="tactical-modal-overlay">
+      <div class="tarkov-modal-card">
+        <div class="modal-card-header">
+          <div class="modal-title-wrap">
+            <span class="modal-tag">PZHUB // SUCESSO</span>
+            <h3 class="modal-title">MODPACK PUBLICADO COM SUCESSO!</h3>
+          </div>
+        </div>
+        <div class="modal-card-body">
+          <p>Seu modpack <strong id="success-modpack-name" style="color: var(--accent-amber);"></strong> já está disponível na nuvem para toda a comunidade.</p>
+          <div class="field-group">
+            <label>Link de Sincronização Direta para o PZHub Desktop:</label>
+            <input type="text" id="success-sync-link" class="tarkov-input-sm" readonly />
+          </div>
+        </div>
+        <div class="modal-card-footer">
+          <button id="btn-close-success-modal" class="tarkov-btn btn-emerald" style="width: 100%;">
+            CONCLUIR & IR PARA O CATÁLOGO
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 2: AVISO DE SINCRONIZAÇÃO DESKTOP -->
+    <div id="sync-info-modal" class="tactical-modal-overlay">
+      <div class="tarkov-modal-card">
+        <div class="modal-card-header">
+          <div class="modal-title-wrap">
+            <span class="modal-tag">PZHUB // SINCRONIZAÇÃO NATIVA</span>
+            <h3 class="modal-title">ABRINDO NO PZHUB DESKTOP</h3>
+          </div>
+        </div>
+        <div class="modal-card-body">
+          <p>Disparamos a sincronização para o aplicativo nativo PZHub instalado no seu computador para o pacote <strong id="sync-modal-pack-name" style="color: var(--accent-amber);"></strong>.</p>
+          <p style="font-size: 11px; color: var(--text-muted);">Se o aplicativo não abriu automaticamente, você pode copiar o link do manifesto abaixo e colar direto na aba <strong>MODPACKS</strong> do seu PZHub:</p>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="sync-modal-link-input" class="tarkov-input-sm" readonly style="flex: 1;" />
+            <button id="btn-copy-sync-link" class="tarkov-btn btn-amber">COPIAR LINK</button>
+          </div>
+        </div>
+        <div class="modal-card-footer">
+          <button id="sync-modal-close-btn" class="tarkov-btn" style="width: 100%;">FECHAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: DETALHES DO MODPACK -->
+    <div id="modpack-detail-modal" class="tactical-modal-overlay">
+      <div class="tarkov-modal-card" style="max-width: 680px;">
+        <div class="modal-card-header">
+          <div class="modal-title-wrap">
+            <span class="modal-tag">PZHUB // DETALHES DO PACOTE</span>
+            <h3 id="detail-modal-title" class="modal-title">Nome do Modpack</h3>
+          </div>
+        </div>
+        <div class="modal-card-body">
+          <div style="height: 140px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 8px;">
+            <img id="detail-modal-banner" src="" style="width: 100%; height: 100%; object-fit: cover;" alt="Banner" />
+          </div>
+          <div>Criador: <strong id="detail-modal-author" style="color: var(--accent-amber);"></strong></div>
+          <p id="detail-modal-desc" style="color: var(--text-muted); font-size: 12px;"></p>
+          
+          <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; color: var(--accent-amber); margin-top: 10px;">
+            COMPONENTES INCLUSOS:
+          </div>
+          <div id="detail-modal-mods-list" style="max-height: 200px; overflow-y: auto; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); padding: 6px;"></div>
+        </div>
+        <div class="modal-card-footer" style="display: flex; gap: 10px;">
+          <button id="detail-modal-install-btn" class="tarkov-btn btn-amber" style="flex: 1;">
+            INSTALAR NO PZHUB DESKTOP
+          </button>
+          <button id="detail-modal-close-btn" class="tarkov-btn" style="width: 100px;">FECHAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: AUTENTICAÇÃO SUPABASE -->
+    <div id="auth-modal" class="tactical-modal-overlay">
+      <div class="tarkov-modal-card" style="max-width: 420px;">
+        <div class="modal-card-header">
+          <div class="modal-title-wrap">
+            <span class="modal-tag">PZHUB // SUPABASE AUTH</span>
+            <h3 id="auth-modal-title" class="modal-title">AUTENTICAÇÃO TÁTICA</h3>
+          </div>
+          <button id="auth-modal-close" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        <form id="auth-form" class="modal-card-body">
+          <div id="auth-username-group" class="field-group" style="display: none;">
+            <label>NICK DE OPERADOR / CRIADOR:</label>
+            <input type="text" id="auth-username" class="tarkov-input-sm" placeholder="Ex: Ghost_Operator" />
+          </div>
+          <div class="field-group">
+            <label>EMAIL:</label>
+            <input type="email" id="auth-email" class="tarkov-input-sm" placeholder="seuemail@exemplo.com" required />
+          </div>
+          <div class="field-group">
+            <label>SENHA:</label>
+            <input type="password" id="auth-password" class="tarkov-input-sm" placeholder="••••••••" required />
+          </div>
+          <div id="auth-status-msg" style="font-family: var(--font-mono); font-size: 10px; color: var(--accent-amber);"></div>
+          <button type="submit" id="auth-submit-btn" class="tarkov-btn btn-amber" style="width: 100%; margin-top: 8px;">
+            ENTRAR NO PZHUB
+          </button>
+          <button type="button" id="btn-toggle-auth-mode" style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-align: center; margin-top: 6px;">
+            Não tem conta? Cadastre-se como Criador
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 5: CONFIGURAÇÃO DE CREDENCIAIS SUPABASE -->
+    <div id="supabase-config-modal" class="tactical-modal-overlay">
+      <div class="tarkov-modal-card" style="max-width: 480px;">
+        <div class="modal-card-header">
+          <div class="modal-title-wrap">
+            <span class="modal-tag">PZHUB // CONEXÃO DA NUVEM</span>
+            <h3 class="modal-title">CREDENCIAS SUPABASE (100% FREE)</h3>
+          </div>
+          <button id="config-modal-close" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer;">✕</button>
+        </div>
+        <form id="config-form" class="modal-card-body">
+          <p style="font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+            Cole a URL e a Anon Key do seu projeto Supabase para conectar a plataforma em tempo real com seu banco de dados PostgreSQL gratuito:
+          </p>
+          <div class="field-group">
+            <label>SUPABASE PROJECT URL:</label>
+            <input type="url" id="config-supabase-url" class="tarkov-input-sm" placeholder="https://xyzcompany.supabase.co" required />
+          </div>
+          <div class="field-group">
+            <label>SUPABASE ANON KEY (PÚBLICA):</label>
+            <input type="text" id="config-supabase-key" class="tarkov-input-sm" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required />
+          </div>
+          <button type="submit" class="tarkov-btn btn-emerald" style="width: 100%; margin-top: 8px;">
+            SALVAR & CONECTAR NUVEM
+          </button>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

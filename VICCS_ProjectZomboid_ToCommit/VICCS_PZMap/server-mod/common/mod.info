@@ -1,0 +1,8 @@
+name=VICCS PZMap Live Squad Radar Bridge (B42)
+poster=poster.png
+icon=icon.png
+id=VICCSRadarBridge
+description=Mini-mod ultraleve de telemetria e sincronizacao de radar em tempo real para o VICCS PZMap no Project Zomboid Build 42.
+versionMin=42.0
+modversion=1.0.0
+author=VICCS
