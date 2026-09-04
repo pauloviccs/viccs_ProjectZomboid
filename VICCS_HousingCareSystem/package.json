@@ -1,0 +1,12 @@
+{
+  "name": "viccs-housing-care-system",
+  "version": "1.7.1",
+  "description": "Project Zomboid B42 Mod - Housing Care System & Interactive Wiki",
+  "scripts": {
+    "dev": "node .agent/website_wiki/server.js",
+    "start": "node .agent/website_wiki/server.js",
+    "wiki": "node .agent/website_wiki/server.js"
+  },
+  "author": "VICCS",
+  "license": "MIT"
+}
