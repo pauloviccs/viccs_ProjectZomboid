@@ -42,96 +42,214 @@ local scanQueue = {
 local safehouseCache = {}
 LV_ComfortScanner.safehouseCache = safehouseCache
 
---- Verifica se o jogador atende ao requisito de Safehouse no MP e retorna a SafeHouse ativa se houver.
-local function checkSafehouseRequirement(square, player)
-    if not square or not player then return true, nil end
+--- Avalia o status de propriedade e posse da base do square atual
+function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
+    if not square or not player then
+        return {
+            status = "OUTSIDE",
+            isOutside = true,
+            isClaimed = false,
+            baseName = "Area Externa",
+            roomName = "Area Externa",
+            totalTiles = 0,
+            roomCount = 0
+        }
+    end
+
+    -- 1. Checagem de Área Externa (Ao ar livre)
+    if square.isOutside and square:isOutside() then
+        return {
+            status = "OUTSIDE",
+            isOutside = true,
+            isClaimed = false,
+            baseName = "Area Externa",
+            roomName = "Area Externa",
+            totalTiles = 0,
+            roomCount = 0
+        }
+    end
 
     local username = player.getUsername and tostring(player:getUsername() or "") or ""
-    local shClass = SafeHouse or Safehouse
-    local activeSafehouse = nil
+    local pMd = player.getModData and player:getModData()
+    local building = (square.getBuilding and square:getBuilding()) or (square.getRoom and square:getRoom() and square:getRoom().getBuilding and square:getRoom():getBuilding())
+    local bId = building and building.getID and building:getID()
+    local room = square.getRoom and square:getRoom()
+    local roomName = (room and room.getName and room:getName()) or "Residencia"
 
-    if shClass then
-        -- 1. Checagem nativa da engine com pcall
-        if shClass.getSafehouse then
-            local ok, sh = pcall(shClass.getSafehouse, square)
-            if ok and sh then
-                activeSafehouse = sh
-            elseif square:getZ() > 0 then
-                local cell = getCell()
-                if cell then
-                    local groundSq = cell:getGridSquare(square:getX(), square:getY(), 0)
-                    if groundSq then
-                        local ok2, sh2 = pcall(shClass.getSafehouse, groundSq)
-                        if ok2 and sh2 then activeSafehouse = sh2 end
+    -- Cálculo de Dimensões / Tamanho da Base (Tiles e Cômodos)
+    local totalTiles = 0
+    local roomCount = 0
+    if building and building.getRooms then
+        local okR, bRooms = pcall(building.getRooms, building)
+        if okR and bRooms and bRooms.size then
+            roomCount = bRooms:size()
+            for r = 0, roomCount - 1 do
+                local rObj = bRooms:get(r)
+                if rObj and rObj.getSquares then
+                    local okS, rSquares = pcall(rObj.getSquares, rObj)
+                    if okS and rSquares and rSquares.size then
+                        totalTiles = totalTiles + rSquares:size()
                     end
                 end
             end
         end
+    end
+    if totalTiles == 0 and room and room.getSquares then
+        local okS, sqs = pcall(room.getSquares, room)
+        if okS and sqs and sqs.size then
+            totalTiles = sqs:size()
+            roomCount = 1
+        end
+    end
 
-        -- 2. Checagem por Bounding Box 2D na lista global
-        if not activeSafehouse and shClass.getSafehouseList then
-            local ok, list = pcall(shClass.getSafehouseList)
-            if ok and list and list.size then
-                local px, py = square:getX(), square:getY()
-                for i = 0, list:size() - 1 do
-                    local sh = list:get(i)
-                    if sh and sh.getX and sh.getY and sh.getW and sh.getH then
-                        local sx, sy, sw, shH = sh:getX(), sh:getY(), sh:getW(), sh:getH()
-                        if px >= sx and px < (sx + sw) and py >= sy and py < (sy + shH) then
-                            activeSafehouse = sh
-                            break
+    -- 2. Modo Casual: Se a exigência de posse foi explicitamente desativada na Sandbox
+    if LV_Config and LV_Config.isBaseOwnershipRequired and not LV_Config.isBaseOwnershipRequired() then
+        return {
+            status = "CLAIMED",
+            isOutside = false,
+            isClaimed = true,
+            isCasual = true,
+            baseName = (pMd and pMd.LV_ClaimedBaseName) or "Lar",
+            roomName = tostring(roomName),
+            building = building,
+            buildingId = bId,
+            totalTiles = totalTiles,
+            roomCount = roomCount
+        }
+    end
+
+    -- 3. Modo Multiplayer: Validação oficial de Safehouse
+    local shClass = SafeHouse or Safehouse
+    local activeSafehouse = nil
+    if (isClient and isClient()) or (isServer and isServer()) then
+        if shClass then
+            if shClass.getSafehouse then
+                local ok, sh = pcall(shClass.getSafehouse, square)
+                if ok and sh then activeSafehouse = sh end
+            end
+            if not activeSafehouse and shClass.getSafehouseList then
+                local ok, list = pcall(shClass.getSafehouseList)
+                if ok and list and list.size then
+                    local px, py = square:getX(), square:getY()
+                    for i = 0, list:size() - 1 do
+                        local sh = list:get(i)
+                        if sh and sh.getX and sh.getY and sh.getW and sh.getH then
+                            local sx, sy, sw, shH = sh:getX(), sh:getY(), sh:getW(), sh:getH()
+                            if px >= sx and px < (sx + sw) and py >= sy and py < (sy + shH) then
+                                activeSafehouse = sh
+                                break
+                            end
                         end
                     end
                 end
             end
         end
-    end
 
-    -- Se o sandbox não exige claim, permite mesmo sem safehouse oficial
-    if not LV_Config.get("RequireSafehouseClaim") then
-        return true, activeSafehouse
-    end
-
-    if not isClient() and not isServer() then
-        return true, activeSafehouse
-    end
-
-    if activeSafehouse and username ~= "" then
-        local sh = activeSafehouse
-        local isOwner = false
-        local isAllowed = false
-
-        if sh.isOwner then
-            local ok, res = pcall(sh.isOwner, sh, username)
-            if ok and res == true then isOwner = true end
-        end
-
-        if not isOwner and sh.getOwner then
-            local ok, ownerName = pcall(sh.getOwner, sh)
-            if ok and ownerName and tostring(ownerName):lower() == username:lower() then
-                isOwner = true
+        if activeSafehouse then
+            local isOwner = false
+            local isAllowed = false
+            if activeSafehouse.isOwner then
+                local ok, res = pcall(activeSafehouse.isOwner, activeSafehouse, username)
+                if ok and res == true then isOwner = true end
             end
-        end
-
-        if not isOwner and sh.playerAllowed then
-            local ok, res = pcall(sh.playerAllowed, sh, username)
-            if ok and res == true then isAllowed = true end
-        end
-
-        if not isOwner and not isAllowed and sh.getPlayers then
-            local ok, playersList = pcall(sh.getPlayers, sh)
-            if ok and playersList and playersList.contains then
-                local ok2, res2 = pcall(playersList.contains, playersList, username)
-                if ok2 and res2 == true then isAllowed = true end
+            if not isOwner and activeSafehouse.getOwner then
+                local ok, oName = pcall(activeSafehouse.getOwner, activeSafehouse)
+                if ok and oName and tostring(oName):lower() == username:lower() then isOwner = true end
             end
-        end
+            if not isOwner and activeSafehouse.playerAllowed then
+                local ok, res = pcall(activeSafehouse.playerAllowed, activeSafehouse, username)
+                if ok and res == true then isAllowed = true end
+            end
+            if not isOwner and not isAllowed and activeSafehouse.getPlayers then
+                local ok, pList = pcall(activeSafehouse.getPlayers, activeSafehouse)
+                if ok and pList and pList.contains then
+                    local ok2, res2 = pcall(pList.contains, pList, username)
+                    if ok2 and res2 == true then isAllowed = true end
+                end
+            end
 
-        if isOwner or isAllowed then
-            return true, activeSafehouse
+            if isOwner or isAllowed then
+                local shTitle = (activeSafehouse.getTitle and activeSafehouse:getTitle()) or ""
+                if shTitle == "" and activeSafehouse.getOwner then
+                    shTitle = "Base de " .. tostring(activeSafehouse:getOwner())
+                end
+                if shTitle == "" then shTitle = "Safehouse" end
+                return {
+                    status = "CLAIMED",
+                    isOutside = false,
+                    isClaimed = true,
+                    baseName = shTitle,
+                    roomName = tostring(roomName),
+                    building = building,
+                    buildingId = bId,
+                    safehouse = activeSafehouse,
+                    totalTiles = (activeSafehouse.getW and activeSafehouse.getH and (activeSafehouse:getW() * activeSafehouse:getH())) or totalTiles,
+                    roomCount = roomCount
+                }
+            else
+                return {
+                    status = "OTHER_OWNER",
+                    isOutside = false,
+                    isClaimed = false,
+                    baseName = "Safehouse de Outro Sobrevivente",
+                    roomName = tostring(roomName) .. " (Nao Reivindicado)",
+                    building = building,
+                    buildingId = bId,
+                    safehouse = activeSafehouse,
+                    totalTiles = totalTiles,
+                    roomCount = roomCount
+                }
+            end
+        else
+            return {
+                status = "UNCLAIMED",
+                isOutside = false,
+                isClaimed = false,
+                baseName = "Imovel Neutro",
+                roomName = tostring(roomName) .. " (Nao Reivindicado)",
+                building = building,
+                buildingId = bId,
+                totalTiles = totalTiles,
+                roomCount = roomCount
+            }
         end
     end
 
-    return false, nil
+    -- 4. Modo Single Player: Posse por Reivindicação do Sobrevivente
+    local claimedBId = pMd and pMd.LV_ClaimedBaseBuildingId
+    if claimedBId and bId and claimedBId == bId then
+        local customName = pMd.LV_ClaimedBaseName or "Meu Lar"
+        return {
+            status = "CLAIMED",
+            isOutside = false,
+            isClaimed = true,
+            baseName = customName,
+            roomName = tostring(roomName),
+            building = building,
+            buildingId = bId,
+            totalTiles = totalTiles,
+            roomCount = roomCount
+        }
+    end
+
+    -- Não é a base do jogador no SP -> Imóvel Neutro
+    return {
+        status = "UNCLAIMED",
+        isOutside = false,
+        isClaimed = false,
+        baseName = "Imovel Neutro",
+        roomName = tostring(roomName) .. " (Nao Reivindicado)",
+        building = building,
+        buildingId = bId,
+        totalTiles = totalTiles,
+        roomCount = roomCount
+    }
+end
+
+--- Ponte de retrocompatibilidade para chamadas antigas
+local function checkSafehouseRequirement(square, player)
+    local own = LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
+    return own.isClaimed, own.safehouse, own
 end
 
 --- Inicia a varredura inteligente do ambiente.
@@ -142,16 +260,75 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
     local square = player:getCurrentSquare()
     if not square then return end
 
-    -- 1. Verificação e detecção de Safehouse
-    local isAllowed, activeSafehouse = checkSafehouseRequirement(square, player)
-    if not isAllowed then
-        print("[LarVivo] Varredura abortada: Safehouse claim exigida mas não atendida.")
+    -- 1. Verificação de Propriedade, Posse e Ambiente
+    local own = LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
+
+    if own.status == "OUTSIDE" then
+        print(string.format("[LarVivo] Jogador em area externa (%d, %d, %d). Conforto desativado.", square:getX(), square:getY(), square:getZ()))
+        LV_ComfortScanner.RoomBreakdown = LV_ComfortScanner.RoomBreakdown or {}
+        local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, square)) or "outside"
+
+        LV_ComfortScanner.RoomBreakdown[locKey] = {
+            locKey = locKey,
+            roomName = "Area Externa",
+            roomScore = 0,
+            roomTier = 0,
+            safehouseScore = 0,
+            safehouseTier = 0,
+            cleanPoints = 0,
+            furniturePoints = 0,
+            lightingPoints = 0,
+            decorPoints = 0,
+            craftBonus = 0,
+            squalorScore = 0,
+            seasonalNote = "Ao Ar Livre",
+            itemsList = {},
+            categoryStats = {},
+            timestamp = (getGameTime and getGameTime():getWorldAgeHours()) or 0,
+            isOutside = true,
+            isClaimed = false,
+            baseName = "Area Externa"
+        }
+        LV_ComfortScanner.LastRoomBreakdown = LV_ComfortScanner.RoomBreakdown[locKey]
+        LV_BuffManager.applyScanResults(player, 0, 0, "Area Externa", false, "Ao Ar Livre")
+        LV_BuffManager.onUnsafeEnvironment(player)
+        return
+    end
+
+    if not own.isClaimed then
+        print(string.format("[LarVivo] Varredura abortada: Imovel Neutro / Nao Reivindicado em (%d, %d, %d).", square:getX(), square:getY(), square:getZ()))
+        local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, square)) or "unclaimed"
+        LV_ComfortScanner.RoomBreakdown = LV_ComfortScanner.RoomBreakdown or {}
+        LV_ComfortScanner.RoomBreakdown[locKey] = {
+            locKey = locKey,
+            roomName = own.roomName or "Residencia (Nao Reivindicado)",
+            roomScore = 0,
+            roomTier = 0,
+            safehouseScore = 0,
+            safehouseTier = 0,
+            cleanPoints = 0,
+            furniturePoints = 0,
+            lightingPoints = 0,
+            decorPoints = 0,
+            craftBonus = 0,
+            squalorScore = 0,
+            seasonalNote = "Imovel Nao Reivindicado",
+            itemsList = {},
+            categoryStats = {},
+            timestamp = (getGameTime and getGameTime():getWorldAgeHours()) or 0,
+            isUnclaimed = true,
+            isClaimed = false,
+            baseName = "Imovel Neutro"
+        }
+        LV_ComfortScanner.LastRoomBreakdown = LV_ComfortScanner.RoomBreakdown[locKey]
+        LV_BuffManager.applyScanResults(player, 0, 0, "Imovel Neutro", false, "Imovel Nao Reivindicado")
         LV_BuffManager.onUnsafeEnvironment(player)
         return
     end
 
     -- 2. Nome da Base
-    local baseName = "Lar"
+    local baseName = own.baseName or "Lar"
+    local activeSafehouse = own.safehouse
     if activeSafehouse then
         if activeSafehouse.getTitle and activeSafehouse:getTitle() and activeSafehouse:getTitle() ~= "" then
             baseName = activeSafehouse:getTitle()
@@ -450,7 +627,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             -- Bônus de Artesanato / Construção Própria do Jogador
             local isCrafted = (instanceof and instanceof(obj, "IsoThumpable")) or spriteName:find("carpentry_") ~= nil
             if isCrafted and not res.foundTypes["crafted_bonus"] then
-                res.craftBonusScore = res.craftBonusScore + 10
+                res.craftBonusScore = res.craftBonusScore + 5
                 res.foundTypes["crafted_bonus"] = true
                 table.insert(res.discoveredItems, "Toque Artesanal")
             end
@@ -576,7 +753,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             -- Cortinas fechadas bloqueando sol direto em dias escaldantes
             if (instanceof and instanceof(obj, "IsoCurtain")) and seasonalEnabled and cc.isSummer and not res.foundTypes["sun_curtain"] then
                 if obj.IsOpen and not obj:IsOpen() then
-                    res.decorScore = res.decorScore + 4
+                    res.decorScore = res.decorScore + 2
                     res.foundTypes["sun_curtain"] = 1
                     table.insert(res.discoveredItems, "Sombra Termica (Cortinas Fechadas)")
                 end
@@ -704,7 +881,8 @@ function LV_ComfortScanner.processSquare(sq, res)
                     -- Fixture limpa e higienizada pontua como conforto sanitário
                     local fixType = isToilet and "toilet" or (isSink and "sink" or "bath")
                     if not res.foundTypes["fixture_" .. fixType] then
-                        res.furnitureScore = res.furnitureScore + 10
+                        local fixPts = (isToilet and 4) or (isBathShower and 4) or 3
+                        res.furnitureScore = res.furnitureScore + fixPts
                         res.foundTypes["fixture_" .. fixType] = true
                         local fixLabel = isToilet and "Vaso Sanitario Higienizado" or (isSink and "Pia Limpa" or "Banheira/Chuveiro Limpo")
                         table.insert(res.discoveredItems, fixLabel)
@@ -784,20 +962,20 @@ function LV_ComfortScanner.finalizeScore(player, res)
     end
 
     -- 1. Cálculo de Conforto Base do Cômodo (0 a 100)
-    -- Base limpa começa com 25 pontos garantidos
-    local cleanPoints = math.max(0, 25 - (res.cleanlinessPenalty * 0.5))
+    -- Base limpa começa com 10 pontos garantidos (nerfado de 25 para exigir mobília real)
+    local cleanPoints = math.max(0, 10 - (res.cleanlinessPenalty * 0.5))
 
-    -- Mobílias somam diretamente (Cama=25, Assento=15, Mesa=15, Armário=15, Tapete=12, Quadros=12, etc.)
-    local furniturePoints = math.min(50, res.furnitureScore)
+    -- Mobílias somam com tetos balanceados (teto reduzido de 50 para 40)
+    local furniturePoints = math.min(40, res.furnitureScore)
 
-    -- Bônus de "Toque Artesanal" (+10 pontos extras para móveis construídos pelo jogador)
-    local craftBonus = math.min(10, res.craftBonusScore or 0)
+    -- Bônus de "Toque Artesanal" (+5 pontos extras para móveis construídos pelo jogador)
+    local craftBonus = math.min(5, res.craftBonusScore or 0)
 
-    -- Iluminação ativa soma até 15 pontos
-    local lightingPoints = math.min(15, res.lightingScore)
+    -- Iluminação ativa soma até 10 pontos (nerfado de 15)
+    local lightingPoints = math.min(10, res.lightingScore)
 
-    -- Decoração e itens 3D somam até 20 pontos
-    local decorPoints = math.min(20, res.decorScore)
+    -- Decoração e itens 3D somam até 25 pontos (ampliado de 20 para recompensar clutter organizado)
+    local decorPoints = math.min(25, res.decorScore)
 
     local roomComfort = cleanPoints + furniturePoints + craftBonus + lightingPoints + decorPoints
     local comfortScore = math.floor(math.max(0, math.min(100, roomComfort)))
@@ -861,13 +1039,13 @@ function LV_ComfortScanner.finalizeScore(player, res)
                 comfortScore = math.max(0, comfortScore - 10)
                 seasonalNote = string.format("Inverno (%dC) - Falta Aquecimento!", math.floor(cc.temperature or 0))
             elseif res.hasActiveHeatInWinter then
-                seasonalNote = string.format("Inverno (%dC) - Aquecimento Ativo (+24 pts)", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Inverno (%dC) - Aquecimento Ativo (+8 pts)", math.floor(cc.temperature or 0))
             else
                 seasonalNote = string.format("Inverno (%dC) - Frio Moderado", math.floor(cc.temperature or 0))
             end
         elseif cc.isSummer then
             if res.hasSummerCooling then
-                seasonalNote = string.format("Verao (%dC) - Ventilacao Ativa (+10 pts)", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Verao (%dC) - Ventilacao Ativa (+4 pts)", math.floor(cc.temperature or 0))
             elseif cc.isHeatwave then
                 seasonalNote = string.format("Verao (%dC) - Calor Intenso", math.floor(cc.temperature or 0))
             else
@@ -926,10 +1104,10 @@ function LV_ComfortScanner.finalizeScore(player, res)
             local dData = dash and dash.cachedData
             if dData then
                 if dData.hasGenerator and dData.isActivated then
-                    infraBonus = infraBonus + 10
+                    infraBonus = infraBonus + 5
                 end
                 if dData.waterTotal and dData.waterTotal >= 200 then
-                    infraBonus = infraBonus + 8
+                    infraBonus = infraBonus + 4
                 end
             end
         end

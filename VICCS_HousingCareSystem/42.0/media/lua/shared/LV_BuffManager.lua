@@ -230,7 +230,7 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
         localPlayerData.seasonalNote = seasonalNote
     end
 
-    if comfortScore > 0 then
+    if comfortScore > 0 and baseName ~= "Imovel Neutro" and baseName ~= "Area Externa" and not tostring(baseName):find("Nao Reivindicado") then
         localPlayerData.isInShelter = true
         localPlayerData.targetComfortScore = comfortScore
         localPlayerData.targetSqualorScore = squalorScore
@@ -247,6 +247,8 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
         end
     else
         localPlayerData.isInShelter = false
+        localPlayerData.targetComfortScore = 0
+        localPlayerData.targetSqualorScore = 0
         localPlayerData.shelterDwellMinutes = 0
         localPlayerData.lastDwellWorldHour = -1
     end
@@ -254,15 +256,23 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
     localPlayerData.lastScanHour = currentHour
 end
 
---- Disparado quando o jogador está em área externa/selvagem fora de abrigo.
+--- Disparado quando o jogador está em área externa/selvagem fora de abrigo ou em imóvel neutro.
 function LV_BuffManager.onUnsafeEnvironment(player)
     local currentHour = getGameTime():getWorldAgeHours()
     localPlayerData.isInShelter = false
+    localPlayerData.targetComfortScore = 0
+    localPlayerData.targetSqualorScore = 0
     localPlayerData.shelterDwellMinutes = 0
     localPlayerData.lastDwellWorldHour = -1
 
-    -- Se o tempo do buff ainda está ativo no relógio do jogo, preserva os bônus!
-    if currentHour >= localPlayerData.comfortExpiryWorldHour then
+    -- Se o jogador não possui base oficial no SP, anula buffs remanescentes imediatamente
+    local pMd = player and player.getModData and player:getModData()
+    local hasClaimedBase = (pMd and pMd.LV_ClaimedBaseBuildingId ~= nil)
+    if not hasClaimedBase and (not isClient or not isClient()) then
+        localPlayerData.comfortScore = 0
+        localPlayerData.comfortTier = 0
+        localPlayerData.comfortExpiryWorldHour = 0
+    elseif currentHour >= localPlayerData.comfortExpiryWorldHour then
         localPlayerData.comfortScore = 0
         localPlayerData.comfortTier = 0
         localPlayerData.comfortExpiryWorldHour = 0

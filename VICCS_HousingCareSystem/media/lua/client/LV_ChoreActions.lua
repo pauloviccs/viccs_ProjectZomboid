@@ -928,6 +928,49 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
                 end
             end
         end
+
+        -- D. Opção de Reivindicar Residência como Meu Lar (Single Player / SP Claim)
+        if sq and not sq:isOutside() and (not isClient() or not SafeHouse) then
+            local building = sq.getBuilding and sq:getBuilding()
+            if building then
+                local bId = building.getID and building:getID()
+                local pMd = player.getModData and player:getModData()
+                if bId and pMd then
+                    if pMd.LV_ClaimedBaseBuildingId == bId then
+                        local onUnclaimHome = function(pObj)
+                            local md = pObj:getModData()
+                            md.LV_ClaimedBaseBuildingId = nil
+                            if pObj.setHaloNote then
+                                pcall(function() pObj:setHaloNote("Residencia desocupada. Voce nao possui mais uma base oficial.", 220, 180, 80, 260) end)
+                            end
+                            if LV_ComfortScanner and LV_ComfortScanner.startScan then
+                                LV_ComfortScanner.startScan(pObj, true)
+                            end
+                            if LV_HouseDashboard and LV_HouseDashboard.getInstance then
+                                pcall(function() LV_HouseDashboard.getInstance():refreshData(true) end)
+                            end
+                        end
+                        context:addOption("Living House: Desocupar Base / Abandonar Lar", player, onUnclaimHome)
+                    else
+                        local onClaimHome = function(pObj, buildingId)
+                            local md = pObj:getModData()
+                            md.LV_ClaimedBaseBuildingId = buildingId
+                            md.LV_ClaimedBaseName = md.LV_ClaimedBaseName or "Meu Lar"
+                            if pObj.setHaloNote then
+                                pcall(function() pObj:setHaloNote("Residencia estabelecida como seu Lar Oficial!", 80, 240, 140, 260) end)
+                            end
+                            if LV_ComfortScanner and LV_ComfortScanner.startScan then
+                                LV_ComfortScanner.startScan(pObj, true)
+                            end
+                            if LV_HouseDashboard and LV_HouseDashboard.getInstance then
+                                pcall(function() LV_HouseDashboard.getInstance():refreshData(true) end)
+                            end
+                        end
+                        context:addOption("Living House: Estabelecer Residencia como Meu Lar", player, onClaimHome, bId)
+                    end
+                end
+            end
+        end
     end)
 
     if not okMaster and errMaster then

@@ -14,8 +14,8 @@ Sandbox_ES = {
     Sandbox_HousingCareSystem_RequireRoofedRoom = "Requerir Habitacion Techada y Cerrada",
     Sandbox_HousingCareSystem_RequireRoofedRoom_tooltip = "Si esta activado, solo los edificios cerrados y con techo valido otorgan mejoras de confort. Si esta desactivado, los campamentos al aire libre tambien suman puntos.",
 
-    Sandbox_HousingCareSystem_RequireSafehouseClaim = "Requerir Refugio Reclamado (Multijugador)",
-    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "En servidores multijugador, solo los jugadores dentro de un refugio (Safehouse) oficialmente reclamado reciben mejoras. Ideal para servidores competitivos.",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim = "Requerir Base Reclamada / Establecida",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "Requiere que la ubicacion sea la base oficial del jugador para generar confort (Safehouse en MP o 'Establecer Hogar' con clic derecho en SP). Desactivalo para que cualquier casa otorgue confort libremente.",
 
     -- Niveles de Confort
     Sandbox_HousingCareSystem_Tier1Threshold = "Puntos para Nivel 1 (Acogedor)",

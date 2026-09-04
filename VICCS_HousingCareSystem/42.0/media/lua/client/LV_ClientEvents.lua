@@ -56,6 +56,9 @@ local function onEveryHoursCheck()
 end
 
 local lastMoveScanTime = 0
+local lastOwnershipClaimed = nil
+local lastBaseName = nil
+local lastEntryExitNoticeTime = 0
 
 --- Monitora movimentação entre cômodos ou deslocamento na base com throttle inteligente.
 local function onPlayerPositionUpdate(player)
@@ -77,6 +80,33 @@ local function onPlayerPositionUpdate(player)
     local px, py, pz = sq:getX(), sq:getY(), sq:getZ()
     local room = sq.getRoom and sq:getRoom()
     local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
+
+    -- Telemetria e Notificações em Halo de Entrada / Saída da Residência Oficial
+    if LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus then
+        local own = LV_ComfortScanner.getBuildingOwnershipStatus(sq, player)
+        local isCurrentlyClaimed = (own and own.isClaimed == true and own.status == "CLAIMED")
+        local currentBaseName = (own and own.baseName) or "Seu Refugio"
+
+        if lastOwnershipClaimed == nil then
+            lastOwnershipClaimed = isCurrentlyClaimed
+            lastBaseName = currentBaseName
+        elseif lastOwnershipClaimed ~= isCurrentlyClaimed then
+            if (now - lastEntryExitNoticeTime) >= 4.0 then
+                lastEntryExitNoticeTime = now
+                if isCurrentlyClaimed then
+                    local note = string.format("Entrando em: %s (Seu Refugio)", currentBaseName)
+                    showNotification(player, note, 80, 230, 120)
+                else
+                    local note = string.format("Saindo de: %s", lastBaseName or "Seu Refugio")
+                    showNotification(player, note, 230, 180, 80)
+                end
+            end
+            lastOwnershipClaimed = isCurrentlyClaimed
+            if isCurrentlyClaimed then
+                lastBaseName = currentBaseName
+            end
+        end
+    end
 
     if room ~= lastRoom then
         lastRoom = room

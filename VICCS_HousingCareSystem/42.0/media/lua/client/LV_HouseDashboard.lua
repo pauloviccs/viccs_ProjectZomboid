@@ -12,6 +12,7 @@
 -- =============================================================================
 
 require "ISUI/ISPanel"
+require "ISUI/ISTextBox"
 require "LV_Config"
 require "LV_ComfortScanner"
 require "LV_BuffManager"
@@ -33,8 +34,8 @@ local ACCENT_RED = {0.95, 0.25, 0.25}
 function LV_HouseDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
-    local w = width or 370
-    local h = height or 330
+    local w = width or 380
+    local h = height or 380
 
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -58,8 +59,8 @@ function LV_HouseDashboard.getInstance()
     if not instance then
         local screenW = getCore():getScreenWidth()
         local screenH = getCore():getScreenHeight()
-        local w = 370
-        local h = 330
+        local w = 380
+        local h = 380
         local x = math.floor((screenW - w) / 2)
         local y = math.floor((screenH - h) / 2)
 
@@ -107,9 +108,75 @@ function LV_HouseDashboard:onMouseUp(x, y)
                 return true
             end
         end
+
+        -- Clique no botão [RENOMEAR]
+        if y >= 26 and y <= 46 and x >= (self.width - 105) and x <= (self.width - PAD) then
+            if self.cachedData and self.cachedData.isClaimed then
+                self:openRenameModal(self.cachedData.safehouseName)
+                self.isDragging = false
+                return true
+            end
+        end
     end
     self.isDragging = false
     return true
+end
+
+--- Abre o modal nativo ISTextBox para renomear o Lar / Safehouse
+function LV_HouseDashboard:openRenameModal(currentName)
+    local player = getPlayer()
+    if not player then return end
+    local pNum = player:getPlayerNum()
+
+    local sw = getCore():getScreenWidth()
+    local sh = getCore():getScreenHeight()
+    local bw, bh = 280, 160
+    local bx = math.floor((sw - bw) / 2)
+    local by = math.floor((sh - bh) / 2)
+
+    local modal = ISTextBox:new(bx, by, bw, bh, "Renomear Refugio / Base:", currentName or "Meu Lar", self, LV_HouseDashboard.onRenameModalConfirm, pNum)
+    modal:initialise()
+    modal:addToUIManager()
+end
+
+--- Callback disparado ao clicar no botão OK ou Cancelar do modal de renomear
+function LV_HouseDashboard:onRenameModalConfirm(button)
+    if button and button.internal == "OK" then
+        local entry = button.parent and button.parent.entry
+        local newName = entry and entry:getText()
+        if newName then
+            local trimmed = (newName.trim and newName:trim()) or newName:match("^%s*(.-)%s*$")
+            if trimmed and trimmed ~= "" then
+                local player = getPlayer()
+                if player then
+                    local pMd = player:getModData()
+                    pMd.LV_ClaimedBaseName = trimmed
+
+                    -- Se for Safehouse no Multiplayer
+                    local pSq = player:getCurrentSquare()
+                    local shClass = SafeHouse or Safehouse
+                    if shClass and shClass.getSafehouse and pSq then
+                        local ok, sh = pcall(shClass.getSafehouse, pSq)
+                        if ok and sh and sh.setTitle then
+                            pcall(sh.setTitle, sh, trimmed)
+                            if sh.syncSafehouse then pcall(sh.syncSafehouse, sh) end
+                        end
+                    end
+
+                    if player.setHaloNote then
+                        pcall(function()
+                            player:setHaloNote("Base renomeada para: " .. trimmed, 80, 230, 140, 250)
+                        end)
+                    end
+
+                    self:refreshData(true)
+                    if LV_ComfortScanner and LV_ComfortScanner.startScan then
+                        LV_ComfortScanner.startScan(player, true)
+                    end
+                end
+            end
+        end
+    end
 end
 
 function LV_HouseDashboard:onMouseMove(dx, dy)
@@ -168,14 +235,28 @@ function LV_HouseDashboard:refreshData(force)
     local cell = getCell()
 
     -- 1. Dados Básicos da Safehouse / Cômodo
+    local own = (LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus and LV_ComfortScanner.getBuildingOwnershipStatus(pSq, player)) or nil
+    res.ownershipStatus = (own and own.status) or "OUTSIDE"
+    res.isClaimed = (own and own.isClaimed == true)
+    res.isOutside = (own and own.isOutside == true)
+    res.isUnclaimed = (not res.isOutside and not res.isClaimed)
+    res.totalTiles = (own and own.totalTiles) or 0
+    res.roomCount = (own and own.roomCount) or 0
+    res.buildingId = (own and own.buildingId) or nil
+    if own and own.baseName and own.baseName ~= "" then
+        res.safehouseName = own.baseName
+    end
+
     local buffData = LV_BuffManager and LV_BuffManager.getPlayerData and LV_BuffManager.getPlayerData(player)
     if buffData then
         res.comfortTier = buffData.comfortTier or 0
         res.comfortScore = buffData.comfortScore or 0
         res.squalorScore = buffData.squalorScore or 0
         res.seasonalNote = buffData.seasonalNote or "Clima Estavel"
-        if buffData.baseName and buffData.baseName ~= "" and buffData.baseName ~= "Lar" then
-            res.safehouseName = buffData.baseName
+        if not own or not own.baseName or own.baseName == "" then
+            if buffData.baseName and buffData.baseName ~= "" and buffData.baseName ~= "Lar" then
+                res.safehouseName = buffData.baseName
+            end
         end
     end
 
@@ -190,6 +271,15 @@ function LV_HouseDashboard:refreshData(force)
         res.safehouseTier = res.comfortTier
         res.roomScore = res.comfortScore
         res.roomTier = res.comfortTier
+    end
+
+    if not res.isClaimed then
+        res.safehouseScore = 0
+        res.safehouseTier = 0
+        res.roomScore = 0
+        res.roomTier = 0
+        res.comfortScore = 0
+        res.comfortTier = 0
     end
 
     local routineData = LV_RoutineSystem and LV_RoutineSystem.getRoutineData and LV_RoutineSystem.getRoutineData(player)
@@ -359,11 +449,45 @@ function LV_HouseDashboard:render()
     self:drawTextRight("[COMODO (K)]", self.width - PAD - 26, PAD + 2, 0.45, 0.85, 0.90, 0.90, FONT_S)
     self:drawTextRight("[X]", self.width - PAD, PAD + 2, 0.70, 0.70, 0.70, 1.0, FONT_S)
 
+    -- Linha 1: Nome da Base & Botão [RENOMEAR]
     local subTitle = string.format("Refugio: %s [Tier %d - %d pts]", data.safehouseName or "Base", data.safehouseTier or 0, data.safehouseScore or 0)
-    self:drawText(subTitle, PAD + 4, PAD + 22, 0.70, 0.75, 0.80, 1.0, FONT_S)
+    if data.isOutside then
+        subTitle = "Refugio: Area Externa [0 pts]"
+    elseif data.isUnclaimed then
+        subTitle = "Refugio: Imovel Neutro [Buffs Inativos]"
+    end
+    self:drawText(subTitle, PAD + 4, PAD + 20, 0.85, 0.90, 0.95, 1.0, FONT_S)
+
+    if data.isClaimed then
+        self:drawTextRight("[RENOMEAR]", self.width - PAD, PAD + 20, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 1.0, FONT_S)
+    end
+
+    -- Linha 2: Status de Posse
+    local posseLabel = "Posse: Seu Lar Oficial (Reivindicado)"
+    local posseCol = ACCENT_GREEN
+    if data.isOutside then
+        posseLabel = "Posse: Area Externa (Sem Cobertura)"
+        posseCol = {0.60, 0.65, 0.70}
+    elseif data.ownershipStatus == "OTHER_OWNER" then
+        posseLabel = "Posse: Safehouse de Outro Sobrevivente"
+        posseCol = ACCENT_RED
+    elseif data.isUnclaimed then
+        posseLabel = "Posse: Imovel Neutro (Nao Reivindicado)"
+        posseCol = ACCENT_AMBER
+    end
+    self:drawText(posseLabel, PAD + 4, PAD + 20 + hgt + 2, posseCol[1], posseCol[2], posseCol[3], 1.0, FONT_S)
+
+    -- Linha 3: Tamanho da Base (Blocos e Cômodos)
+    local sizeLabel = "Tamanho: N/A (Ao ar livre)"
+    local sizeCol = {0.60, 0.60, 0.65}
+    if data.totalTiles and data.totalTiles > 0 and not data.isOutside then
+        sizeLabel = string.format("Tamanho: %d blocos (%d comodos)", data.totalTiles, data.roomCount or 1)
+        sizeCol = {0.70, 0.85, 0.95}
+    end
+    self:drawText(sizeLabel, PAD + 4, PAD + 20 + (hgt + 2) * 2, sizeCol[1], sizeCol[2], sizeCol[3], 1.0, FONT_S)
 
     -- Linha Divisória 1
-    local curY = PAD + 42
+    local curY = PAD + 20 + (hgt + 2) * 3 + 2
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.20, 1, 1, 1)
     curY = curY + 8
 

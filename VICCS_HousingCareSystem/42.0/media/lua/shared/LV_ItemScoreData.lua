@@ -32,49 +32,49 @@ LV_ItemScoreData.SqualorWeights = {
 
 --- Arquétipos de pontuação para Mobílias, Eletrônicos e Decoração de Superfície.
 LV_ItemScoreData.FurnitureScore = {
-    bed              = 25,  -- Camas (conforto de descanso essencial)
-    couch            = 15,  -- Sofás acolchoados
-    chair            = 12,  -- Poltronas e cadeiras confortáveis
-    table            = 15,  -- Mesas de jantar e escrivaninhas
-    storage          = 15,  -- Armários, roupeiros, cristaleiras e cômodas
-    bookshelf        = 12,  -- Estantes de livros
-    stove_oven       = 12,  -- Fogão / Forno funcional
-    fridge           = 12,  -- Geladeira residencial
-    radio_tv         = 12,  -- Televisão ou Rádio
-    light_source_on  = 15,  -- Fontes de luz ativas (lâmpadas, velas acesas, lareira)
-    light_source_off = 5,   -- Fontes de luz apagadas
-    rug              = 12,  -- Tapetes e peles no piso
-    painting         = 8,   -- Quadros, pôsteres e decorações de parede
-    plant            = 10,  -- Vasos de plantas decorativas
-    curtain          = 6,   -- Cortinas em janelas
-    clock            = 8,   -- Relógios de parede
-    mirror           = 8,   -- Espelhos decorativos
-    fan              = 8,   -- Ventiladores residenciais
+    bed              = 10,  -- Camas (conforto de descanso essencial - era 25)
+    couch            = 7,   -- Sofás acolchoados (era 15)
+    chair            = 3,   -- Poltronas e cadeiras confortáveis (era 12)
+    table            = 4,   -- Mesas de jantar e escrivaninhas (era 15)
+    storage          = 4,   -- Armários, roupeiros, cristaleiras e cômodas (era 15)
+    bookshelf        = 5,   -- Estantes de livros (era 12)
+    stove_oven       = 6,   -- Fogão / Forno funcional (era 12)
+    fridge           = 6,   -- Geladeira residencial (era 12)
+    radio_tv         = 5,   -- Televisão ou Rádio (era 12)
+    light_source_on  = 5,   -- Fontes de luz ativas (lâmpadas, velas acesas, lareira - era 15)
+    light_source_off = 1,   -- Fontes de luz apagadas (era 5)
+    rug              = 4,   -- Tapetes e peles no piso (era 12)
+    painting         = 3,   -- Quadros, pôsteres e decorações de parede (era 8)
+    plant            = 3,   -- Vasos de plantas decorativas (era 10)
+    curtain          = 2,   -- Cortinas em janelas (era 6)
+    clock            = 3,   -- Relógios de parede (era 8)
+    mirror           = 3,   -- Espelhos decorativos (era 8)
+    fan              = 4,   -- Ventiladores residenciais (era 8)
 }
 
 --- Arquétipos de pontuação balanceada para Tiles de Mobílias, Eletrônicos e Decoração
 LV_ItemScoreData.TileArchetypes = {
-    bed              = { score = 25, category = "HEAVY_FURNITURE", label = "Cama de Descanso", maxPerRoom = 3 },
-    couch            = { score = 15, category = "HEAVY_FURNITURE", label = "Sofa Acolchoado", maxPerRoom = 4 },
-    chair            = { score = 10, category = "HEAVY_FURNITURE", label = "Cadeira/Poltrona", maxPerRoom = 8 },
-    table            = { score = 12, category = "HEAVY_FURNITURE", label = "Mesa/Balcao", maxPerRoom = 6 },
-    storage          = { score = 12, category = "HEAVY_FURNITURE", label = "Armario/Comoda", maxPerRoom = 8 },
-    bookshelf        = { score = 12, category = "HEAVY_FURNITURE", label = "Estante de Livros", maxPerRoom = 6 },
-    stove_oven       = { score = 15, category = "APPLIANCES_ELECTRONICS", label = "Fogao/Forno", maxPerRoom = 3 },
-    fridge           = { score = 15, category = "APPLIANCES_ELECTRONICS", label = "Geladeira", maxPerRoom = 3 },
-    radio_tv         = { score = 12, category = "APPLIANCES_ELECTRONICS", label = "Televisao/Radio", maxPerRoom = 4 },
-    light_source_on  = { score = 15, category = "APPLIANCES_ELECTRONICS", label = "Luz Ativa", maxPerRoom = 8 },
-    light_source_off = { score = 4,  category = "APPLIANCES_ELECTRONICS", label = "Luz Apagada", maxPerRoom = 8 },
-    heat_source_on   = { score = 24, category = "APPLIANCES_ELECTRONICS", label = "Aquecimento Ativo (Inverno)", maxPerRoom = 2 },
-    heat_source_off  = { score = 10, category = "APPLIANCES_ELECTRONICS", label = "Lareira/Aquecedor", maxPerRoom = 2 },
-    fan_cooling      = { score = 10, category = "APPLIANCES_ELECTRONICS", label = "Ventilador (Verao)", maxPerRoom = 4 },
-    rug              = { score = 12, category = "SURFACE_DECOR", label = "Tapete/Pele", maxPerRoom = 6 },
-    rug_winter       = { score = 18, category = "SURFACE_DECOR", label = "Tapete Isolante (Inverno)", maxPerRoom = 6 },
-    wall_decor       = { score = 8,  category = "SURFACE_DECOR", label = "Quadro/Decoracao Parede", maxPerRoom = 8 },
-    plant            = { score = 10, category = "SURFACE_DECOR", label = "Vaso de Planta", maxPerRoom = 6 },
-    curtain          = { score = 6,  category = "SURFACE_DECOR", label = "Cortina", maxPerRoom = 8 },
-    clock            = { score = 8,  category = "SURFACE_DECOR", label = "Relogio de Parede", maxPerRoom = 4 },
-    mirror           = { score = 8,  category = "SURFACE_DECOR", label = "Espelho", maxPerRoom = 4 },
+    bed              = { score = 10, category = "HEAVY_FURNITURE", label = "Cama de Descanso", maxPerRoom = 2 },
+    couch            = { score = 7,  category = "HEAVY_FURNITURE", label = "Sofa Acolchoado", maxPerRoom = 3 },
+    chair            = { score = 3,  category = "HEAVY_FURNITURE", label = "Cadeira/Poltrona", maxPerRoom = 6 },
+    table            = { score = 4,  category = "HEAVY_FURNITURE", label = "Mesa/Balcao", maxPerRoom = 4 },
+    storage          = { score = 4,  category = "HEAVY_FURNITURE", label = "Armario/Comoda", maxPerRoom = 6 },
+    bookshelf        = { score = 5,  category = "HEAVY_FURNITURE", label = "Estante de Livros", maxPerRoom = 4 },
+    stove_oven       = { score = 6,  category = "APPLIANCES_ELECTRONICS", label = "Fogao/Forno", maxPerRoom = 2 },
+    fridge           = { score = 6,  category = "APPLIANCES_ELECTRONICS", label = "Geladeira", maxPerRoom = 2 },
+    radio_tv         = { score = 5,  category = "APPLIANCES_ELECTRONICS", label = "Televisao/Radio", maxPerRoom = 2 },
+    light_source_on  = { score = 5,  category = "APPLIANCES_ELECTRONICS", label = "Luz Ativa", maxPerRoom = 6 },
+    light_source_off = { score = 1,  category = "APPLIANCES_ELECTRONICS", label = "Luz Apagada", maxPerRoom = 6 },
+    heat_source_on   = { score = 8,  category = "APPLIANCES_ELECTRONICS", label = "Aquecimento Ativo (Inverno)", maxPerRoom = 2 },
+    heat_source_off  = { score = 2,  category = "APPLIANCES_ELECTRONICS", label = "Lareira/Aquecedor", maxPerRoom = 2 },
+    fan_cooling      = { score = 4,  category = "APPLIANCES_ELECTRONICS", label = "Ventilador (Verao)", maxPerRoom = 2 },
+    rug              = { score = 4,  category = "SURFACE_DECOR", label = "Tapete/Pele", maxPerRoom = 4 },
+    rug_winter       = { score = 6,  category = "SURFACE_DECOR", label = "Tapete Isolante (Inverno)", maxPerRoom = 4 },
+    wall_decor       = { score = 3,  category = "SURFACE_DECOR", label = "Quadro/Decoracao Parede", maxPerRoom = 6 },
+    plant            = { score = 3,  category = "SURFACE_DECOR", label = "Vaso de Planta", maxPerRoom = 4 },
+    curtain          = { score = 2,  category = "SURFACE_DECOR", label = "Cortina", maxPerRoom = 6 },
+    clock            = { score = 3,  category = "SURFACE_DECOR", label = "Relogio de Parede", maxPerRoom = 2 },
+    mirror           = { score = 3,  category = "SURFACE_DECOR", label = "Espelho", maxPerRoom = 2 },
 }
 
 --- Retorna os dados do arquétipo de tile
@@ -101,119 +101,119 @@ LV_ItemScoreData.Categories = {
 }
 LV_ItemScoreData.EnvironmentScore.Categories = LV_ItemScoreData.Categories
 
---- Retorna a pontuação ajustada pela Curva de Rendimento Decrescente
+--- Retorna a pontuação ajustada pela Curva de Rendimento Decrescente (Mais rigorosa anti-spam)
 function LV_ItemScoreData.getDiminishedScore(baseScore, itemCount, isEnabled)
     if not isEnabled or itemCount <= 1 then
         return baseScore
     elseif itemCount == 2 then
-        return baseScore * 0.75
+        return baseScore * 0.60
     elseif itemCount == 3 then
-        return baseScore * 0.50
+        return baseScore * 0.35
     elseif itemCount == 4 then
-        return baseScore * 0.25
+        return baseScore * 0.15
     else
-        return baseScore * 0.10
+        return baseScore * 0.05
     end
 end
 
 --- Tabela Hash O(1) direta por FullType de Itens 3D Comuns
 LV_ItemScoreData.TypeLookup = {
-    -- Despensa / Alimentos 3D (Micro-pontuação balanceada)
-    ["Base.Cereal"]                 = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Cereal" },
-    ["Base.Crisps"]                 = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho de Batata" },
-    ["Base.Crisps2"]                = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho Tortilha" },
-    ["Base.Crisps3"]                = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho de Milho" },
-    ["Base.Crisps4"]                = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Batata Palha" },
-    ["Base.Popcorn"]                = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Pipoca de Micro-ondas" },
-    ["Base.CookiesChocolate"]       = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Biscoitos de Chocolate" },
-    ["Base.Chocolate"]              = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Barra de Chocolate" },
-    ["Base.CandyFruitSlices"]       = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Guloseimas Frutadas" },
-    ["Base.CannedCorn"]             = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Milho em Lata" },
-    ["Base.CannedPeas"]             = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Ervilha em Lata" },
-    ["Base.CannedPotato2"]          = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Batatas em Lata" },
-    ["Base.CannedTomato"]           = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Tomate em Lata" },
-    ["Base.CannedCarrots2"]         = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Cenouras em Lata" },
-    ["Base.CannedChili"]            = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Chili em Lata" },
-    ["Base.CannedBolognese"]        = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Bolonhesa em Lata" },
-    ["Base.TinnedSoup"]             = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Sopa Enlatada" },
-    ["Base.TunaTin"]                = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Atum em Lata" },
-    ["Base.CannedSardines"]         = { score = 0.4, category = "PANTRY_SUPPLIES_3D", label = "Sardinhas em Lata" },
-    ["Base.PeanutButter"]           = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Manteiga de Amendoim" },
-    ["Base.JamFruit"]               = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Geleia de Frutas" },
-    ["Base.Coffee2"]                = { score = 0.8, category = "PANTRY_SUPPLIES_3D", label = "Lata de Cafe em Po" },
-    ["Base.TeaBag"]                 = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Cha" },
-    ["Base.Sugar"]                  = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Pacote de Acucar" },
-    ["Base.Flour"]                  = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Saco de Farinha" },
-    ["Base.Rice"]                   = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Saco de Arroz" },
-    ["Base.Pasta"]                  = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Pacote de Macarrao" },
+    -- Despensa / Alimentos 3D (Micro-pontuação balanceada: 0.1 a 0.25 pts)
+    ["Base.Cereal"]                 = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Cereal" },
+    ["Base.Crisps"]                 = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho de Batata" },
+    ["Base.Crisps2"]                = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho Tortilha" },
+    ["Base.Crisps3"]                = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho de Milho" },
+    ["Base.Crisps4"]                = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Batata Palha" },
+    ["Base.Popcorn"]                = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Pipoca de Micro-ondas" },
+    ["Base.CookiesChocolate"]       = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Biscoitos de Chocolate" },
+    ["Base.Chocolate"]              = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Barra de Chocolate" },
+    ["Base.CandyFruitSlices"]       = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Guloseimas Frutadas" },
+    ["Base.CannedCorn"]             = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Milho em Lata" },
+    ["Base.CannedPeas"]             = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Ervilha em Lata" },
+    ["Base.CannedPotato2"]          = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Batatas em Lata" },
+    ["Base.CannedTomato"]           = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Tomate em Lata" },
+    ["Base.CannedCarrots2"]         = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Cenouras em Lata" },
+    ["Base.CannedChili"]            = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Chili em Lata" },
+    ["Base.CannedBolognese"]        = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Bolonhesa em Lata" },
+    ["Base.TinnedSoup"]             = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Sopa Enlatada" },
+    ["Base.TunaTin"]                = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Atum em Lata" },
+    ["Base.CannedSardines"]         = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Sardinhas em Lata" },
+    ["Base.PeanutButter"]           = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Manteiga de Amendoim" },
+    ["Base.JamFruit"]               = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Geleia de Frutas" },
+    ["Base.Coffee2"]                = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Lata de Cafe em Po" },
+    ["Base.TeaBag"]                 = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Cha" },
+    ["Base.Sugar"]                  = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Pacote de Acucar" },
+    ["Base.Flour"]                  = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Saco de Farinha" },
+    ["Base.Rice"]                   = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Saco de Arroz" },
+    ["Base.Pasta"]                  = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Pacote de Macarrao" },
 
-    -- Bebidas Lacradas / Garrafas
-    ["Base.Pop"]                    = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Lata de Refrigerante" },
-    ["Base.Pop2"]                   = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Lata de Refrigerante Diet" },
-    ["Base.Pop3"]                   = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Lata de Refrigerante Limao" },
-    ["Base.WaterBottleFull"]        = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Agua Mineral" },
-    ["Base.BeerBottle"]             = { score = 0.7, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Cerveja" },
-    ["Base.BeerCan"]                = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Lata de Cerveja" },
-    ["Base.Wine"]                   = { score = 1.0, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Vinho Tinto" },
-    ["Base.Wine2"]                  = { score = 1.0, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Vinho Branco" },
-    ["Base.WhiskeyFull"]            = { score = 1.2, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Whiskey" },
+    -- Bebidas Lacradas / Garrafas (0.15 a 0.35 pts)
+    ["Base.Pop"]                    = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Lata de Refrigerante" },
+    ["Base.Pop2"]                   = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Lata de Refrigerante Diet" },
+    ["Base.Pop3"]                   = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Lata de Refrigerante Limao" },
+    ["Base.WaterBottleFull"]        = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Agua Mineral" },
+    ["Base.BeerBottle"]             = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Cerveja" },
+    ["Base.BeerCan"]                = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Lata de Cerveja" },
+    ["Base.Wine"]                   = { score = 0.35, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Vinho Tinto" },
+    ["Base.Wine2"]                  = { score = 0.35, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Vinho Branco" },
+    ["Base.WhiskeyFull"]            = { score = 0.40, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Whiskey" },
 
-    -- Conforto Orgânico 3D (Livros, Louças, Colecionáveis, Brinquedos)
-    ["Base.Book"]                   = { score = 2.5, category = "ORGANIC_COMFORT_3D", label = "Livro de Leitura" },
-    ["Base.BookCarpentry1"]         = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Manual de Carpintaria" },
-    ["Base.BookCooking1"]           = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Guia de Culinaria" },
-    ["Base.ComicBook"]              = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Revista em Quadrinhos" },
-    ["Base.Magazine"]               = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Revista Informativa" },
-    ["Base.Newspaper"]              = { score = 0.8, category = "ORGANIC_COMFORT_3D", label = "Jornal do Dia" },
-    ["Base.Notebook"]               = { score = 1.2, category = "ORGANIC_COMFORT_3D", label = "Caderno de Anotacoes" },
-    ["Base.Journal"]                = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Diario Pessoal" },
-    ["Base.Spiffo"]                 = { score = 3.5, category = "ORGANIC_COMFORT_3D", label = "Pelucia Oficial do Spiffo" },
-    ["Base.SpiffoBig"]              = { score = 5.0, category = "ORGANIC_COMFORT_3D", label = "Spiffo de Pelucia Gigante" },
-    ["Base.TeddyBear"]              = { score = 3.0, category = "ORGANIC_COMFORT_3D", label = "Ursinho de Pelucia" },
-    ["Base.Doll"]                   = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Boneca Decorativa" },
-    ["Base.ToyBear"]                = { score = 2.5, category = "ORGANIC_COMFORT_3D", label = "Bichinho de Pelucia" },
-    ["Base.Mugl"]                   = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Caneca de Ceramica" },
-    ["Base.MugWhite"]               = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Caneca de Cafe Branca" },
-    ["Base.MugRed"]                 = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Caneca de Cafe Vermelha" },
-    ["Base.Teacup"]                 = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Xicara de Porcelana" },
-    ["Base.Teapot"]                 = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Bule de Cha" },
-    ["Base.Kettle"]                 = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Chaleira Esmaltada" },
-    ["Base.Pot"]                    = { score = 1.8, category = "ORGANIC_COMFORT_3D", label = "Panela de Cozinha" },
-    ["Base.Saucepan"]               = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Frigideira / Cacarola" },
-    ["Base.Pan"]                    = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Frigideira de Ferro" },
-    ["Base.GuitarAcoustic"]         = { score = 3.5, category = "ORGANIC_COMFORT_3D", label = "Violao Acustico" },
-    ["Base.GuitarElectricBassBlack"]= { score = 3.5, category = "ORGANIC_COMFORT_3D", label = "Baixo Eletrico" },
-    ["Base.GuitarElectricBlack"]    = { score = 3.5, category = "ORGANIC_COMFORT_3D", label = "Guitarra Eletrica" },
-    ["Base.Violin"]                 = { score = 3.5, category = "ORGANIC_COMFORT_3D", label = "Violino Classico" },
-    ["Base.Dice"]                   = { score = 1.0, category = "ORGANIC_COMFORT_3D", label = "Dados de Jogo" },
-    ["Base.Cards"]                  = { score = 1.2, category = "ORGANIC_COMFORT_3D", label = "Baralho de Cartas" },
-    ["Base.ChessWhiteKing"]         = { score = 1.0, category = "ORGANIC_COMFORT_3D", label = "Peca de Xadrez" },
+    -- Conforto Orgânico 3D (Livros, Louças, Colecionáveis, Brinquedos: 0.2 a 1.2 pts)
+    ["Base.Book"]                   = { score = 0.60, category = "ORGANIC_COMFORT_3D", label = "Livro de Leitura" },
+    ["Base.BookCarpentry1"]         = { score = 0.50, category = "ORGANIC_COMFORT_3D", label = "Manual de Carpintaria" },
+    ["Base.BookCooking1"]           = { score = 0.50, category = "ORGANIC_COMFORT_3D", label = "Guia de Culinaria" },
+    ["Base.ComicBook"]              = { score = 0.40, category = "ORGANIC_COMFORT_3D", label = "Revista em Quadrinhos" },
+    ["Base.Magazine"]               = { score = 0.40, category = "ORGANIC_COMFORT_3D", label = "Revista Informativa" },
+    ["Base.Newspaper"]              = { score = 0.20, category = "ORGANIC_COMFORT_3D", label = "Jornal do Dia" },
+    ["Base.Notebook"]               = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Caderno de Anotacoes" },
+    ["Base.Journal"]                = { score = 0.40, category = "ORGANIC_COMFORT_3D", label = "Diario Pessoal" },
+    ["Base.Spiffo"]                 = { score = 1.00, category = "ORGANIC_COMFORT_3D", label = "Pelucia Oficial do Spiffo" },
+    ["Base.SpiffoBig"]              = { score = 1.50, category = "ORGANIC_COMFORT_3D", label = "Spiffo de Pelucia Gigante" },
+    ["Base.TeddyBear"]              = { score = 0.80, category = "ORGANIC_COMFORT_3D", label = "Ursinho de Pelucia" },
+    ["Base.Doll"]                   = { score = 0.60, category = "ORGANIC_COMFORT_3D", label = "Boneca Decorativa" },
+    ["Base.ToyBear"]                = { score = 0.70, category = "ORGANIC_COMFORT_3D", label = "Bichinho de Pelucia" },
+    ["Base.Mugl"]                   = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Caneca de Ceramica" },
+    ["Base.MugWhite"]               = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Caneca de Cafe Branca" },
+    ["Base.MugRed"]                 = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Caneca de Cafe Vermelha" },
+    ["Base.Teacup"]                 = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Xicara de Porcelana" },
+    ["Base.Teapot"]                 = { score = 0.40, category = "ORGANIC_COMFORT_3D", label = "Bule de Cha" },
+    ["Base.Kettle"]                 = { score = 0.40, category = "ORGANIC_COMFORT_3D", label = "Chaleira Esmaltada" },
+    ["Base.Pot"]                    = { score = 0.35, category = "ORGANIC_COMFORT_3D", label = "Panela de Cozinha" },
+    ["Base.Saucepan"]               = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Frigideira / Cacarola" },
+    ["Base.Pan"]                    = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Frigideira de Ferro" },
+    ["Base.GuitarAcoustic"]         = { score = 1.20, category = "ORGANIC_COMFORT_3D", label = "Violao Acustico" },
+    ["Base.GuitarElectricBassBlack"]= { score = 1.20, category = "ORGANIC_COMFORT_3D", label = "Baixo Eletrico" },
+    ["Base.GuitarElectricBlack"]    = { score = 1.20, category = "ORGANIC_COMFORT_3D", label = "Guitarra Eletrica" },
+    ["Base.Violin"]                 = { score = 1.20, category = "ORGANIC_COMFORT_3D", label = "Violino Classico" },
+    ["Base.Dice"]                   = { score = 0.25, category = "ORGANIC_COMFORT_3D", label = "Dados de Jogo" },
+    ["Base.Cards"]                  = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Baralho de Cartas" },
+    ["Base.ChessWhiteKing"]         = { score = 0.25, category = "ORGANIC_COMFORT_3D", label = "Peca de Xadrez" },
 
-    -- Ferramentas Manuais & Equipamentos de Bancada
-    ["Base.Hammer"]                 = { score = 0.8, category = "PANTRY_SUPPLIES_3D", label = "Martelo de Bancada" },
-    ["Base.Saw"]                    = { score = 0.8, category = "PANTRY_SUPPLIES_3D", label = "Serrote Manual" },
-    ["Base.Screwdriver"]            = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Chave de Fenda" },
-    ["Base.Wrench"]                 = { score = 0.8, category = "PANTRY_SUPPLIES_3D", label = "Chave Inglesa" },
-    ["Base.Needle"]                 = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Kit de Costura / Agulha" },
-    ["Base.FirstAidKit"]            = { score = 1.5, category = "PANTRY_SUPPLIES_3D", label = "Maleta de Primeiros Socorros" },
-    ["Base.Toolbox"]                = { score = 1.5, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Ferramentas" },
-    ["Base.Flashlight"]             = { score = 1.0, category = "PANTRY_SUPPLIES_3D", label = "Lanterna Eletrica" },
-    ["Base.Candle"]                 = { score = 1.2, category = "PANTRY_SUPPLIES_3D", label = "Vela Aromatica" },
+    -- Ferramentas Manuais & Equipamentos de Bancada (0.2 a 0.4 pts)
+    ["Base.Hammer"]                 = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Martelo de Bancada" },
+    ["Base.Saw"]                    = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Serrote Manual" },
+    ["Base.Screwdriver"]            = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Chave de Fenda" },
+    ["Base.Wrench"]                 = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Chave Inglesa" },
+    ["Base.Needle"]                 = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Kit de Costura / Agulha" },
+    ["Base.FirstAidKit"]            = { score = 0.40, category = "PANTRY_SUPPLIES_3D", label = "Maleta de Primeiros Socorros" },
+    ["Base.Toolbox"]                = { score = 0.40, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Ferramentas" },
+    ["Base.Flashlight"]             = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Lanterna Eletrica" },
+    ["Base.Candle"]                 = { score = 0.30, category = "PANTRY_SUPPLIES_3D", label = "Vela Aromatica" },
 }
 
 --- Tabela Hash O(1) de Tags e Categorias de Exibição
 LV_ItemScoreData.TagLookup = {
-    ["Literature"]  = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Material de Leitura" },
-    ["Book"]        = { score = 2.0, category = "ORGANIC_COMFORT_3D", label = "Livro" },
-    ["Toy"]         = { score = 2.5, category = "ORGANIC_COMFORT_3D", label = "Brinquedo / Pelucia" },
-    ["Cooking"]     = { score = 1.5, category = "ORGANIC_COMFORT_3D", label = "Utensilio Culinario" },
-    ["Food"]        = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Alimento / Suprimento" },
-    ["Drink"]       = { score = 0.6, category = "PANTRY_SUPPLIES_3D", label = "Bebida Lacrada" },
-    ["Medical"]     = { score = 1.0, category = "PANTRY_SUPPLIES_3D", label = "Suprimento Medico" },
-    ["Tool"]        = { score = 0.8, category = "PANTRY_SUPPLIES_3D", label = "Ferramenta de Bancada" },
-    ["Ammo"]        = { score = 0.5, category = "PANTRY_SUPPLIES_3D", label = "Municao em Caixa" },
-    ["Weapon"]      = { score = 1.2, category = "PANTRY_SUPPLIES_3D", label = "Armamento Decorativo" },
-    ["Firearm"]     = { score = 1.2, category = "PANTRY_SUPPLIES_3D", label = "Arma de Fogo em Exibicao" },
+    ["Literature"]  = { score = 0.60, category = "ORGANIC_COMFORT_3D", label = "Material de Leitura" },
+    ["Book"]        = { score = 0.50, category = "ORGANIC_COMFORT_3D", label = "Livro" },
+    ["Toy"]         = { score = 0.80, category = "ORGANIC_COMFORT_3D", label = "Brinquedo / Pelucia" },
+    ["Cooking"]     = { score = 0.30, category = "ORGANIC_COMFORT_3D", label = "Utensilio Culinario" },
+    ["Food"]        = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Alimento / Suprimento" },
+    ["Drink"]       = { score = 0.20, category = "PANTRY_SUPPLIES_3D", label = "Bebida Lacrada" },
+    ["Medical"]     = { score = 0.30, category = "PANTRY_SUPPLIES_3D", label = "Suprimento Medico" },
+    ["Tool"]        = { score = 0.25, category = "PANTRY_SUPPLIES_3D", label = "Ferramenta de Bancada" },
+    ["Ammo"]        = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Municao em Caixa" },
+    ["Weapon"]      = { score = 0.35, category = "PANTRY_SUPPLIES_3D", label = "Armamento Decorativo" },
+    ["Firearm"]     = { score = 0.35, category = "PANTRY_SUPPLIES_3D", label = "Arma de Fogo em Exibicao" },
 }
 
 --- Avalia um item em tempo O(1) retornando sua pontuação, categoria e se está estragado

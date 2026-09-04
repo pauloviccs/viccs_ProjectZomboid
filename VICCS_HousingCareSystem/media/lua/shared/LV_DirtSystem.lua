@@ -22,6 +22,11 @@ local lastPlayerSquares = {}
 function LV_DirtSystem.getCurrentLocationKey(player, square)
     if not square then return "global" end
 
+    -- Se estiver em área externa (ao ar livre/jardim/rua), a localização é estritamente "outside"
+    if square.isOutside and square:isOutside() then
+        return "outside"
+    end
+
     -- 1. Tenta identificar Safehouse
     local shClass = SafeHouse or Safehouse
     if shClass and shClass.getSafehouse then

@@ -14,8 +14,8 @@ Sandbox_CN = {
     Sandbox_HousingCareSystem_RequireRoofedRoom = "要求必须有完整屋顶",
     Sandbox_HousingCareSystem_RequireRoofedRoom_tooltip = "启用后，仅有封闭且有屋顶的房间可提供舒适度加成。禁用后，露天营地也可获得积分。",
 
-    Sandbox_HousingCareSystem_RequireSafehouseClaim = "要求必须占领安全屋 (多人联机)",
-    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "在多人服务器中，仅位于官方占领安全屋内的玩家可获得加成。适合竞技/平衡服务器。",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim = "要求已占领基地 / 设定庇护所",
+    Sandbox_HousingCareSystem_RequireSafehouseClaim_tooltip = "需要该建筑为玩家的官方安全屋（多人）或通过右键菜单设为庇护所（单人）才会获得舒适度加成。禁用后任意房屋皆可提供舒适。",
 
     -- 舒适度等级阈值
     Sandbox_HousingCareSystem_Tier1Threshold = "1级舒适度阈值 (温馨)",

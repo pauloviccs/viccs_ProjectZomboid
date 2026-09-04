@@ -134,6 +134,35 @@ function LV_RoomInspectorDashboard:onMouseWheel(del)
     return true
 end
 
+--- Desenha texto com quebra de linha automática respeitando a largura máxima
+function LV_RoomInspectorDashboard:drawWrappedText(text, x, y, maxW, r, g, b, a, font)
+    font = font or FONT_S
+    local tm = getTextManager()
+    local hgt = self.fontH or tm:getFontHeight(font)
+    local words = {}
+    for word in string.gmatch(text or "", "%S+") do
+        table.insert(words, word)
+    end
+
+    local line = ""
+    local curY = y
+    for _, word in ipairs(words) do
+        local testLine = (line == "") and word or (line .. " " .. word)
+        if tm:MeasureStringX(font, testLine) > maxW and line ~= "" then
+            self:drawText(line, x, curY, r, g, b, a or 1.0, font)
+            curY = curY + hgt + 2
+            line = word
+        else
+            line = testLine
+        end
+    end
+    if line ~= "" then
+        self:drawText(line, x, curY, r, g, b, a or 1.0, font)
+        curY = curY + hgt + 2
+    end
+    return curY
+end
+
 --- Atualiza os dados de telemetria do cômodo
 function LV_RoomInspectorDashboard:refreshData(force)
     local curTime = (getGameTime and getGameTime():getWorldAgeHours()) or 0
@@ -143,8 +172,63 @@ function LV_RoomInspectorDashboard:refreshData(force)
 
     local player = getPlayer()
     local sq = player and player:getCurrentSquare()
-    local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, sq)) or "room_default"
 
+    local own = (LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus and LV_ComfortScanner.getBuildingOwnershipStatus(sq, player)) or nil
+
+    -- 1. Verificação instantânea de Área Externa (ao ar livre / fora de casa)
+    if (own and own.status == "OUTSIDE") or (sq and sq.isOutside and sq:isOutside()) then
+        local breakdown = {
+            locKey = "outside",
+            roomName = "Area Externa",
+            roomScore = 0,
+            roomTier = 0,
+            safehouseScore = 0,
+            safehouseTier = 0,
+            cleanPoints = 0,
+            furniturePoints = 0,
+            lightingPoints = 0,
+            decorPoints = 0,
+            craftBonus = 0,
+            squalorScore = 0,
+            seasonalNote = "Ao Ar Livre",
+            itemsList = {},
+            categoryStats = {},
+            isOutside = true,
+            isClaimed = false
+        }
+        self.cachedBreakdown = breakdown
+        self.lastRefreshTime = curTime
+        return breakdown
+    end
+
+    -- 2. Verificação instantânea de Imóvel Neutro / Não Reivindicado
+    if own and not own.isClaimed then
+        local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, sq)) or "unclaimed"
+        local breakdown = {
+            locKey = locKey,
+            roomName = own.roomName or "Residencia (Nao Reivindicado)",
+            roomScore = 0,
+            roomTier = 0,
+            safehouseScore = 0,
+            safehouseTier = 0,
+            cleanPoints = 0,
+            furniturePoints = 0,
+            lightingPoints = 0,
+            decorPoints = 0,
+            craftBonus = 0,
+            squalorScore = 0,
+            seasonalNote = "Imovel Nao Reivindicado",
+            itemsList = {},
+            categoryStats = {},
+            isUnclaimed = true,
+            isClaimed = false
+        }
+        self.cachedBreakdown = breakdown
+        self.lastRefreshTime = curTime
+        return breakdown
+    end
+
+    local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, sq)) or "room_default"
     local breakdown = (LV_ComfortScanner and LV_ComfortScanner.getRoomBreakdown and LV_ComfortScanner.getRoomBreakdown(locKey)) or {}
     self.cachedBreakdown = breakdown
     self.lastRefreshTime = curTime
@@ -189,6 +273,9 @@ function LV_RoomInspectorDashboard:render()
     self:drawTextRight("[X]", self.width - PAD, PAD + 2, 0.70, 0.70, 0.70, 1.0, FONT_S)
 
     local roomTitle = string.format("Comodo Atual: %s", data.roomName or "Ambiente Desconhecido")
+    if data.isOutside then
+        roomTitle = "Comodo Atual: Area Externa"
+    end
     self:drawText(roomTitle, PAD + 4, PAD + 22, 0.85, 0.90, 0.95, 1.0, FONT_S)
 
     -- Linha Divisória 1
@@ -246,7 +333,13 @@ function LV_RoomInspectorDashboard:render()
     curY = curY + hgt + 2
 
     local itemsList = data.itemsList or {}
-    if #itemsList == 0 then
+    if data.isOutside then
+        self:drawText("- Area Externa: Sem comodo interno fechado ao redor.", PAD + 12, curY, 0.60, 0.60, 0.65, 1.0, FONT_S)
+        curY = curY + hgt + 4
+    elseif data.isUnclaimed then
+        self:drawText("- Imovel Nao Reivindicado: Aconchego e buffs inativos.", PAD + 12, curY, 0.85, 0.60, 0.40, 1.0, FONT_S)
+        curY = curY + hgt + 4
+    elseif #itemsList == 0 then
         self:drawText("Nenhum movel ou objeto 3D detectado ao redor.", PAD + 12, curY, 0.60, 0.60, 0.65, 1.0, FONT_S)
         curY = curY + hgt + 4
     else
@@ -286,19 +379,30 @@ function LV_RoomInspectorDashboard:render()
 
     local ptsNeeded = math.max(0, nextThreshold - roomScore)
     local advice = ""
-    if roomTier == 4 then
+    if data.isOutside then
+        advice = "Voce esta ao ar livre. Entre em sua base para desfrutar de conforto."
+    elseif data.isUnclaimed then
+        advice = "Imovel nao reivindicado. Clique com botao direito no interior para estabelecer seu Lar."
+    elseif roomTier == 4 then
         advice = "Santuario Perfeito: O ambiente atingiu a pontuacao maxima de conforto!"
     elseif ptsNeeded > 0 then
-        if furnPts < 25 then
+        if furnPts < 15 then
             advice = string.format("Dica: Faltam %d pts para o Tier %d. Adicione uma cama acolchoada ou poltrona.", ptsNeeded, nextTier)
-        elseif elecPts < 10 then
+        elseif elecPts < 6 then
             advice = string.format("Dica: Faltam %d pts para o Tier %d. Acenda luminarias ou ligue uma TV/Radio.", ptsNeeded, nextTier)
         else
             advice = string.format("Dica: Faltam %d pts para o Tier %d. Decore as paredes com quadros e tapetes.", ptsNeeded, nextTier)
         end
     end
 
-    self:drawText(advice, PAD + 4, curY, 0.90, 0.85, 0.50, 1.0, FONT_S)
+    local maxW = self.width - (PAD * 2) - 8
+    curY = self:drawWrappedText(advice, PAD + 4, curY, maxW, 0.90, 0.85, 0.50, 1.0, FONT_S)
+
+    -- Auto-ajuste dinâmico de altura para eliminar espaços pretos vazios no rodapé
+    local targetH = math.max(260, curY + PAD)
+    if math.abs(self.height - targetH) > 2 then
+        self:setHeight(targetH)
+    end
 end
 
 -- =============================================================================

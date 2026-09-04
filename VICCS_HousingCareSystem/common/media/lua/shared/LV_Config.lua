@@ -18,7 +18,8 @@ local DEFAULTS = {
     ComfortCheckIntervalHours = 6,
     ComfortRadiusTiles = 15,
     RequireRoofedRoom = true,
-    RequireSafehouseClaim = false,
+    RequireSafehouseClaim = true,
+    RequireBaseOwnership = true,
 
     -- Tiers de Conforto
     Tier1Threshold = 20,
@@ -128,6 +129,18 @@ end
 --- Verifica se o sistema de tarefas domésticas (Homemaking) está ativo.
 function LV_Config.isHomemakingEnabled()
     return LV_Config.isEnabled() and (LV_Config.get("HomemakingEnabled") == true)
+end
+
+--- Verifica se a exigência de posse/reivindicação de base está ativa (Padrão: True)
+function LV_Config.isBaseOwnershipRequired()
+    if not LV_Config.isEnabled() then return false end
+    if SandboxVars and SandboxVars.HousingCareSystem then
+        if SandboxVars.HousingCareSystem.RequireBaseOwnership ~= nil then
+            return SandboxVars.HousingCareSystem.RequireBaseOwnership == true
+        end
+    end
+    -- Padrão inegociável: SEMPRE EXIGIR BASE REIVINDICADA (Evita que casas aleatórias dêem buffs)
+    return true
 end
 
 --- Verifica se o sistema de sujeira dinâmica e faxina está ativo.

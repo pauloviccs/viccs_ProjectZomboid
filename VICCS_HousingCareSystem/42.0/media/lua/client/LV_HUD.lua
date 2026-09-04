@@ -190,7 +190,12 @@ function LV_HUD:render()
     local footDirt = (LV_DirtSystem and LV_DirtSystem.getFootDirt and LV_DirtSystem.getFootDirt(player)) or 0
     local bodyDirt = (LV_DirtSystem and LV_DirtSystem.getPlayerBodyDirt and LV_DirtSystem.getPlayerBodyDirt(player)) or 0
 
-    local isAcclimatizing = (data.isInShelter and comfortTier == 0 and data.targetComfortScore and data.targetComfortScore > 0)
+    local own = (LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus and LV_ComfortScanner.getBuildingOwnershipStatus(sq, player)) or nil
+    local isOutside = (own and own.status == "OUTSIDE") or (sq and sq.isOutside and sq:isOutside())
+    local isClaimed = (own and own.isClaimed == true)
+    local isUnclaimed = (not isOutside and not isClaimed)
+
+    local isAcclimatizing = (isClaimed and data.isInShelter and comfortTier == 0 and data.targetComfortScore and data.targetComfortScore > 0)
 
     -- Controle de Interpolação Linear (LERP) de Transparência (Auto-Fade)
     local isOver = self:isMouseOver()
@@ -222,8 +227,18 @@ function LV_HUD:render()
     -- 2. Cabeçalho / Título (Living House)
     local curY = PAD
     local title = "LIVING HOUSE"
-    if data.baseName and data.baseName ~= "" and data.baseName ~= "Lar" and data.baseName ~= "Living House" then
-        title = string.format("LAR: %s", data.baseName)
+    if isOutside then
+        title = "AREA EXTERNA"
+    elseif isUnclaimed then
+        title = "IMOVEL NEUTRO"
+    elseif own and own.baseName and own.baseName ~= "" then
+        title = string.format("LAR: %s", own.baseName)
+    elseif data.baseName and data.baseName ~= "" and data.baseName ~= "Lar" and data.baseName ~= "Living House" then
+        if data.baseName:find("Nao Reivindicado") or data.baseName == "Imovel Neutro" then
+            title = "IMOVEL NEUTRO"
+        else
+            title = string.format("LAR: %s", data.baseName)
+        end
     end
     self:shadowText(title, PAD + 4, curY, acc[1], acc[2], acc[3], 0.95 * a)
 
@@ -278,13 +293,25 @@ function LV_HUD:render()
             0.70, 0.80, 0.75, 0.35, 0.85, 0.45)
     elseif comfortTier > 0 or not self.onlyProblems then
         -- Linha 1: Conforto do Cômodo / Lar
-        local breakdown = (LV_ComfortScanner and LV_ComfortScanner.getRoomBreakdown and LV_ComfortScanner.getRoomBreakdown()) or nil
+        local breakdown = (LV_ComfortScanner and LV_ComfortScanner.getRoomBreakdown and LV_ComfortScanner.getRoomBreakdown(locKey)) or nil
         local rTier = (breakdown and breakdown.roomTier) or comfortTier
         local rScore = (breakdown and breakdown.roomScore) or comfortScore
         local label = string.format("Conforto Comodo (T%d)", rTier)
         local valStr = string.format("%d pts", rScore)
         local color = {0.30, 0.88, 0.42}
-        drawBarLine(ICON_COMFORT, label, valStr, rScore / 100.0, color, {0.2, 0.4, 0.6, 0.8},
+        local pct = rScore / 100.0
+        if isOutside then
+            label = "Conforto (Area Externa)"
+            valStr = "0 pts"
+            pct = 0.0
+            color = {0.45, 0.50, 0.55}
+        elseif isUnclaimed then
+            label = "Conforto (Nao Reivindicado)"
+            valStr = "0 pts"
+            pct = 0.0
+            color = {0.55, 0.55, 0.45}
+        end
+        drawBarLine(ICON_COMFORT, label, valStr, pct, color, {0.2, 0.4, 0.6, 0.8},
             0.75, 0.80, 0.85, 0.35, 0.90, 0.45)
     end
 

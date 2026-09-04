@@ -49,9 +49,17 @@ option HousingCareSystem.RequireRoofedRoom
 option HousingCareSystem.RequireSafehouseClaim
 {
     type = boolean,
-    default = false,
+    default = true,
     page = HousingCareSystem,
     translation = RequireSafehouseClaim,
+}
+
+option HousingCareSystem.RequireBaseOwnership
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = RequireBaseOwnership,
 }
 
 option HousingCareSystem.Tier1Threshold
