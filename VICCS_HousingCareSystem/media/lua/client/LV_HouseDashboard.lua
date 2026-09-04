@@ -34,7 +34,7 @@ function LV_HouseDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
     local w = width or 370
-    local h = height or 280
+    local h = height or 315
 
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -147,6 +147,7 @@ function LV_HouseDashboard:refreshData(force)
         squalorScore = 0,
         streakDays = 0,
         isSpotless = false,
+        seasonalNote = "Clima Estavel",
     }
 
     if not player or player:isDead() then
@@ -163,6 +164,7 @@ function LV_HouseDashboard:refreshData(force)
         res.comfortTier = buffData.comfortTier or 0
         res.comfortScore = buffData.comfortScore or 0
         res.squalorScore = buffData.squalorScore or 0
+        res.seasonalNote = buffData.seasonalNote or "Clima Estavel"
         if buffData.baseName and buffData.baseName ~= "" and buffData.baseName ~= "Lar" then
             res.safehouseName = buffData.baseName
         end
@@ -378,7 +380,7 @@ function LV_HouseDashboard:render()
     curY = curY + 8
 
     -- =========================================================================
-    -- SEÇÃO 3: GOVERNANÇA, ROTINA & VIDA SOCIAL
+    -- SEÇÃO 3: GOVERNANÇA, ROTINA, CLIMA & VIDA SOCIAL
     -- =========================================================================
     local streakStr = string.format("Rotina: %d dias seguidos", data.streakDays or 0)
     self:drawText(streakStr, PAD + 4, curY, 0.20, 0.90, 0.75, 1.0, FONT_S)
@@ -392,11 +394,16 @@ function LV_HouseDashboard:render()
     end
     curY = curY + hgt + 3
 
+    -- Sazonalidade Tática do Clima
+    local seasonStr = string.format("Sazonalidade: %s", data.seasonalNote or "Clima Estavel")
+    self:drawText(seasonStr, PAD + 4, curY, 0.88, 0.78, 0.45, 1.0, FONT_S)
+    curY = curY + hgt + 3
+
     -- Vida Social / Companhia
     if data.survivorCount and data.survivorCount >= 2 then
-        local compText = string.format("Companhia Ativa (%d sobreviventes no refúgio)", data.survivorCount)
+        local compText = string.format("Companhia Ativa (%d sobreviventes)", data.survivorCount)
         self:drawText(compText, PAD + 4, curY, 0.40, 0.95, 0.50, 1.0, FONT_S)
-        self:drawTextRight("Bonus: Tedio e Tristeza reduzidos", self.width - PAD, curY, 0.60, 0.90, 0.60, 1.0, FONT_S)
+        self:drawTextRight("Bonus: -Tedio e -Tristeza", self.width - PAD, curY, 0.60, 0.90, 0.60, 1.0, FONT_S)
     else
         self:drawText("Vida Social: Sobrevivente Solitario", PAD + 4, curY, 0.60, 0.60, 0.65, 1.0, FONT_S)
         self:drawTextRight("Dica: Convide aliados para o lar", self.width - PAD, curY, 0.50, 0.50, 0.55, 1.0, FONT_S)
@@ -418,11 +425,16 @@ function LV_HouseDashboard.printStatusReport(player)
     end
     table.insert(lines, string.format(" - Reserva Hidrica: %d barris (%d / %d Litros)", data.barrelCount or 0, math.floor(data.waterTotal or 0), math.floor(data.waterMax or 0)))
     table.insert(lines, string.format(" - Conforto do Lar: Tier %d (%d pts) | Insalubridade: %d%%", data.comfortTier or 0, data.comfortScore or 0, math.floor(data.squalorScore or 0)))
+    table.insert(lines, string.format(" - Clima & Sazonalidade: %s", data.seasonalNote or "Clima Estavel"))
     table.insert(lines, string.format(" - Rotina & Social: Streak de %d dias | Companhia: %d sobrevivente(s)", data.streakDays or 0, data.survivorCount or 1))
 
     for _, line in ipairs(lines) do
-        if ISChat and ISChat.addLineInChat then
-            pcall(ISChat.addLineInChat, line, 0)
+        if ISChat then
+            if ISChat.instance and ISChat.instance.addLineInChat then
+                pcall(function() ISChat.instance:addLineInChat(line, 0) end)
+            elseif ISChat.addLineInChat then
+                pcall(ISChat.addLineInChat, line, 0)
+            end
         end
         print(line)
     end

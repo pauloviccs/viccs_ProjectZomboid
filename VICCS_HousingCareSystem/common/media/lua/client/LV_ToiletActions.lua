@@ -142,12 +142,20 @@ function LV_ToiletActions.onFillWorldObjectContextMenu(playerNum, context, world
         context:addSubMenu(context:addOption(string.format("Usar Banheiro (Necessidade: %d%%)", math.floor(currentNeed))), toiletSubMenu)
 
         toiletSubMenu:addOption("Aliviar-se (Rapido)", clickedToilet, function()
-            ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedToilet:getSquare()))
+            if luautils and luautils.walkAdj then
+                luautils.walkAdj(player, clickedToilet:getSquare())
+            else
+                ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedToilet:getSquare()))
+            end
             ISTimedActionQueue.add(ISUseToiletAction:new(player, clickedToilet, "pee", 70))
         end)
 
         toiletSubMenu:addOption("Aliviar-se (Completo)", clickedToilet, function()
-            ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedToilet:getSquare()))
+            if luautils and luautils.walkAdj then
+                luautils.walkAdj(player, clickedToilet:getSquare())
+            else
+                ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedToilet:getSquare()))
+            end
             ISTimedActionQueue.add(ISUseToiletAction:new(player, clickedToilet, "poop", 120))
         end)
     end

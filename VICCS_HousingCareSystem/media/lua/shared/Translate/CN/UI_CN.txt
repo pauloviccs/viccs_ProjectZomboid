@@ -36,6 +36,7 @@ UI_CN = {
     UI_LV_Halo_Farming = "+15% 居所增益持续时间 (农艺)",
     UI_LV_Halo_Building = "+25% 居所增益持续时间 (建造)",
     UI_LV_Halo_Decorating = "+15% 居所增益持续时间 (装饰)",
+    UI_LV_Halo_Hobbies = "+15% 居所增益持续时间 (爱好与休闲)",
     UI_LV_HUD_HomemakingBonus = "家务加成: +%sh",
 
     UI_LV_NeedToilet1_Title = "如厕需求",

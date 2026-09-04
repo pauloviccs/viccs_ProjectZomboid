@@ -387,9 +387,20 @@ Events.OnPlayerUpdate.Add(function(player)
 end)
 
 Events.EveryDays.Add(function()
-    local player = getPlayer()
-    if player then
-        LV_RoutineSystem.checkDailyStreak(player)
+    if isServer and isServer() then
+        local playerList = getOnlinePlayers and getOnlinePlayers()
+        if playerList and playerList.size then
+            for i = 0, playerList:size() - 1 do
+                local p = playerList:get(i)
+                if p then LV_RoutineSystem.checkDailyStreak(p) end
+            end
+        end
+    else
+        local numPlayers = (getNumActivePlayers and getNumActivePlayers()) or 1
+        for i = 0, numPlayers - 1 do
+            local p = (getSpecificPlayer and getSpecificPlayer(i)) or (getPlayer and getPlayer())
+            if p then LV_RoutineSystem.checkDailyStreak(p) end
+        end
     end
 end)
 

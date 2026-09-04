@@ -36,6 +36,7 @@ UI_ES = {
     UI_LV_Halo_Farming = "+15% Duracion del Hogar (Agricultura)",
     UI_LV_Halo_Building = "+25% Duracion del Hogar (Construccion)",
     UI_LV_Halo_Decorating = "+15% Duracion del Hogar (Decoracion)",
+    UI_LV_Halo_Hobbies = "+15% Duracion del Hogar (Pasatiempos y Ocio)",
     UI_LV_HUD_HomemakingBonus = "Bonus de Tareas: +%sh",
 
     UI_LV_NeedToilet1_Title = "Ganas de ir al Baño",

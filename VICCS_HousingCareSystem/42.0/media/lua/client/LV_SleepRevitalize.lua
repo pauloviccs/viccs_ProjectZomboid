@@ -11,10 +11,19 @@
 
 LV_SleepRevitalize = LV_SleepRevitalize or {}
 
-local wasSleeping = false
-local sleepStartWorldHour = -1
-local hadPillowAtSleep = false
-local hadBedAtSleep = false
+local playerSleepStates = {}
+local function getPlayerSleepState(player)
+    local pNum = (player and player.getPlayerNum and player:getPlayerNum()) or 0
+    if not playerSleepStates[pNum] then
+        playerSleepStates[pNum] = {
+            wasSleeping = false,
+            sleepStartWorldHour = -1,
+            hadPillowAtSleep = false,
+            hadBedAtSleep = false
+        }
+    end
+    return playerSleepStates[pNum]
+end
 
 --- Verifica se há travesseiro no inventário, nas mãos ou no azulejo da cama.
 local function checkPillowPresence(player, square)
@@ -105,26 +114,27 @@ local function onSleepUpdate(player)
 
     local isAsleep = player.isAsleep and player:isAsleep()
     local currentHour = getGameTime():getWorldAgeHours()
+    local st = getPlayerSleepState(player)
 
     -- 1. Início do Sono
-    if isAsleep and not wasSleeping then
-        wasSleeping = true
-        sleepStartWorldHour = currentHour
+    if isAsleep and not st.wasSleeping then
+        st.wasSleeping = true
+        st.sleepStartWorldHour = currentHour
         local sq = player:getCurrentSquare()
-        hadBedAtSleep = checkBedPresence(sq)
-        hadPillowAtSleep = checkPillowPresence(player, sq)
+        st.hadBedAtSleep = checkBedPresence(sq)
+        st.hadPillowAtSleep = checkPillowPresence(player, sq)
 
         print(string.format("[LarVivo] Sobrevivente adormeceu na hora %.2f. Cama: %s | Travesseiro: %s",
-            sleepStartWorldHour, tostring(hadBedAtSleep), tostring(hadPillowAtSleep)))
+            st.sleepStartWorldHour, tostring(st.hadBedAtSleep), tostring(st.hadPillowAtSleep)))
 
     -- 2. Término do Sono (Acordou)
-    elseif not isAsleep and wasSleeping then
-        wasSleeping = false
-        local hoursSlept = math.max(0, currentHour - sleepStartWorldHour)
+    elseif not isAsleep and st.wasSleeping then
+        st.wasSleeping = false
+        local hoursSlept = math.max(0, currentHour - st.sleepStartWorldHour)
         print(string.format("[LarVivo] Sobrevivente acordou! Tempo dormido: %.1f horas in-game.", hoursSlept))
 
         -- Se dormiu pelo menos 6 horas no relógio do jogo
-        if hoursSlept >= 5.5 and hadBedAtSleep then
+        if hoursSlept >= 5.5 and st.hadBedAtSleep then
             local bodyDamage = player:getBodyDamage()
             local stats = player:getStats()
 
@@ -154,7 +164,7 @@ local function onSleepUpdate(player)
                         LV_DirtSystem.addFloorDirt(locKey, 15.0)
                     end
                 end
-            elseif hadPillowAtSleep then
+            elseif st.hadPillowAtSleep then
                 -- Sono Perfeito com Travesseiro
                 if bodyDamage then
                     pcall(function()
@@ -198,10 +208,10 @@ local function onSleepUpdate(player)
 
         -- Integração com a Rotina Matinal (Manhã Aconchegante)
         if LV_RoutineSystem and LV_RoutineSystem.onWakeUp then
-            LV_RoutineSystem.onWakeUp(player, hoursSlept, hadBedAtSleep, hadPillowAtSleep, bodyDirt < 70)
+            LV_RoutineSystem.onWakeUp(player, hoursSlept, st.hadBedAtSleep, st.hadPillowAtSleep, bodyDirt < 70)
         end
 
-        sleepStartWorldHour = -1
+        st.sleepStartWorldHour = -1
     end
 end
 

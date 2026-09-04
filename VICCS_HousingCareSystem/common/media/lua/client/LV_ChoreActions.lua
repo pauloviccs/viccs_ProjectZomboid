@@ -250,7 +250,11 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
         if dirt > 0 then
             if hasCleaningCloth then
                 local opt = context:addOption(string.format("Higienizar %s (Sujeira: %d%%)", fixtureLabel, math.floor(dirt)), clickedFixture, function()
-                    ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedFixture:getSquare()))
+                    if luautils and luautils.walkAdj then
+                        luautils.walkAdj(player, clickedFixture:getSquare())
+                    else
+                        ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedFixture:getSquare()))
+                    end
                     ISTimedActionQueue.add(ISCleanFixtureAction:new(player, clickedFixture, fixtureLabel, 120))
                 end)
             else

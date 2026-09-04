@@ -214,6 +214,47 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         return
     end
 
+    -- 4. Contexto Climático e Sazonalidade Tática
+    local climateContext = {
+        seasonName = "Temperado",
+        isWinter = false,
+        isSummer = false,
+        isFreezing = false,
+        isHeatwave = false,
+        temperature = 20.0,
+    }
+
+    if LV_Config and LV_Config.get and (LV_Config.get("EnableSeasonalComfort") ~= false) then
+        local cm = getClimateManager and getClimateManager()
+        if cm and cm.getAirTemperatureForCharacter and player then
+            local ok, t = pcall(cm.getAirTemperatureForCharacter, cm, player)
+            if ok and t then
+                climateContext.temperature = t
+                if t <= 5.0 then climateContext.isFreezing = true end
+                if t >= 28.0 then climateContext.isHeatwave = true end
+            end
+        end
+
+        local gt = getGameTime()
+        if gt then
+            local s = gt.getSeason and gt:getSeason()
+            local m = gt.getMonth and gt:getMonth()
+            -- Inverno no hemisfério norte: Dezembro (11), Janeiro (0), Fevereiro (1) ou frio extremo
+            if s == 5 or m == 11 or m == 0 or m == 1 or climateContext.isFreezing then
+                climateContext.isWinter = true
+                climateContext.seasonName = "Inverno"
+            -- Verão: Junho (5), Julho (6), Agosto (7) ou calor intenso
+            elseif s == 2 or s == 3 or m == 5 or m == 6 or m == 7 or climateContext.isHeatwave then
+                climateContext.isSummer = true
+                climateContext.seasonName = "Verao"
+            elseif m == 8 or m == 9 or m == 10 then
+                climateContext.seasonName = "Outono"
+            else
+                climateContext.seasonName = "Primavera"
+            end
+        end
+    end
+
     local initialResults = {
         furnitureScore = 0,
         craftBonusScore = 0,
@@ -229,7 +270,11 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         baseName = baseName,
         isWholeBaseScan = isWholeBaseScan,
         foundTypes = {},
-        discoveredItems = {}
+        discoveredItems = {},
+        climate = climateContext,
+        hasActiveHeatInWinter = false,
+        hasSummerCooling = false,
+        seasonalNote = "",
     }
 
     -- Processa imediatamente se for poucos tiles ou acionamento manual (K)
@@ -424,7 +469,10 @@ function LV_ComfortScanner.processSquare(sq, res)
                 table.insert(res.discoveredItems, "Armario/Comoda/Cristaleira")
             end
 
-            -- 5. Tapetes e Peles no Chão
+            local cc = res.climate or {}
+            local seasonalEnabled = (LV_Config and LV_Config.get and LV_Config.get("EnableSeasonalComfort") ~= false)
+
+            -- 5. Tapetes e Peles no Chão (com Bônus de Isolamento no Inverno)
             local isRug = spriteName:find("rug") ~= nil or
                           spriteName:find("carpet") ~= nil or
                           spriteName:find("floors_rugs_") ~= nil or
@@ -435,12 +483,18 @@ function LV_ComfortScanner.processSquare(sq, res)
                           spriteName:find("mat") ~= nil
 
             if isRug and not res.foundTypes["rug"] then
-                res.furnitureScore = res.furnitureScore + 12
+                local rugScore = 12
+                if seasonalEnabled and cc.isWinter then
+                    rugScore = 18 -- +6 pts extras por isolamento térmico de piso frio no inverno
+                    table.insert(res.discoveredItems, "Tapete Acolchoado (Isolamento Frio)")
+                else
+                    table.insert(res.discoveredItems, "Tapete/Pele")
+                end
+                res.furnitureScore = res.furnitureScore + rugScore
                 res.foundTypes["rug"] = true
-                table.insert(res.discoveredItems, "Tapete/Pele")
             end
 
-            -- 6. Quadros, Pôsteres, Espelhos e Decorações de Parede
+            -- 6. Quadros, Pôsteres, Espelhos e Decorações de Parede (com Sombra Térmica no Verão)
             local isWallDecor = spriteName:find("painting") ~= nil or
                                 spriteName:find("poster") ~= nil or
                                 spriteName:find("picture") ~= nil or
@@ -457,10 +511,25 @@ function LV_ComfortScanner.processSquare(sq, res)
                 table.insert(res.discoveredItems, "Quadro/Decoracao")
             end
 
-            -- 7. Fogões, Fornos, Lareiras e Churrasqueiras com Sazonalidade Tática
-            local isFireplace = spriteName:find("fireplace") ~= nil or
-                                spriteName:find("campfire") ~= nil or
-                                (instanceof and instanceof(obj, "IsoFireplace"))
+            -- Cortinas fechadas bloqueando sol direto em dias escaldantes
+            if (instanceof and instanceof(obj, "IsoCurtain")) and seasonalEnabled and cc.isSummer and not res.foundTypes["sun_curtain"] then
+                if obj.IsOpen and not obj:IsOpen() then
+                    res.furnitureScore = res.furnitureScore + 4
+                    res.foundTypes["sun_curtain"] = true
+                    table.insert(res.discoveredItems, "Sombra Termica (Cortinas Fechadas)")
+                end
+            end
+
+            -- 7. Fogões, Fornos, Lareiras, Aquecedores e Churrasqueiras com Sazonalidade Tática
+            local isFireplace = (instanceof and instanceof(obj, "IsoFireplace")) or
+                                spriteName:find("fireplace") ~= nil or
+                                spriteName:find("campfire") ~= nil
+
+            local isHeater = spriteName:find("heater") ~= nil or
+                             spriteName:find("radiator") ~= nil or
+                             spriteName:find("appliances_heating_") ~= nil
+
+            local isAntiqueStove = (spriteName:find("appliances_cooking_01_0") ~= nil or spriteName:find("appliances_cooking_01_1") ~= nil)
 
             local isCooking = (IsoFlagType and IsoFlagType.stove and safeHasFlag(props, IsoFlagType.stove)) or
                               spriteName:find("stove") ~= nil or
@@ -470,35 +539,33 @@ function LV_ComfortScanner.processSquare(sq, res)
                               spriteName:find("appliances_cooking_") ~= nil or
                               (instanceof and (instanceof(obj, "IsoStove") or instanceof(obj, "IsoBarbecue")))
 
-            if isFireplace and not res.foundTypes["fireplace_heat"] then
-                local isWinter = false
-                local isSummer = false
-                local gt = getGameTime()
-                if gt then
-                    local s = gt.getSeason and gt:getSeason()
-                    local m = gt.getMonth and gt:getMonth()
-                    if s == 5 or m == 11 or m == 0 or m == 1 then
-                        isWinter = true
-                    elseif s == 2 or s == 3 or m == 5 or m == 6 or m == 7 then
-                        isSummer = true
-                    end
+            if (isFireplace or isHeater or isAntiqueStove) and not res.foundTypes["heat_source"] then
+                local isLit = (obj.isLit and obj:isLit()) or (obj.isActivated and obj:isActivated()) or false
+                if isHeater and not isLit and sq.haveElectricity and sq:haveElectricity() then
+                    isLit = true
                 end
 
-                local isLit = (obj.isLit and obj:isLit()) or (obj.isActivated and obj:isActivated()) or false
-                if isWinter then
-                    -- Inverno: Lareiras concedem o dobro de conforto térmico
-                    res.furnitureScore = res.furnitureScore + 24
-                    res.foundTypes["fireplace_heat"] = true
-                    table.insert(res.discoveredItems, "Lareira Aconchegante (Inverno)")
-                elseif isSummer and isLit then
-                    -- Verão: Fogo aceso em ambiente fechado gera desconforto térmico
-                    res.cleanlinessPenalty = res.cleanlinessPenalty + 8
-                    res.squalorTrash = res.squalorTrash + 8
-                    table.insert(res.discoveredItems, "Calor Excessivo (Verao)")
+                if seasonalEnabled and cc.isWinter then
+                    -- Inverno: Fontes de calor ativas concedem pontuação dobrada (+24 pontos)
+                    if isLit then
+                        res.furnitureScore = res.furnitureScore + 24
+                        res.foundTypes["heat_source"] = true
+                        res.hasActiveHeatInWinter = true
+                        table.insert(res.discoveredItems, "Aquecimento Ativo (Inverno)")
+                    else
+                        res.furnitureScore = res.furnitureScore + 12
+                        res.foundTypes["heat_source"] = true
+                        table.insert(res.discoveredItems, "Lareira/Aquecedor Apagado")
+                    end
+                elseif seasonalEnabled and cc.isSummer and isLit and not sq:isOutside() then
+                    -- Verão: Fogo aceso em ambiente fechado gera desconforto e calor sufocante
+                    res.cleanlinessPenalty = res.cleanlinessPenalty + 12
+                    res.squalorTrash = res.squalorTrash + 12
+                    table.insert(res.discoveredItems, "Calor Sufocante (Fogo no Verao)")
                 else
                     res.furnitureScore = res.furnitureScore + 12
-                    res.foundTypes["fireplace_heat"] = true
-                    table.insert(res.discoveredItems, "Lareira")
+                    res.foundTypes["heat_source"] = true
+                    table.insert(res.discoveredItems, "Lareira/Fonte de Calor")
                 end
             elseif isCooking and not res.foundTypes["cooking"] then
                 res.furnitureScore = res.furnitureScore + 12
@@ -506,8 +573,23 @@ function LV_ComfortScanner.processSquare(sq, res)
                 table.insert(res.discoveredItems, "Fogao/Cozinha")
             end
 
-            -- 8. Fontes de Luz
+            -- 8. Fontes de Luz e Ventiladores (Resfriamento de Verão)
+            local isFan = spriteName:find("fan") ~= nil or
+                          spriteName:find("ventilador") ~= nil or
+                          (spriteName:find("lighting_ceiling") ~= nil and spriteName:find("fan") ~= nil)
+
+            if isFan and seasonalEnabled and cc.isSummer and not res.foundTypes["fan_cooling"] then
+                local hasPower = (obj.isActivated and obj:isActivated()) or (sq.haveElectricity and sq:haveElectricity()) or false
+                if hasPower then
+                    res.furnitureScore = res.furnitureScore + 10
+                    res.foundTypes["fan_cooling"] = true
+                    res.hasSummerCooling = true
+                    table.insert(res.discoveredItems, "Ventilacao Refrescante (Verao)")
+                end
+            end
+
             local isLightOn = (instanceof and instanceof(obj, "IsoLightSwitch") and obj.isActivated and obj:isActivated()) or
+
                               (obj.isLightSource and obj:isLightSource()) or
                               spriteName:find("lamp") ~= nil or
                               spriteName:find("candle") ~= nil or
@@ -698,11 +780,40 @@ function LV_ComfortScanner.finalizeScore(player, res)
         comfortScore = 0
     end
 
-    local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
-    print(string.format("[LarVivo] Varredura Concluída: Conforto = %d, Insalubridade = %d | Base: '%s' | Itens: [%s]", comfortScore, squalorScore, tostring(res.baseName or "Lar"), itemsSummary))
+    -- 4. Avaliação e Feedback de Clima Sazonal
+    local cc = res.climate or {}
+    local seasonalEnabled = (LV_Config and LV_Config.get and LV_Config.get("EnableSeasonalComfort") ~= false)
+    local seasonalNote = "Clima Estavel"
 
-    -- 4. Aplica os resultados consolidados no jogador
-    LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, res.baseName)
+    if seasonalEnabled then
+        if cc.isWinter then
+            if cc.isFreezing and not res.hasActiveHeatInWinter then
+                -- Penalidade por refúgio congelante sem fonte de calor
+                comfortScore = math.max(0, comfortScore - 10)
+                seasonalNote = string.format("Inverno (%d°C) - Falta Aquecimento!", math.floor(cc.temperature or 0))
+            elseif res.hasActiveHeatInWinter then
+                seasonalNote = string.format("Inverno (%d°C) - Aquecimento Ativo (+24 pts)", math.floor(cc.temperature or 0))
+            else
+                seasonalNote = string.format("Inverno (%d°C) - Frio Moderado", math.floor(cc.temperature or 0))
+            end
+        elseif cc.isSummer then
+            if res.hasSummerCooling then
+                seasonalNote = string.format("Verao (%d°C) - Ventilacao Ativa (+10 pts)", math.floor(cc.temperature or 0))
+            elseif cc.isHeatwave then
+                seasonalNote = string.format("Verao (%d°C) - Calor Intenso", math.floor(cc.temperature or 0))
+            else
+                seasonalNote = string.format("Verao (%d°C) - Clima Quente", math.floor(cc.temperature or 0))
+            end
+        elseif cc.seasonName then
+            seasonalNote = string.format("%s (%d°C) - Clima Agradavel", cc.seasonName, math.floor(cc.temperature or 20))
+        end
+    end
+
+    local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
+    print(string.format("[LarVivo] Varredura Concluída: Conforto = %d, Insalubridade = %d | Base: '%s' | Sazonal: '%s' | Itens: [%s]", comfortScore, squalorScore, tostring(res.baseName or "Lar"), seasonalNote, itemsSummary))
+
+    -- 5. Aplica os resultados consolidados no jogador
+    LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, res.baseName, false, seasonalNote)
 end
 
 --- Handler no OnTick para varredura suave sem micro-stutter

@@ -47,6 +47,13 @@ local CATEGORIES = {
         cooldownSeconds = 120,
         haloKey = "UI_LV_Halo_Decorating",
         defaultHalo = "+15% Duracao do Lar (Decoracao)"
+    },
+    Hobbies = {
+        name = "Hobbies",
+        defaultPercent = 15,
+        cooldownSeconds = 60,
+        haloKey = "UI_LV_Halo_Hobbies",
+        defaultHalo = "+15% Duracao do Lar (Lazer & Hobbies)"
     }
 }
 
@@ -97,7 +104,20 @@ local KEYWORD_CATEGORY_MAP = {
     furniture = "Decorating",
     place3d = "Decorating",
     rotate = "Decorating",
-    curtain = "Decorating"
+    curtain = "Decorating",
+
+    -- Hobbies, Lazer & Música (The Sims no Refúgio)
+    guitar = "Hobbies",
+    instrument = "Hobbies",
+    music = "Hobbies",
+    play = "Hobbies",
+    flute = "Hobbies",
+    piano = "Hobbies",
+    game = "Hobbies",
+    read = "Hobbies",
+    book = "Hobbies",
+    magazine = "Hobbies",
+    comic = "Hobbies"
 }
 
 --- Rastreamento de tempo real para cooldowns anti-spam
@@ -196,6 +216,21 @@ function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, 
     -- Se for culinária, adiciona sujeira orgânica na cozinha/cômodo
     if categoryName == "Cooking" and LV_DirtSystem and LV_DirtSystem.onCooking then
         pcall(function() LV_DirtSystem.onCooking(character) end)
+    end
+
+    -- Se for Hobbies/Música/Leitura, reduz tédio e tristeza imediatamente
+    if categoryName == "Hobbies" then
+        pcall(function()
+            local bd = character:getBodyDamage()
+            if bd then
+                if bd.setBoredomLevel and bd.getBoredomLevel then
+                    bd:setBoredomLevel(math.max(0, bd:getBoredomLevel() - 5.0))
+                end
+                if bd.setUnhappynessLevel and bd.getUnhappynessLevel then
+                    bd:setUnhappynessLevel(math.max(0, bd:getUnhappynessLevel() - 5.0))
+                end
+            end
+        end)
     end
 
     if addedHours and addedHours > 0 then

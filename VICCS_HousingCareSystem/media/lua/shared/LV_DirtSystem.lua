@@ -402,7 +402,8 @@ end
 
 -- Invalida o cache de sujeira corporal e notifica a rotina matinal ao concluir o banho/lavagem
 Events.OnGameStart.Add(function()
-    if ISWashYourself and ISWashYourself.perform then
+    if ISWashYourself and ISWashYourself.perform and not ISWashYourself._LV_hooked then
+        ISWashYourself._LV_hooked = true
         local orig_ISWashYourself_perform = ISWashYourself.perform
         function ISWashYourself:perform()
             orig_ISWashYourself_perform(self)

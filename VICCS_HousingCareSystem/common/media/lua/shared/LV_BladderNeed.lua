@@ -155,7 +155,7 @@ function LV_BladderNeed.onEveryHours(player)
     -- Efeito de estresse se estiver na urgência máxima (95+)
     if newNeed >= 95 then
         local stats = player.getStats and player:getStats()
-        if stats and stats.getStress then
+        if stats and stats.setStress and stats.getStress then
             stats:setStress(math.min(1.0, stats:getStress() + 0.05))
         end
     end
@@ -212,11 +212,18 @@ function LV_BladderNeed.relieve(player, isCleanToilet)
         if stats.setStress and stats.getStress then
             stats:setStress(math.max(0, stats:getStress() - 0.20))
         end
-        if stats.setBoredom and stats.getBoredom then
-            stats:setBoredom(math.max(0, stats:getBoredom() - 10))
-        end
         if stats.setPain and stats.getPain then
             stats:setPain(0)
+        end
+    end
+
+    local bd = player.getBodyDamage and player:getBodyDamage()
+    if bd then
+        if bd.setBoredomLevel and bd.getBoredomLevel then
+            bd:setBoredomLevel(math.max(0, bd:getBoredomLevel() - 10.0))
+        end
+        if bd.setUnhappynessLevel and bd.getUnhappynessLevel then
+            bd:setUnhappynessLevel(math.max(0, bd:getUnhappynessLevel() - 5.0))
         end
     end
 

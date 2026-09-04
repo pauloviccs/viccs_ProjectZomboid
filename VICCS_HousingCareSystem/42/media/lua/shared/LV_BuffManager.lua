@@ -31,12 +31,42 @@ local localPlayerData = {
     homemakingBonusHours = 0.0,
     homemakingDailyHours = 0.0,
     homemakingDailyActions = 0,
-    homemakingLastDay = -1
+    homemakingLastDay = -1,
+
+    -- Sazonalidade Tática & Clima
+    seasonalNote = "Clima Estavel"
 }
 
-local isModDataLoaded = false
-local function ensureModDataLoaded(player)
-    if isModDataLoaded or not player then return end
+local function resetLocalPlayerData()
+    localPlayerData.comfortScore = 0
+    localPlayerData.comfortTier = 0
+    localPlayerData.comfortExpiryWorldHour = 0
+    localPlayerData.squalorScore = 0
+    localPlayerData.squalorTier = 0
+    localPlayerData.squalorExpiryWorldHour = 0
+    localPlayerData.isInSqualorArea = false
+    localPlayerData.isInShelter = false
+    localPlayerData.shelterDwellMinutes = 0
+    localPlayerData.targetComfortScore = 0
+    localPlayerData.targetSqualorScore = 0
+    localPlayerData.lastDwellWorldHour = -1
+    localPlayerData.baseName = "Lar"
+    localPlayerData.lastScanHour = -1
+    localPlayerData.homemakingBonusHours = 0.0
+    localPlayerData.homemakingDailyHours = 0.0
+    localPlayerData.homemakingDailyActions = 0
+    localPlayerData.homemakingLastDay = -1
+    localPlayerData.seasonalNote = "Clima Estavel"
+end
+
+local loadedPlayer = nil
+local function ensureModDataLoaded(player, force)
+    if not player then return end
+    if not force and loadedPlayer == player then return end
+
+    resetLocalPlayerData()
+    loadedPlayer = player
+
     local ok, md = pcall(function() return player:getModData() end)
     if ok and md and md.LV_Homemaking then
         local hm = md.LV_Homemaking
@@ -49,7 +79,6 @@ local function ensureModDataLoaded(player)
             localPlayerData.comfortExpiryWorldHour = hm.comfortExpiryWorldHour
         end
     end
-    isModDataLoaded = true
 end
 
 --- Retorna os dados do jogador ativo de forma segura (puro e direto para a UI).
@@ -58,13 +87,15 @@ function LV_BuffManager.getPlayerData(player)
 end
 
 Events.OnGameStart.Add(function()
-    local player = getPlayer()
-    if player then ensureModDataLoaded(player) end
+    if isServer and isServer() then return end
+    local player = getPlayer and getPlayer()
+    if player then ensureModDataLoaded(player, true) end
 end)
 
 Events.OnCreatePlayer.Add(function(pNum, player)
-    if not player then player = getPlayer() end
-    if player then ensureModDataLoaded(player) end
+    if isServer and isServer() then return end
+    if not player and getPlayer then player = getPlayer() end
+    if player then ensureModDataLoaded(player, true) end
 end)
 
 --- Modificadores diretos e 100% seguros para o PZ B42 sem reflexão dinâmica
@@ -184,7 +215,7 @@ local function activateBuffs(player, comfortScore, squalorScore, duration)
 end
 
 --- Aplica o resultado consolidado da varredura de ambiente no jogador.
-function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, baseName, isManualTrigger)
+function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, baseName, isManualTrigger, seasonalNote)
     if not player then return end
 
     local currentHour = getGameTime():getWorldAgeHours()
@@ -193,6 +224,10 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
 
     if baseName and baseName ~= "" then
         localPlayerData.baseName = baseName
+    end
+
+    if seasonalNote and seasonalNote ~= "" then
+        localPlayerData.seasonalNote = seasonalNote
     end
 
     if comfortScore > 0 then
