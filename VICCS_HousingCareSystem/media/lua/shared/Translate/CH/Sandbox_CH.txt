@@ -19,13 +19,13 @@ Sandbox_CH = {
 
     -- 舒適度等級閾值
     Sandbox_HousingCareSystem_Tier1Threshold = "1級舒適度閾值 (溫馨)",
-    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "解鎖1級舒適度所需的最低積分 (溫馨庇護: 恐慌積累減少10%)。\n默認: 20分。",
+    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "解鎖1級舒適度所需的最低積分 (溫馨庇護: 恐慌積累減少10%%)。\n默認: 20分。",
 
     Sandbox_HousingCareSystem_Tier2Threshold = "2級舒適度閾值 (整潔居所)",
-    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "解鎖2級舒適度所需的最低積分 (整潔居所: 恐慌-20%，耐力恢復加速10%)。\n默認: 40分。",
+    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "解鎖2級舒適度所需的最低積分 (整潔居所: 恐慌-20%%，耐力恢復加速10%%)。\n默認: 40分。",
 
     Sandbox_HousingCareSystem_Tier3Threshold = "3級舒適度閾值 (舒適避難所)",
-    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "解鎖3級舒適度所需的最低積分 (舒適避難所: 不適度-25%，耐力+15%，提高瞄準穩定性)。\n默認: 60分。",
+    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "解鎖3級舒適度所需的最低積分 (舒適避難所: 不適度-25%%，耐力+15%%，提高瞄準穩定性)。\n默認: 60分。",
 
     Sandbox_HousingCareSystem_Tier4Threshold = "4級舒適度閾值 (避風聖所)",
     Sandbox_HousingCareSystem_Tier4Threshold_tooltip = "最高級別所需積分 (避風聖所: 近乎免疫恐慌，極高耐力，傷口加速癒合)。\n默認: 80分。",
@@ -124,7 +124,7 @@ Sandbox_CH = {
     Sandbox_BladderGainPerHour_tooltip = "每遊戲小時被動增加的如廁急迫度。",
     Sandbox_BladderGainAfterEatingMultiplier = "進食後如廁需求倍率",
     Sandbox_BladderGainAfterEatingMultiplier_tooltip = "食用食物或飲水後額外累積生理需求的縮放倍率。",
-    Sandbox_BladderNotifyThreshold = "如廁提醒閾值 (%)",
+    Sandbox_BladderNotifyThreshold = "如廁提醒閾值 (%%)",
     Sandbox_BladderNotifyThreshold_tooltip = "觸發如廁提醒心情圖標的需求百分比閾值。",
     Sandbox_HousingCareSystem_EnableVisualDirtTiles = "啟用地面可見污漬 (血跡與污垢覆蓋層)",
     Sandbox_HousingCareSystem_EnableVisualDirtTiles_tooltip = "啟用後，受傷流血或地面污垢達到閾值時會在室內地磚上生成真實的血跡和污漬貼圖。",

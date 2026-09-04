@@ -92,23 +92,25 @@ end
 local function isCaffeineOrHotDrink(food)
     if not food then return false end
 
-    -- 1. Verificação por Tags nativas B42
-    if food.hasTag then
-        local ok, t1 = pcall(food.hasTag, food, "HotDrink")
-        local ok2, t2 = pcall(food.hasTag, food, "hotdrink")
-        local ok3, t3 = pcall(food.hasTag, food, "Coffee")
-        local ok4, t4 = pcall(food.hasTag, food, "Tea")
-        if (ok and t1) or (ok2 and t2) or (ok3 and t3) or (ok4 and t4) then
-            return true
-        end
+    local itemType = ""
+    if food.getType then
+        local ok, res = pcall(food.getType, food)
+        if ok and res then itemType = tostring(res):lower() end
     end
-
-    -- 2. Verificação por tipo de item e nome traduzido
-    local itemType = food.getType and tostring(food:getType()):lower() or ""
-    local itemName = food.getName and tostring(food:getName()):lower() or ""
+    local itemFull = ""
+    if food.getFullType then
+        local ok, res = pcall(food.getFullType, food)
+        if ok and res then itemFull = tostring(res):lower() end
+    end
+    local itemName = ""
+    if food.getName then
+        local ok, res = pcall(food.getName, food)
+        if ok and res then itemName = tostring(res):lower() end
+    end
 
     if itemType:find("coffee") or itemType:find("tea") or itemType:find("hotcup") or
        itemType:find("mugl") or itemType:find("cup") or
+       itemFull:find("coffee") or itemFull:find("tea") or
        itemName:find("caf") or itemName:find("ch") or itemName:find("coffee") or itemName:find("tea") then
         return true
     end
@@ -325,31 +327,49 @@ function LV_RoutineSystem.updateRoutineEffects(player)
         if (now - (data.lastSocialCheckTime or 0)) >= 3.0 then
             data.lastSocialCheckTime = now
             local pSq = player:getCurrentSquare()
-            local cell = getCell()
             local count = 0
-            if pSq and cell then
+            if pSq then
                 local room = pSq:getRoom()
-                local pList = cell:getPlayerList()
-                if pList and pList.size then
-                    for p = 0, pList:size() - 1 do
-                        local other = pList:get(p)
-                        if other and not other:isDead() then
-                            local oSq = other:getCurrentSquare()
-                            if oSq then
-                                if room and oSq:getRoom() == room then
-                                    count = count + 1
-                                elseif not room and math.abs(oSq:getX() - pSq:getX()) <= 10 and math.abs(oSq:getY() - pSq:getY()) <= 10 then
-                                    count = count + 1
+                pcall(function()
+                    if isClient and isClient() then
+                        local pList = getOnlinePlayers and getOnlinePlayers()
+                        if pList and pList.size then
+                            for p = 0, pList:size() - 1 do
+                                local other = pList:get(p)
+                                if other and not other:isDead() and other ~= player then
+                                    local oSq = other:getCurrentSquare()
+                                    if oSq then
+                                        if room and oSq:getRoom() == room then
+                                            count = count + 1
+                                        elseif not room and math.abs(oSq:getX() - pSq:getX()) <= 10 and math.abs(oSq:getY() - pSq:getY()) <= 10 then
+                                            count = count + 1
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    else
+                        local numPlayers = (getNumActivePlayers and getNumActivePlayers()) or 1
+                        for p = 0, numPlayers - 1 do
+                            local other = (getSpecificPlayer and getSpecificPlayer(p)) or getPlayer()
+                            if other and not other:isDead() and other ~= player then
+                                local oSq = other:getCurrentSquare()
+                                if oSq then
+                                    if room and oSq:getRoom() == room then
+                                        count = count + 1
+                                    elseif not room and math.abs(oSq:getX() - pSq:getX()) <= 10 and math.abs(oSq:getY() - pSq:getY()) <= 10 then
+                                        count = count + 1
+                                    end
                                 end
                             end
                         end
                     end
-                end
+                end)
             end
             data.companionCount = count
         end
 
-        if (data.companionCount or 0) >= 2 then
+        if (data.companionCount or 0) >= 1 then
             -- Alivia tédio e infelicidade com a convivência
             if bd then
                 pcall(function()
@@ -375,6 +395,15 @@ function LV_RoutineSystem.updateRoutineEffects(player)
         else
             data.socialActive = false
         end
+    end
+end
+
+--- Registra qualquer atividade de higiene concluída (escovação de dentes, banho, etc.)
+function LV_RoutineSystem.recordHygieneActivity(player, activityName)
+    if not player then return end
+    print("[LivingHouse] Atividade de higiene registrada: " .. tostring(activityName))
+    if LV_RoutineSystem.onWash then
+        pcall(LV_RoutineSystem.onWash, player)
     end
 end
 
@@ -404,8 +433,21 @@ Events.EveryDays.Add(function()
     end
 end)
 
-Events.OnEatFood.Add(function(player, food, percent)
-    LV_RoutineSystem.onEatFood(player, food)
-end)
+-- Hook seguro para alimentação/bebidas
+if Events.OnEatFood and Events.OnEatFood.Add then
+    Events.OnEatFood.Add(function(player, food, percent)
+        LV_RoutineSystem.onEatFood(player, food)
+    end)
+end
+
+if ISEatFoodAction and ISEatFoodAction.perform then
+    local original_ISEatFoodAction_perform = ISEatFoodAction.perform
+    function ISEatFoodAction:perform()
+        if LV_RoutineSystem and LV_RoutineSystem.onEatFood and self.character and self.item then
+            pcall(LV_RoutineSystem.onEatFood, self.character, self.item)
+        end
+        return original_ISEatFoodAction_perform(self)
+    end
+end
 
 print("[LivingHouse] LV_RoutineSystem carregado com sucesso (Manha Aconchegante, Streaks e Casa Impecavel)!")

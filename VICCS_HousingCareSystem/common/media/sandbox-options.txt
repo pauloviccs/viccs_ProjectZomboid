@@ -468,3 +468,40 @@ option HousingCareSystem.ServerTelemetryEnabled
     translation = ServerTelemetryEnabled,
 }
 
+option HousingCareSystem.Max3DItemsPerRoomCategory
+{
+    type = integer,
+    min = 1,
+    max = 50,
+    default = 6,
+    page = HousingCareSystem,
+    translation = Max3DItemsPerRoomCategory,
+}
+
+option HousingCareSystem.Max3DItemsPerTile
+{
+    type = integer,
+    min = 1,
+    max = 30,
+    default = 10,
+    page = HousingCareSystem,
+    translation = Max3DItemsPerTile,
+}
+
+option HousingCareSystem.EnableAmbientItemDropNotice
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableAmbientItemDropNotice,
+}
+
+option HousingCareSystem.EnableDiminishingReturns
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableDiminishingReturns,
+}
+
+

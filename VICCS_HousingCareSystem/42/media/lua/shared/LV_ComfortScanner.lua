@@ -271,13 +271,22 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         isWholeBaseScan = isWholeBaseScan,
         foundTypes = {},
         discoveredItems = {},
+        scoredItemsList = {},
+        categoryCounts = {},
+        categoryStats = {
+            HEAVY_FURNITURE = 0,
+            APPLIANCES_ELECTRONICS = 0,
+            SURFACE_DECOR = 0,
+            ORGANIC_COMFORT_3D = 0,
+            PANTRY_SUPPLIES_3D = 0
+        },
         climate = climateContext,
         hasActiveHeatInWinter = false,
         hasSummerCooling = false,
         seasonalNote = "",
     }
 
-    -- Processa imediatamente se for poucos tiles ou acionamento manual (K)
+    -- Processa imediatamente se for poucos tiles ou acionamento manual
     if #squaresToScan <= 80 or isManualTrigger then
         for _, sq in ipairs(squaresToScan) do
             pcall(LV_ComfortScanner.processSquare, sq, initialResults)
@@ -668,45 +677,56 @@ function LV_ComfortScanner.processSquare(sq, res)
         end
     end
 
-    -- C. Itens 3D no Mundo (World Objects)
+    -- C. Itens 3D no Mundo (World Objects) com Avaliacao O(1) e Tetos de Sandbox
     if not sq.getWorldObjects then return end
     local worldObjects = sq:getWorldObjects()
     if not worldObjects or not worldObjects.size then return end
     local wCount = worldObjects:size()
     if wCount <= 0 then return end
 
-    if wCount > 5 then
-        res.squalorClutter = res.squalorClutter + ((wCount - 5) * (LV_ItemScoreData.Penalties.LooseClutter or 1))
+    local maxPerTile = (LV_Config and LV_Config.getMax3DItemsPerTile and LV_Config.getMax3DItemsPerTile()) or 10
+    local maxPerCategory = (LV_Config and LV_Config.getMax3DItemsPerRoomCategory and LV_Config.getMax3DItemsPerRoomCategory()) or 6
+    local diminishingEnabled = (LV_Config and LV_Config.isDiminishingReturnsEnabled and LV_Config.isDiminishingReturnsEnabled()) ~= false
+
+    if wCount > maxPerTile then
+        res.squalorClutter = res.squalorClutter + ((wCount - maxPerTile) * (LV_ItemScoreData.Penalties.LooseClutter or 1))
     end
 
-    for i = 0, wCount - 1 do
+    local evalLimit = math.min(wCount, maxPerTile)
+    for i = 0, evalLimit - 1 do
         local wObj = worldObjects:get(i)
         if wObj and wObj.getItem then
             local item = wObj:getItem()
             if item then
-                if instanceof and instanceof(item, "Food") and item.isRotten and item:isRotten() then
-                    res.cleanlinessPenalty = res.cleanlinessPenalty + (LV_ItemScoreData.Penalties.RottenFood or 12)
-                    res.squalorRotten = res.squalorRotten + (LV_ItemScoreData.Penalties.RottenFood or 12)
-                else
-                    local itemTypeLua = item.getType and tostring(item:getType() or ""):lower() or ""
-                    local itemCatLua = item.getDisplayCategory and tostring(item:getDisplayCategory() or ""):lower() or ""
-                    local itemNameLua = item.getName and tostring(item:getName() or ""):lower() or ""
-
-                    for tag, score in pairs(LV_ItemScoreData.WorldItemTags or {}) do
-                        local tagLower = tag:lower()
-                        local matched = false
-
-                        if itemCatLua:find(tagLower) or itemTypeLua:find(tagLower) or itemNameLua:find(tagLower) then
-                            matched = true
+                local eval = LV_ItemScoreData and LV_ItemScoreData.evaluateItem and LV_ItemScoreData.evaluateItem(item)
+                if eval then
+                    if eval.isRotten then
+                        res.cleanlinessPenalty = res.cleanlinessPenalty + (LV_ItemScoreData.Penalties.RottenFood or 12)
+                        res.squalorRotten = res.squalorRotten + (LV_ItemScoreData.Penalties.RottenFood or 12)
+                        if res.scoredItemsList then
+                            table.insert(res.scoredItemsList, { name = eval.label .. " (Podre)", score = -12, category = "SQUALOR_DEBRIS" })
                         end
+                    else
+                        local cat = eval.category or "ORGANIC_COMFORT_3D"
+                        res.categoryCounts = res.categoryCounts or {}
+                        local curCount = (res.categoryCounts[cat] or 0) + 1
+                        res.categoryCounts[cat] = curCount
 
-                        if matched then
-                            local count = res.foundTypes[tag] or 0
-                            if count < 3 then
-                                res.decorScore = res.decorScore + (score / (count + 1))
-                                res.foundTypes[tag] = count + 1
+                        if curCount <= maxPerCategory then
+                            local finalItemScore = LV_ItemScoreData.getDiminishedScore(eval.score, curCount, diminishingEnabled)
+                            res.decorScore = res.decorScore + finalItemScore
+                            if res.categoryStats and res.categoryStats[cat] ~= nil then
+                                res.categoryStats[cat] = res.categoryStats[cat] + finalItemScore
                             end
-                            break
+                            if res.scoredItemsList then
+                                table.insert(res.scoredItemsList, {
+                                    name = eval.label,
+                                    score = finalItemScore,
+                                    baseScore = eval.score,
+                                    category = cat,
+                                    count = curCount
+                                })
+                            end
                         end
                     end
                 end
@@ -739,8 +759,8 @@ function LV_ComfortScanner.finalizeScore(player, res)
     -- Iluminação ativa soma até 15 pontos
     local lightingPoints = math.min(15, res.lightingScore)
 
-    -- Decoração soma até 15 pontos
-    local decorPoints = math.min(15, res.decorScore)
+    -- Decoração e itens 3D somam até 20 pontos
+    local decorPoints = math.min(20, res.decorScore)
 
     local roomComfort = cleanPoints + furniturePoints + craftBonus + lightingPoints + decorPoints
     local comfortScore = math.floor(math.max(0, math.min(100, roomComfort)))
@@ -780,7 +800,20 @@ function LV_ComfortScanner.finalizeScore(player, res)
         comfortScore = 0
     end
 
-    -- 4. Avaliação e Feedback de Clima Sazonal
+    -- 4. Cálculo do Tier Independente do Cômodo
+    local t1 = (LV_Config and LV_Config.get and LV_Config.get("Tier1Threshold")) or 20
+    local t2 = (LV_Config and LV_Config.get and LV_Config.get("Tier2Threshold")) or 40
+    local t3 = (LV_Config and LV_Config.get and LV_Config.get("Tier3Threshold")) or 60
+    local t4 = (LV_Config and LV_Config.get and LV_Config.get("Tier4Threshold")) or 80
+
+    local roomTier = 0
+    if comfortScore >= t4 then roomTier = 4
+    elseif comfortScore >= t3 then roomTier = 3
+    elseif comfortScore >= t2 then roomTier = 2
+    elseif comfortScore >= t1 then roomTier = 1
+    end
+
+    -- 5. Avaliação e Feedback de Clima Sazonal
     local cc = res.climate or {}
     local seasonalEnabled = (LV_Config and LV_Config.get and LV_Config.get("EnableSeasonalComfort") ~= false)
     local seasonalNote = "Clima Estavel"
@@ -788,32 +821,65 @@ function LV_ComfortScanner.finalizeScore(player, res)
     if seasonalEnabled then
         if cc.isWinter then
             if cc.isFreezing and not res.hasActiveHeatInWinter then
-                -- Penalidade por refúgio congelante sem fonte de calor
                 comfortScore = math.max(0, comfortScore - 10)
-                seasonalNote = string.format("Inverno (%d°C) - Falta Aquecimento!", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Inverno (%dC) - Falta Aquecimento!", math.floor(cc.temperature or 0))
             elseif res.hasActiveHeatInWinter then
-                seasonalNote = string.format("Inverno (%d°C) - Aquecimento Ativo (+24 pts)", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Inverno (%dC) - Aquecimento Ativo (+24 pts)", math.floor(cc.temperature or 0))
             else
-                seasonalNote = string.format("Inverno (%d°C) - Frio Moderado", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Inverno (%dC) - Frio Moderado", math.floor(cc.temperature or 0))
             end
         elseif cc.isSummer then
             if res.hasSummerCooling then
-                seasonalNote = string.format("Verao (%d°C) - Ventilacao Ativa (+10 pts)", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Verao (%dC) - Ventilacao Ativa (+10 pts)", math.floor(cc.temperature or 0))
             elseif cc.isHeatwave then
-                seasonalNote = string.format("Verao (%d°C) - Calor Intenso", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Verao (%dC) - Calor Intenso", math.floor(cc.temperature or 0))
             else
-                seasonalNote = string.format("Verao (%d°C) - Clima Quente", math.floor(cc.temperature or 0))
+                seasonalNote = string.format("Verao (%dC) - Clima Quente", math.floor(cc.temperature or 0))
             end
         elseif cc.seasonName then
-            seasonalNote = string.format("%s (%d°C) - Clima Agradavel", cc.seasonName, math.floor(cc.temperature or 20))
+            seasonalNote = string.format("%s (%dC) - Clima Agradavel", cc.seasonName, math.floor(cc.temperature or 20))
         end
     end
 
-    local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
-    print(string.format("[LarVivo] Varredura Concluída: Conforto = %d, Insalubridade = %d | Base: '%s' | Sazonal: '%s' | Itens: [%s]", comfortScore, squalorScore, tostring(res.baseName or "Lar"), seasonalNote, itemsSummary))
+    -- 6. Cache Estruturado do Detalhamento do Cômodo (Room Breakdown)
+    local pSq = player and player.getCurrentSquare and player:getCurrentSquare()
+    local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, pSq)) or "room_default"
+    
+    LV_ComfortScanner.RoomBreakdown = LV_ComfortScanner.RoomBreakdown or {}
+    LV_ComfortScanner.RoomBreakdown[locKey] = {
+        locKey = locKey,
+        roomName = res.baseName or "Comodo",
+        roomScore = comfortScore,
+        roomTier = roomTier,
+        safehouseScore = comfortScore,
+        safehouseTier = roomTier,
+        cleanPoints = cleanPoints,
+        furniturePoints = furniturePoints,
+        lightingPoints = lightingPoints,
+        decorPoints = decorPoints,
+        craftBonus = craftBonus,
+        squalorScore = squalorScore,
+        seasonalNote = seasonalNote,
+        itemsList = res.scoredItemsList or {},
+        categoryStats = res.categoryStats or {},
+        timestamp = (getGameTime and getGameTime():getWorldAgeHours()) or 0
+    }
+    LV_ComfortScanner.LastRoomBreakdown = LV_ComfortScanner.RoomBreakdown[locKey]
 
-    -- 5. Aplica os resultados consolidados no jogador
+    local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
+    print(string.format("[LarVivo] Varredura Concluída: Cômodo '%s' [Tier %d] = %d pts, Insalubridade = %d%% | Sazonal: '%s' | Itens: [%s]", tostring(res.baseName or "Lar"), roomTier, comfortScore, squalorScore, seasonalNote, itemsSummary))
+
+    -- 7. Aplica os resultados consolidados no jogador
     LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, res.baseName, false, seasonalNote)
+end
+
+--- Retorna o cache de detalhamento do cômodo atual
+function LV_ComfortScanner.getRoomBreakdown(locKey)
+    if not LV_ComfortScanner.RoomBreakdown then return LV_ComfortScanner.LastRoomBreakdown end
+    if locKey and LV_ComfortScanner.RoomBreakdown[locKey] then
+        return LV_ComfortScanner.RoomBreakdown[locKey]
+    end
+    return LV_ComfortScanner.LastRoomBreakdown
 end
 
 --- Handler no OnTick para varredura suave sem micro-stutter

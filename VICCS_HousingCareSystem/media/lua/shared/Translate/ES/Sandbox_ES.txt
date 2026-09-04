@@ -19,13 +19,13 @@ Sandbox_ES = {
 
     -- Niveles de Confort
     Sandbox_HousingCareSystem_Tier1Threshold = "Puntos para Nivel 1 (Acogedor)",
-    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "Puntuacion minima de confort para desbloquear el Nivel 1 (Comodidad Basica: -10% Panico).\nPredeterminado: 20 puntos.",
+    Sandbox_HousingCareSystem_Tier1Threshold_tooltip = "Puntuacion minima de confort para desbloquear el Nivel 1 (Comodidad Basica: -10%% Panico).\nPredeterminado: 20 puntos.",
 
     Sandbox_HousingCareSystem_Tier2Threshold = "Puntos para Nivel 2 (Hogar Organizado)",
-    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "Puntuacion minima para desbloquear el Nivel 2 (Hogar Organizado: -20% Panico, +10% Regeneracion de Resistencia).\nPredeterminado: 40 puntos.",
+    Sandbox_HousingCareSystem_Tier2Threshold_tooltip = "Puntuacion minima para desbloquear el Nivel 2 (Hogar Organizado: -20%% Panico, +10%% Regeneracion de Resistencia).\nPredeterminado: 40 puntos.",
 
     Sandbox_HousingCareSystem_Tier3Threshold = "Puntos para Nivel 3 (Refugio Confortable)",
-    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "Puntuacion minima para desbloquear el Nivel 3 (Refugio: -25% Infelicidad, +15% Resistencia, Estabilidad de Punteria).\nPredeterminado: 60 puntos.",
+    Sandbox_HousingCareSystem_Tier3Threshold_tooltip = "Puntuacion minima para desbloquear el Nivel 3 (Refugio: -25%% Infelicidad, +15%% Resistencia, Estabilidad de Punteria).\nPredeterminado: 60 puntos.",
 
     Sandbox_HousingCareSystem_Tier4Threshold = "Puntos para Nivel 4 (Santuario)",
     Sandbox_HousingCareSystem_Tier4Threshold_tooltip = "Puntuacion minima para el nivel maximo (Santuario: Inmunidad casi total al panico, gran resistencia, curacion acelerada).\nPredeterminado: 80 puntos.",
@@ -124,7 +124,7 @@ Sandbox_ES = {
     Sandbox_BladderGainPerHour_tooltip = "Aumento pasivo de ganas de ir al baño cada hora en el juego.",
     Sandbox_BladderGainAfterEatingMultiplier = "Multiplicador de Necesidad al Comer",
     Sandbox_BladderGainAfterEatingMultiplier_tooltip = "Multiplicador del incremento de necesidad fisiologica al ingerir comida o bebida.",
-    Sandbox_BladderNotifyThreshold = "Umbral de Notificacion de Baño (%)",
+    Sandbox_BladderNotifyThreshold = "Umbral de Notificacion de Baño (%%)",
     Sandbox_BladderNotifyThreshold_tooltip = "Porcentaje de necesidad para mostrar el primer aviso de necesidad de baño.",
     Sandbox_HousingCareSystem_EnableVisualDirtTiles = "Activar Manchas Visuales en el Suelo (Sangre y Suciedad)",
     Sandbox_HousingCareSystem_EnableVisualDirtTiles_tooltip = "Si esta activado, caminar herido/sangrando o acumular suciedad genera manchas reales en los pisos interiores.",

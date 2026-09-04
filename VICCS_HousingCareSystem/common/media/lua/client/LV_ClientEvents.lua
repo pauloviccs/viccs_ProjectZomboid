@@ -8,6 +8,7 @@
 require "LV_Config"
 require "LV_RoutineSystem"
 require "LV_HouseDashboard"
+require "LV_DentalNeed"
 
 
 local lastCheckHour = -1
@@ -38,6 +39,11 @@ local function onEveryHoursCheck()
     -- Atualização de necessidade fisiológica
     if LV_BladderNeed and LV_BladderNeed.onEveryHours then
         pcall(LV_BladderNeed.onEveryHours, player)
+    end
+
+    -- Atualização de necessidade de higiene bucal
+    if LV_DentalNeed and LV_DentalNeed.onEveryHours then
+        pcall(LV_DentalNeed.onEveryHours, player)
     end
 
     local interval = LV_Config.get("ComfortCheckIntervalHours") or 6
@@ -97,6 +103,9 @@ local function onEatFood(player, food)
     if LV_BladderNeed and LV_BladderNeed.onEatFood then
         pcall(LV_BladderNeed.onEatFood, player, food)
     end
+    if LV_DentalNeed and LV_DentalNeed.onEatFood then
+        pcall(LV_DentalNeed.onEatFood, player, food)
+    end
 end
 
 --- Listener para menus de contexto no mundo (Faxina e Banheiro)
@@ -129,16 +138,40 @@ local function onKeyPressed(key)
     if key == 37 then
         local player = getPlayer()
         if player then
-            print("[LarVivo] Tecla 'K' pressionada. Forçando varredura manual e alternando HUD...")
+            print("[LarVivo] Tecla 'K' pressionada. Alternando Painel de Inspecao do Comodo...")
             LV_ComfortScanner.startScan(player, true)
-            LV_HUD.toggleHUD()
-
-            local baseStr = (data and data.baseName and data.baseName ~= "" and data.baseName ~= "Lar" and data.baseName ~= "Living House") and (data.baseName .. " - ") or ""
-            if data and data.comfortTier and data.comfortTier > 0 then
-                local msg = string.format("Living House: %sConforto %d pts (Tier %d)", baseStr, data.comfortScore or 0, data.comfortTier or 0)
-                showNotification(player, msg, 80, 240, 120)
+            if LV_RoomInspectorDashboard and LV_RoomInspectorDashboard.toggle then
+                LV_RoomInspectorDashboard.toggle()
             else
-                showNotification(player, "Living House: Varredura Concluida (Sem bonus)", 220, 220, 220)
+                LV_HUD.toggleHUD()
+            end
+        end
+    end
+end
+
+--- Listener passivo de colocacao ou soltura de itens 3D no comodo (Zero Cliques)
+local lastDropNoticeTime = 0
+local function onWorldObjectAdded(object)
+    if not object or not LV_Config or not LV_Config.isAmbientItemDropNoticeEnabled() then return end
+    local player = getPlayer()
+    if not player or player:isDead() then return end
+
+    if instanceof and instanceof(object, "IsoWorldInventoryObject") then
+        local itm = object.getItem and object:getItem()
+        if itm and LV_ItemScoreData and LV_ItemScoreData.evaluateItem then
+            local eval = LV_ItemScoreData.evaluateItem(itm)
+            if eval and eval.score and eval.score > 0 then
+                local sq = object.getSquare and object:getSquare()
+                local pSq = player:getCurrentSquare()
+                if sq and pSq and sq:getRoom() and sq:getRoom() == pSq:getRoom() then
+                    local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
+                    if now - lastDropNoticeTime >= 1.0 then
+                        lastDropNoticeTime = now
+                        local note = string.format("[Ambiente +%.1f pts: %s]", eval.score, eval.label or itm:getName() or "Item")
+                        showNotification(player, note, 100, 240, 180)
+                        pcall(function() LV_ComfortScanner.startScan(player, false) end)
+                    end
+                end
             end
         end
     end
@@ -153,6 +186,9 @@ local function setupActionHooks()
             orig_perform(self)
             if self.character and self.item and LV_BladderNeed and LV_BladderNeed.onEatFood then
                 pcall(LV_BladderNeed.onEatFood, self.character, self.item)
+            end
+            if self.character and self.item and LV_DentalNeed and LV_DentalNeed.onEatFood then
+                pcall(LV_DentalNeed.onEatFood, self.character, self.item)
             end
         end
     end
@@ -181,10 +217,14 @@ Events.OnCreatePlayer.Add(function(pNum, player)
     end
 end)
 Events.OnKeyPressed.Add(onKeyPressed)
+if Events.OnObjectAdded then
+    Events.OnObjectAdded.Add(onWorldObjectAdded)
+end
 if Events.OnEatFood then
     Events.OnEatFood.Add(onEatFood)
 end
 Events.OnFillWorldObjectContextMenu.Add(onFillContextMenu)
 
 print("[LarVivo] LV_ClientEvents carregado e escutando eventos de jogo!")
+
 

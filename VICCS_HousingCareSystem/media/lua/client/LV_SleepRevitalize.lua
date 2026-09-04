@@ -41,14 +41,10 @@ local function checkPillowPresence(player, square)
                 local item = items:get(i)
                 if item then
                     local itemType = item.getType and tostring(item:getType()):lower() or ""
+                    local itemFull = item.getFullType and tostring(item:getFullType()):lower() or ""
                     local itemName = item.getName and tostring(item:getName()):lower() or ""
-                    local hasTag = false
-                    if item.hasTag then
-                        local ok1, t1 = pcall(item.hasTag, item, "Pillow")
-                        local ok2, t2 = pcall(item.hasTag, item, "pillow")
-                        hasTag = (ok1 and t1) or (ok2 and t2)
-                    end
-                    if hasTag or itemType:find("pillow") or itemName:find("travesseiro") or itemName:find("pillow") then
+                    local itemDisp = item.getDisplayName and tostring(item:getDisplayName()):lower() or ""
+                    if itemType:find("pillow") or itemFull:find("pillow") or itemName:find("travesseiro") or itemName:find("pillow") or itemDisp:find("travesseiro") or itemDisp:find("pillow") then
                         return true
                     end
                 end

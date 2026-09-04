@@ -27,18 +27,31 @@ end
 
 function ISUseToiletAction:waitToStart()
     if self.character and self.toiletObject then
-        self.character:faceThisObject(self.toiletObject)
+        if self.character.faceThisObjectAlt then
+            self.character:faceThisObjectAlt(self.toiletObject)
+        elseif self.character.faceThisObject then
+            self.character:faceThisObject(self.toiletObject)
+        end
     end
     return (self.character and self.character.shouldBeTurning and self.character:shouldBeTurning()) or false
 end
 
 function ISUseToiletAction:update()
-    self.character:faceThisObject(self.toiletObject)
+    if self.character and self.toiletObject then
+        if self.character.faceThisObjectAlt then
+            self.character:faceThisObjectAlt(self.toiletObject)
+        elseif self.character.faceThisObject then
+            self.character:faceThisObject(self.toiletObject)
+        end
+    end
 end
 
 function ISUseToiletAction:start()
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "Low")
+    if self.setOverrideHandModels then
+        self:setOverrideHandModels(nil, nil)
+    end
 end
 
 function ISUseToiletAction:perform()
@@ -73,15 +86,14 @@ function ISUseToiletAction:perform()
 end
 
 function ISUseToiletAction:new(character, toiletObject, mode, time)
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
-    o.character = character
+    local o = ISBaseTimedAction.new(self, character)
     o.toiletObject = toiletObject
     o.mode = mode or "pee"
     o.stopOnWalk = true
     o.stopOnRun = true
+    o.stopOnAim = true
     o.maxTime = time or 90
+    o.forceProgressBar = true
     return o
 end
 
@@ -97,6 +109,9 @@ end
 function ISRelieveInNatureAction:start()
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "Low")
+    if self.setOverrideHandModels then
+        self:setOverrideHandModels(nil, nil)
+    end
 end
 
 function ISRelieveInNatureAction:perform()
@@ -105,13 +120,12 @@ function ISRelieveInNatureAction:perform()
 end
 
 function ISRelieveInNatureAction:new(character, time)
-    local o = {}
-    setmetatable(o, self)
-    self.__index = self
-    o.character = character
+    local o = ISBaseTimedAction.new(self, character)
     o.stopOnWalk = true
     o.stopOnRun = true
+    o.stopOnAim = true
     o.maxTime = time or 80
+    o.forceProgressBar = true
     return o
 end
 
@@ -141,23 +155,21 @@ function LV_ToiletActions.onFillWorldObjectContextMenu(playerNum, context, world
         local toiletSubMenu = context:getNew(context)
         context:addSubMenu(context:addOption(string.format("Usar Banheiro (Necessidade: %d%%)", math.floor(currentNeed))), toiletSubMenu)
 
-        toiletSubMenu:addOption("Aliviar-se (Rapido)", clickedToilet, function()
-            if luautils and luautils.walkAdj then
-                luautils.walkAdj(player, clickedToilet:getSquare())
+        local onUseToilet = function(toilet, pObj, mode, time)
+            if luautils and luautils.walkAdjObject then
+                if not luautils.walkAdjObject(pObj, toilet, true, true) then
+                    return
+                end
+            elseif luautils and luautils.walkAdj then
+                luautils.walkAdj(pObj, toilet:getSquare(), true)
             else
-                ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedToilet:getSquare()))
+                ISTimedActionQueue.add(ISWalkToTimedAction:new(pObj, toilet:getSquare()))
             end
-            ISTimedActionQueue.add(ISUseToiletAction:new(player, clickedToilet, "pee", 70))
-        end)
+            ISTimedActionQueue.add(ISUseToiletAction:new(pObj, toilet, mode, time))
+        end
 
-        toiletSubMenu:addOption("Aliviar-se (Completo)", clickedToilet, function()
-            if luautils and luautils.walkAdj then
-                luautils.walkAdj(player, clickedToilet:getSquare())
-            else
-                ISTimedActionQueue.add(ISWalkToTimedAction:new(player, clickedToilet:getSquare()))
-            end
-            ISTimedActionQueue.add(ISUseToiletAction:new(player, clickedToilet, "poop", 120))
-        end)
+        toiletSubMenu:addOption("Aliviar-se (Rapido)", clickedToilet, onUseToilet, player, "pee", 70)
+        toiletSubMenu:addOption("Aliviar-se (Completo)", clickedToilet, onUseToilet, player, "poop", 120)
     end
 
     -- Opção no mato / exterior se tiver aperto acumulado (>= 20)
@@ -166,9 +178,10 @@ function LV_ToiletActions.onFillWorldObjectContextMenu(playerNum, context, world
         local floorSprite = sq:getFloor() and sq:getFloor():getSprite() and sq:getFloor():getSprite():getName() or ""
         floorSprite = tostring(floorSprite):lower()
         if floorSprite:find("grass") or floorSprite:find("dirt") or floorSprite:find("sand") or floorSprite:find("forest") then
-            context:addOption(string.format("Aliviar-se na Natureza (Aperto: %d%%)", math.floor(currentNeed)), player, function()
-                ISTimedActionQueue.add(ISRelieveInNatureAction:new(player, 80))
-            end)
+            local onRelieveNature = function(pObj)
+                ISTimedActionQueue.add(ISRelieveInNatureAction:new(pObj, 80))
+            end
+            context:addOption(string.format("Aliviar-se na Natureza (Aperto: %d%%)", math.floor(currentNeed)), player, onRelieveNature)
         end
     end
 end

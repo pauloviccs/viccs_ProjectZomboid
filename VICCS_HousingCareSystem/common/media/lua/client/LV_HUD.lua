@@ -17,6 +17,7 @@ require "ISUI/ISPanel"
 require "LV_Config"
 require "LV_DirtSystem"
 require "LV_BladderNeed"
+require "LV_DentalNeed"
 require "LV_HouseDashboard"
 
 LV_HUD = ISPanel:derive("LV_HUD")
@@ -35,6 +36,7 @@ local ICON_SQUALOR    = "media/ui/Moodles/32/Mood_NoxiousSmell.png"
 local ICON_FLOOR_DIRT = "media/ui/Moodles/32/Status_Wet.png"
 local ICON_BODY_DIRT  = "media/ui/Moodles/32/Status_Bleeding.png"
 local ICON_BLADDER    = "media/ui/Moodles/32/Mood_Pained.png"
+local ICON_DENTAL     = "media/ui/Moodles/32/Mood_Unhappy.png"
 
 --- Cria uma nova instância do painel HUD.
 function LV_HUD:new(x, y, width)
@@ -76,6 +78,15 @@ function LV_HUD:onMouseUp(x, y)
             if x >= (self.width - PAD - 65) and x <= (self.width - PAD - 20) then
                 if LV_HouseDashboard and LV_HouseDashboard.toggle then
                     LV_HouseDashboard.toggle()
+                end
+                self.isDragging = false
+                return true
+            end
+
+            -- Clique no botão [K] abre/fecha o Painel de Inspeção do Cômodo
+            if x >= (self.width - PAD - 98) and x <= (self.width - PAD - 68) then
+                if LV_RoomInspectorDashboard and LV_RoomInspectorDashboard.toggle then
+                    LV_RoomInspectorDashboard.toggle()
                 end
                 self.isDragging = false
                 return true
@@ -172,6 +183,7 @@ function LV_HUD:render()
     local squalorTier = data.squalorTier or 0
     local squalorScore = data.squalorScore or 0
     local bladderNeed = (LV_BladderNeed and LV_BladderNeed.getNeed and LV_BladderNeed.getNeed(player)) or 0
+    local dentalNeed = (LV_DentalNeed and LV_DentalNeed.getNeed and LV_DentalNeed.getNeed(player)) or 0
     local sq = player:getCurrentSquare()
     local locKey = (sq and LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, sq)) or "outside"
     local floorDirt = (locKey ~= "outside" and LV_DirtSystem and LV_DirtSystem.getFloorDirt and LV_DirtSystem.getFloorDirt(locKey)) or 0
@@ -198,7 +210,7 @@ function LV_HUD:render()
     local tri = p < 30 and (p / 30) or ((60 - p) / 30)
 
     local acc = ACCENT_CYAN
-    if squalorTier > 0 or bladderNeed >= 80 or bodyDirt >= 75 then
+    if squalorTier > 0 or bladderNeed >= 80 or bodyDirt >= 75 or dentalNeed >= 75 then
         acc = ACCENT_AMBER
     end
 
@@ -207,23 +219,24 @@ function LV_HUD:render()
     -- Linha de acento vertical de 2px à esquerda
     self:drawRect(0, 0, 2, self.height, 0.85 * a, acc[1], acc[2], acc[3])
 
-    -- 2. Cabeçalho / Título (Living House + Modo)
+    -- 2. Cabeçalho / Título (Living House)
     local curY = PAD
-    local modeTag = self.fadeMode == "always" and "[FIXO]" or "[AUTO]"
-    local title = "LIVING HOUSE " .. modeTag
+    local title = "LIVING HOUSE"
     if data.baseName and data.baseName ~= "" and data.baseName ~= "Lar" and data.baseName ~= "Living House" then
-        title = string.format("LIVING HOUSE - %s %s", data.baseName, modeTag)
+        title = string.format("LAR: %s", data.baseName)
     end
     self:shadowText(title, PAD + 4, curY, acc[1], acc[2], acc[3], 0.95 * a)
 
     if self.collapsed then
         self:shadowTextRight("[+]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.8 * a)
         self:shadowTextRight("[BASE]", self.width - PAD - 22, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.85 * a)
+        self:shadowTextRight("[K]", self.width - PAD - 72, curY, 0.85, 0.75, 0.40, 0.85 * a)
         self:setHeight(curY + self.fontH + PAD)
         return
     else
         self:shadowTextRight("[-]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.6 * a)
         self:shadowTextRight("[BASE]", self.width - PAD - 22, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.90 * a)
+        self:shadowTextRight("[K]", self.width - PAD - 72, curY, 0.85, 0.75, 0.40, 0.90 * a)
     end
 
     curY = curY + self.fontH + 3
@@ -264,11 +277,14 @@ function LV_HUD:render()
         drawBarLine(ICON_COMFORT, estLabel, estValStr, (data.targetComfortScore or 0) / 100.0, estColor, {0.2, 0.4, 0.6, 0.8},
             0.70, 0.80, 0.75, 0.35, 0.85, 0.45)
     elseif comfortTier > 0 or not self.onlyProblems then
-        -- Linha 1: Conforto do Lar (Buff Ativo)
-        local label = string.format("Conforto (Tier %d)", comfortTier)
-        local valStr = string.format("%d pts", comfortScore)
+        -- Linha 1: Conforto do Cômodo / Lar
+        local breakdown = (LV_ComfortScanner and LV_ComfortScanner.getRoomBreakdown and LV_ComfortScanner.getRoomBreakdown()) or nil
+        local rTier = (breakdown and breakdown.roomTier) or comfortTier
+        local rScore = (breakdown and breakdown.roomScore) or comfortScore
+        local label = string.format("Conforto Comodo (T%d)", rTier)
+        local valStr = string.format("%d pts", rScore)
         local color = {0.30, 0.88, 0.42}
-        drawBarLine(ICON_COMFORT, label, valStr, comfortScore / 100.0, color, {0.2, 0.4, 0.6, 0.8},
+        drawBarLine(ICON_COMFORT, label, valStr, rScore / 100.0, color, {0.2, 0.4, 0.6, 0.8},
             0.75, 0.80, 0.85, 0.35, 0.90, 0.45)
     end
 
@@ -312,6 +328,18 @@ function LV_HUD:render()
         local lr, lg, lb = isCrit and 1.0 or 0.75, isCrit and (0.30 + 0.4 * tri) or 0.80, isCrit and 0.20 or 0.85
         local vr, vg, vb = isCrit and 1.0 or 0.85, isCrit and 0.30 or 0.80, isCrit and 0.20 or 0.30
         drawBarLine(ICON_BLADDER, label, valStr, bladderNeed / 100.0, color, {0.6, 0.8, 0.95},
+            lr, lg, lb, vr, vg, vb)
+    end
+
+    -- Linha 6: Higiene Bucal / Dentes (ao comer ou acumular placa)
+    if dentalNeed >= 10 or not self.onlyProblems then
+        local isCrit = (dentalNeed >= 75)
+        local label = isCrit and "Escovar os Dentes!" or "Higiene Bucal"
+        local valStr = string.format("%d%%", math.floor(dentalNeed))
+        local color = isCrit and {0.95, 0.30, 0.20} or {0.40, 0.85, 0.80}
+        local lr, lg, lb = isCrit and 1.0 or 0.75, isCrit and (0.30 + 0.4 * tri) or 0.80, isCrit and 0.20 or 0.85
+        local vr, vg, vb = isCrit and 1.0 or 0.85, isCrit and 0.30 or 0.75, isCrit and 0.20 or 0.85
+        drawBarLine(ICON_DENTAL, label, valStr, dentalNeed / 100.0, color, {0.5, 0.75},
             lr, lg, lb, vr, vg, vb)
     end
 

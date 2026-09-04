@@ -86,6 +86,12 @@ local DEFAULTS = {
     -- Infraestrutura, Comunidade & Servidor (Fase 2)
     EnableSocialBonus = true,
     ServerTelemetryEnabled = true,
+
+    -- Matriz de Ambiente, Tetos 3D e Rendimento Decrescente
+    Max3DItemsPerRoomCategory = 6,
+    Max3DItemsPerTile = 10,
+    EnableAmbientItemDropNotice = true,
+    EnableDiminishingReturns = true,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.
@@ -138,4 +144,25 @@ end
 function LV_Config.isVisualDirtEnabled()
     return LV_Config.isEnabled() and (LV_Config.get("EnableVisualDirtTiles") == true)
 end
+
+--- Retorna o teto máximo de itens 3D por categoria que pontuam em um mesmo cômodo.
+function LV_Config.getMax3DItemsPerRoomCategory()
+    return tonumber(LV_Config.get("Max3DItemsPerRoomCategory")) or 6
+end
+
+--- Retorna o limite de itens 3D inspecionados por tile para otimização de performance.
+function LV_Config.getMax3DItemsPerTile()
+    return tonumber(LV_Config.get("Max3DItemsPerTile")) or 10
+end
+
+--- Verifica se a notificação passiva flutuante de ganho de ambiente está ativa.
+function LV_Config.isAmbientItemDropNoticeEnabled()
+    return LV_Config.isEnabled() and (LV_Config.get("EnableAmbientItemDropNotice") == true)
+end
+
+--- Verifica se a curva de rendimento decrescente está ativa para mobílias e decorações.
+function LV_Config.isDiminishingReturnsEnabled()
+    return LV_Config.get("EnableDiminishingReturns") ~= false
+end
+
 

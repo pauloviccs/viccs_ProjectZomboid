@@ -34,10 +34,33 @@ local ICONS = {
     }
 }
 
-local VANILLA_MOODLE_TYPES = {
-    "Endurance", "Tired", "Hungry", "Panic", "Sick", "Bored", "Unhappy", "Bleeding",
-    "Wet", "HasACold", "Injured", "Pain", "HeavyLoad", "Drunk", "Dead", "Zombie",
-    "FoodEaten", "Hyperthermia", "Hypothermia", "Windchill", "Stress"
+local VANILLA_MOODLE_MAP = {
+    { "ENDURANCE", "Endurance" },
+    { "TIRED", "Tired" },
+    { "HUNGRY", "Hungry" },
+    { "PANIC", "Panic" },
+    { "SICK", "Sick" },
+    { "BORED", "Bored" },
+    { "UNHAPPY", "Unhappy" },
+    { "BLEEDING", "Bleeding" },
+    { "WET", "Wet" },
+    { "HAS_A_COLD", "HasACold" },
+    { "ANGRY", "Angry" },
+    { "STRESS", "Stress" },
+    { "THIRST", "Thirst" },
+    { "INJURED", "Injured" },
+    { "PAIN", "Pain" },
+    { "HEAVY_LOAD", "HeavyLoad" },
+    { "DRUNK", "Drunk" },
+    { "DEAD", "Dead" },
+    { "ZOMBIE", "Zombie" },
+    { "HYPERTHERMIA", "Hyperthermia" },
+    { "HYPOTHERMIA", "Hypothermia" },
+    { "WINDCHILL", "Windchill" },
+    { "CANT_SPRINT", "CantSprint" },
+    { "UNCOMFORTABLE", "Uncomfortable" },
+    { "NOXIOUS_SMELL", "NoxiousSmell" },
+    { "FOOD_EATEN", "FoodEaten" }
 }
 
 local function fetchTexture(isComfort, tier)
@@ -58,7 +81,7 @@ local lastVanillaCheckTime = 0
 local function getActiveVanillaMoodlesCount(player)
     if not player then return 0 end
     local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
-    if (now - lastVanillaCheckTime) < 0.2 then
+    if (now - lastVanillaCheckTime) < 0.15 then
         return cachedVanillaCount
     end
     lastVanillaCheckTime = now
@@ -67,12 +90,17 @@ local function getActiveVanillaMoodlesCount(player)
     if not moodles or not MoodleType then return cachedVanillaCount end
 
     local count = 0
-    for i = 1, #VANILLA_MOODLE_TYPES do
-        local mt = MoodleType[VANILLA_MOODLE_TYPES[i]]
+    for i = 1, #VANILLA_MOODLE_MAP do
+        local pair = VANILLA_MOODLE_MAP[i]
+        local mt = MoodleType[pair[1]] or MoodleType[pair[2]]
         if mt then
             local lvl = moodles:getMoodleLevel(mt)
             if lvl and lvl > 0 then
-                count = count + 1
+                if pair[1] == "FOOD_EATEN" then
+                    if lvl >= 2 then count = count + 1 end
+                else
+                    count = count + 1
+                end
             end
         end
     end
@@ -80,13 +108,89 @@ local function getActiveVanillaMoodlesCount(player)
     return count
 end
 
+local HANDLE_HEIGHT = 16
+
 function LV_MoodleUI:new()
     local o = ISUIElement:new(0, 0, MOODLE_SIZE, MOODLE_SIZE * 3)
     setmetatable(o, self)
     self.__index = self
     o.visible = true
     o.alwaysOnTop = true
+    o.isDragging = false
+    o.dragStartX = 0
+    o.dragStartY = 0
     return o
+end
+
+function LV_MoodleUI:onMouseDown(x, y)
+    if not self:getIsVisible() then return false end
+    self.isDragging = true
+    self.dragStartX = x
+    self.dragStartY = y
+    self:setCapture(true)
+    return true
+end
+
+function LV_MoodleUI:onMouseMove(dx, dy)
+    if not self:getIsVisible() then return false end
+    if self.isDragging then
+        local screenW = getCore():getScreenWidth()
+        local screenH = getCore():getScreenHeight()
+        local newX = self:getX() + dx
+        local newY = self:getY() + dy
+        newX = math.max(4, math.min(screenW - self:getWidth() - 4, newX))
+        newY = math.max(4, math.min(screenH - self:getHeight() - 4, newY))
+        self:setX(newX)
+        self:setY(newY)
+
+        local player = getPlayer()
+        if player and player.getModData then
+            local md = player:getModData()
+            md.LV_Moodle_CustomX = newX
+            md.LV_Moodle_CustomY = newY
+            md.LV_Moodle_IsCustomPos = true
+        end
+        return true
+    end
+    return false
+end
+
+function LV_MoodleUI:onMouseMoveOutside(dx, dy)
+    return self:onMouseMove(dx, dy)
+end
+
+function LV_MoodleUI:onMouseUp(x, y)
+    if self.isDragging then
+        self.isDragging = false
+        self:setCapture(false)
+        return true
+    end
+    return false
+end
+
+function LV_MoodleUI:onMouseUpOutside(x, y)
+    if self.isDragging then
+        self.isDragging = false
+        self:setCapture(false)
+        return true
+    end
+    return false
+end
+
+function LV_MoodleUI:onMouseDoubleClick(x, y)
+    local player = getPlayer()
+    if player and player.getModData then
+        local md = player:getModData()
+        md.LV_Moodle_IsCustomPos = false
+        md.LV_Moodle_CustomX = nil
+        md.LV_Moodle_CustomY = nil
+        pcall(function()
+            if player.setHaloNote then
+                player:setHaloNote("Moodlets: Posicao padrao restaurada!", 120, 220, 200, 240)
+            end
+        end)
+    end
+    return true
 end
 
 function LV_MoodleUI:prerender()
@@ -162,20 +266,53 @@ function LV_MoodleUI:render()
     if #activeMoodles == 0 then return end
 
     local screenW = getCore():getScreenWidth()
-    local vanillaCount = getActiveVanillaMoodlesCount(player)
-    local targetX = screenW - MOODLE_SIZE - MARGIN_RIGHT
-    local startY = BASE_TOP + (vanillaCount * MOODLE_STEP)
+    local vanillaUI = MoodlesUI and MoodlesUI.getInstance and MoodlesUI.getInstance()
+    local distY = (vanillaUI and vanillaUI.moodleDistY) or MOODLE_STEP
+    local baseY = (vanillaUI and vanillaUI.getY and vanillaUI:getY()) or BASE_TOP
 
-    self:setX(targetX)
-    self:setY(startY)
+    local md = player.getModData and player:getModData()
+    local isCustom = md and md.LV_Moodle_IsCustomPos and md.LV_Moodle_CustomX and md.LV_Moodle_CustomY
+
+    if not self.isDragging then
+        if isCustom then
+            self:setX(md.LV_Moodle_CustomX)
+            self:setY(md.LV_Moodle_CustomY)
+        else
+            -- Posição padrão em coluna paralela dedicada à esquerda dos vanillas (evita qualquer sobreposição)
+            local targetX = screenW - (MOODLE_SIZE * 2) - MARGIN_RIGHT - 8
+            local startY = baseY
+            self:setX(targetX)
+            self:setY(startY)
+        end
+    end
+
     self:setWidth(MOODLE_SIZE)
-    self:setHeight(#activeMoodles * MOODLE_STEP)
+    self:setHeight(HANDLE_HEIGHT + (#activeMoodles * distY))
 
     local mouseX = getMouseX()
     local mouseY = getMouseY()
+    local absX = self:getX()
+    local absY = self:getY()
 
+    -- 2. Renderiza a Alça Discreta de Arrasto (Handle) no topo
+    local isMouseOverHandle = (mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and mouseY >= absY and mouseY <= (absY + HANDLE_HEIGHT))
+
+    if isMouseOverHandle or self.isDragging then
+        self:drawRect(0, 0, MOODLE_SIZE, HANDLE_HEIGHT - 2, 0.75, 0.08, 0.12, 0.18)
+        self:drawRectBorder(0, 0, MOODLE_SIZE, HANDLE_HEIGHT - 2, 0.90, 0.36, 0.76, 0.86)
+        self:drawText("•••", 8, -1, 0.36, 0.76, 0.86, 1.0, UIFont.Small)
+
+        if not self.isDragging then
+            self:drawTooltipBox("Mover Moodlets", "Segure com o botao esquerdo para arrastar.", "Duplo clique: Restaurar padrao.", {0.36, 0.76, 0.86}, 0)
+        end
+    else
+        self:drawRect(0, 0, MOODLE_SIZE, 3, 0.35, 0.6, 0.6, 0.6)
+        self:drawText("•", 13, -4, 0.8, 0.8, 0.8, 0.5, UIFont.Small)
+    end
+
+    -- 3. Renderiza cada moodlet abaixo da alça
     for idx, item in ipairs(activeMoodles) do
-        local relY = (idx - 1) * MOODLE_STEP
+        local relY = HANDLE_HEIGHT + ((idx - 1) * distY)
 
         if item.kind == "comfort" or item.kind == "squalor" then
             local isComfort = (item.kind == "comfort")
@@ -192,8 +329,8 @@ function LV_MoodleUI:render()
             end
 
             -- Tooltip
-            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+            if not self.isDragging and mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and
+               mouseY >= (absY + relY) and mouseY <= (absY + relY + MOODLE_SIZE) then
                 self:renderBaseTooltip(player, item.data, isComfort, item.tier, relY)
             end
 
@@ -209,8 +346,8 @@ function LV_MoodleUI:render()
             end
 
             -- Tooltip
-            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+            if not self.isDragging and mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and
+               mouseY >= (absY + relY) and mouseY <= (absY + relY + MOODLE_SIZE) then
                 self:renderToiletTooltip(def, item.need, relY)
             end
 
@@ -225,8 +362,8 @@ function LV_MoodleUI:render()
             end
 
             -- Tooltip
-            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+            if not self.isDragging and mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and
+               mouseY >= (absY + relY) and mouseY <= (absY + relY + MOODLE_SIZE) then
                 self:renderRelievedTooltip(def, relY)
             end
 
@@ -239,8 +376,8 @@ function LV_MoodleUI:render()
                 self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.95, 0.75, 0.3)
                 self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
             end
-            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+            if not self.isDragging and mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and
+               mouseY >= (absY + relY) and mouseY <= (absY + relY + MOODLE_SIZE) then
                 local timeStr = string.format("Duracao restante: %.1fh", item.remaining or 0)
                 self:drawTooltipBox(def.defaultTitle, def.defaultDesc, timeStr, {0.95, 0.75, 0.3}, relY)
             end
@@ -254,8 +391,8 @@ function LV_MoodleUI:render()
                 self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.2, 0.9, 0.75)
                 self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
             end
-            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+            if not self.isDragging and mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and
+               mouseY >= (absY + relY) and mouseY <= (absY + relY + MOODLE_SIZE) then
                 local streakStr = string.format("Streak Ativo: %d dias consecutivos", item.days or 3)
                 self:drawTooltipBox(def.defaultTitle, def.defaultDesc, streakStr, {0.2, 0.9, 0.75}, relY)
             end
@@ -269,13 +406,14 @@ function LV_MoodleUI:render()
                 self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.3, 0.85, 0.95)
                 self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
             end
-            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+            if not self.isDragging and mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and
+               mouseY >= (absY + relY) and mouseY <= (absY + relY + MOODLE_SIZE) then
                 self:drawTooltipBox(def.defaultTitle, def.defaultDesc, "Ambiente focado (XP de estudo acelerado)", {0.3, 0.85, 0.95}, relY)
             end
         end
     end
 end
+
 
 function LV_MoodleUI:renderBaseTooltip(player, data, isComfort, tier, relY)
     local currentHour = getGameTime():getWorldAgeHours()

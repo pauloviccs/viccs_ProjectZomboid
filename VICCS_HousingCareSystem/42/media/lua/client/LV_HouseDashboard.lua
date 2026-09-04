@@ -34,7 +34,7 @@ function LV_HouseDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
     local w = width or 370
-    local h = height or 315
+    local h = height or 330
 
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -59,7 +59,7 @@ function LV_HouseDashboard.getInstance()
         local screenW = getCore():getScreenWidth()
         local screenH = getCore():getScreenHeight()
         local w = 370
-        local h = 295
+        local h = 330
         local x = math.floor((screenW - w) / 2)
         local y = math.floor((screenH - h) / 2)
 
@@ -97,6 +97,15 @@ function LV_HouseDashboard:onMouseUp(x, y)
         if x >= (self.width - 28) and y <= 24 then
             self:setVisible(false)
             return true
+        end
+
+        -- Clique no botão [CÔMODO (K)] abre o painel de inspeção
+        if x >= (self.width - 125) and x <= (self.width - 32) and y <= 24 then
+            if LV_RoomInspectorDashboard and LV_RoomInspectorDashboard.toggle then
+                self:setVisible(false)
+                LV_RoomInspectorDashboard.toggle()
+                return true
+            end
         end
     end
     self.isDragging = false
@@ -261,25 +270,43 @@ function LV_HouseDashboard:refreshData(force)
     end
 
     -- 5. Contagem de Sobreviventes para Vida Social / Companhia
-    if cell and pSq then
+    if pSq then
         local room = pSq:getRoom()
-        local pList = cell:getPlayerList()
-        if pList and pList.size then
-            local count = 0
-            for p = 0, pList:size() - 1 do
-                local other = pList:get(p)
-                if other and not other:isDead() then
-                    local oSq = other:getCurrentSquare()
-                    if room and oSq and oSq:getRoom() == room then
-                        count = count + 1
-                    elseif not room and oSq and math.abs(oSq:getX() - pSq:getX()) <= 12 and math.abs(oSq:getY() - pSq:getY()) <= 12 then
-                        count = count + 1
+        local count = 0
+        pcall(function()
+            if isClient and isClient() then
+                local pList = getOnlinePlayers and getOnlinePlayers()
+                if pList and pList.size then
+                    for p = 0, pList:size() - 1 do
+                        local other = pList:get(p)
+                        if other and not other:isDead() then
+                            local oSq = other:getCurrentSquare()
+                            if room and oSq and oSq:getRoom() == room then
+                                count = count + 1
+                            elseif not room and oSq and math.abs(oSq:getX() - pSq:getX()) <= 12 and math.abs(oSq:getY() - pSq:getY()) <= 12 then
+                                count = count + 1
+                            end
+                        end
+                    end
+                end
+            else
+                local numPlayers = (getNumActivePlayers and getNumActivePlayers()) or 1
+                for p = 0, numPlayers - 1 do
+                    local other = (getSpecificPlayer and getSpecificPlayer(p)) or getPlayer()
+                    if other and not other:isDead() then
+                        local oSq = other:getCurrentSquare()
+                        if room and oSq and oSq:getRoom() == room then
+                            count = count + 1
+                        elseif not room and oSq and math.abs(oSq:getX() - pSq:getX()) <= 12 and math.abs(oSq:getY() - pSq:getY()) <= 12 then
+                            count = count + 1
+                        end
                     end
                 end
             end
-            res.survivorCount = math.max(1, count)
-        end
+        end)
+        res.survivorCount = math.max(1, count)
     end
+
 
     self.cachedData = res
     return res
@@ -314,8 +341,9 @@ function LV_HouseDashboard:render()
     self:drawRect(0, 0, 2, self.height, 0.95, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3])
     self:drawRectBorder(0, 0, self.width, self.height, 0.25, 1, 1, 1)
 
-    -- Cabeçalho & Botão de Fechar [X]
+    -- Cabeçalho & Botões
     self:drawText("INFRAESTRUTURA DA BASE", PAD + 4, PAD, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 1.0, FONT_M)
+    self:drawTextRight("[COMODO (K)]", self.width - PAD - 26, PAD + 2, 0.45, 0.85, 0.90, 0.90, FONT_S)
     self:drawTextRight("[X]", self.width - PAD, PAD + 2, 0.70, 0.70, 0.70, 1.0, FONT_S)
 
     local subTitle = string.format("Local: %s", data.safehouseName or "Refugio")
@@ -392,12 +420,12 @@ function LV_HouseDashboard:render()
         local sqCol = (data.squalorScore >= 50) and ACCENT_RED or {0.8, 0.7, 0.5}
         self:drawTextRight(squalorStr, self.width - PAD, curY, sqCol[1], sqCol[2], sqCol[3], 1.0, FONT_S)
     end
-    curY = curY + hgt + 3
+    curY = curY + hgt + 6
 
     -- Sazonalidade Tática do Clima
     local seasonStr = string.format("Sazonalidade: %s", data.seasonalNote or "Clima Estavel")
     self:drawText(seasonStr, PAD + 4, curY, 0.88, 0.78, 0.45, 1.0, FONT_S)
-    curY = curY + hgt + 3
+    curY = curY + hgt + 6
 
     -- Vida Social / Companhia
     if data.survivorCount and data.survivorCount >= 2 then
