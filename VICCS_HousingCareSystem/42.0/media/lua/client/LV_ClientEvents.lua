@@ -7,6 +7,8 @@
 --   Dispara varredura imediata ao entrar no jogo, transições de cômodos e tecla 'K'.
 require "LV_Config"
 require "LV_RoutineSystem"
+require "LV_HouseDashboard"
+
 
 local lastCheckHour = -1
 local lastRoom = nil

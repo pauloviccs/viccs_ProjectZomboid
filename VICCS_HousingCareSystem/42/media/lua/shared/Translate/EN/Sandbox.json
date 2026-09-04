@@ -195,5 +195,13 @@
     "Sandbox_EnableSeasonalComfort": "Enable Seasonal Comfort (Weather & Seasons)",
     "Sandbox_EnableSeasonalComfort_tooltip": "Fireplaces and heat sources provide double comfort in freezing winter, while causing discomfort if lit during summer.",
     "Sandbox_HousingCareSystem_EnableSeasonalComfort": "Enable Seasonal Comfort (Weather & Seasons)",
-    "Sandbox_HousingCareSystem_EnableSeasonalComfort_tooltip": "Fireplaces and heat sources provide double comfort in freezing winter, while causing discomfort if lit during summer."
+    "Sandbox_HousingCareSystem_EnableSeasonalComfort_tooltip": "Fireplaces and heat sources provide double comfort in freezing winter, while causing discomfort if lit during summer.",
+    "Sandbox_EnableSocialBonus": "Enable Social Life / Companionship (Multiplayer)",
+    "Sandbox_EnableSocialBonus_tooltip": "Grants continuous reduction to boredom and unhappiness when two or more survivors share the same shelter room.",
+    "Sandbox_HousingCareSystem_EnableSocialBonus": "Enable Social Life / Companionship (Multiplayer)",
+    "Sandbox_HousingCareSystem_EnableSocialBonus_tooltip": "Grants continuous reduction to boredom and unhappiness when two or more survivors share the same shelter room.",
+    "Sandbox_ServerTelemetryEnabled": "Enable Server Telemetry (/lv_status)",
+    "Sandbox_ServerTelemetryEnabled_tooltip": "Allows players and server admins to query base infrastructure reports (generator, water, hygiene) via chat.",
+    "Sandbox_HousingCareSystem_ServerTelemetryEnabled": "Enable Server Telemetry (/lv_status)",
+    "Sandbox_HousingCareSystem_ServerTelemetryEnabled_tooltip": "Allows players and server admins to query base infrastructure reports (generator, water, hygiene) via chat."
 }

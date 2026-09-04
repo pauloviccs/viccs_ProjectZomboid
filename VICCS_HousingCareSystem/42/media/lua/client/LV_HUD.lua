@@ -17,6 +17,7 @@ require "ISUI/ISPanel"
 require "LV_Config"
 require "LV_DirtSystem"
 require "LV_BladderNeed"
+require "LV_HouseDashboard"
 
 LV_HUD = ISPanel:derive("LV_HUD")
 
@@ -71,6 +72,15 @@ function LV_HUD:onMouseUp(x, y)
     if self.isDragging and math.abs(x - self.downX) <= 4 and math.abs(y - self.downY) <= 4 then
         -- Clique rápido no cabeçalho alterna modos
         if y <= self.headerH + PAD then
+            -- Clique no botão [BASE] abre/fecha o Dashboard de Infraestrutura
+            if x >= (self.width - PAD - 65) and x <= (self.width - PAD - 20) then
+                if LV_HouseDashboard and LV_HouseDashboard.toggle then
+                    LV_HouseDashboard.toggle()
+                end
+                self.isDragging = false
+                return true
+            end
+
             if self.fadeMode == "auto" then
                 self.fadeMode = "always"
             elseif self.fadeMode == "always" then
@@ -208,10 +218,12 @@ function LV_HUD:render()
 
     if self.collapsed then
         self:shadowTextRight("[+]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.8 * a)
+        self:shadowTextRight("[BASE]", self.width - PAD - 22, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.85 * a)
         self:setHeight(curY + self.fontH + PAD)
         return
     else
         self:shadowTextRight("[-]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.6 * a)
+        self:shadowTextRight("[BASE]", self.width - PAD - 22, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.90 * a)
     end
 
     curY = curY + self.fontH + 3

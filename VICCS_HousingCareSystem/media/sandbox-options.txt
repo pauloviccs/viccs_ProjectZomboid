@@ -451,3 +451,20 @@ option HousingCareSystem.EnableSeasonalComfort
     page = HousingCareSystem,
     translation = EnableSeasonalComfort,
 }
+
+option HousingCareSystem.EnableSocialBonus
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableSocialBonus,
+}
+
+option HousingCareSystem.ServerTelemetryEnabled
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = ServerTelemetryEnabled,
+}
+

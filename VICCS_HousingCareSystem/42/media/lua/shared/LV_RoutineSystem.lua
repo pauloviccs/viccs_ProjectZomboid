@@ -318,6 +318,64 @@ function LV_RoutineSystem.updateRoutineEffects(player)
     else
         data.spotlessActive = false
     end
+
+    -- 4. Vida Social / Companhia Ativa no Lar (Multiplayer)
+    if LV_Config.get("EnableSocialBonus") then
+        local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or os.time()
+        if (now - (data.lastSocialCheckTime or 0)) >= 3.0 then
+            data.lastSocialCheckTime = now
+            local pSq = player:getCurrentSquare()
+            local cell = getCell()
+            local count = 0
+            if pSq and cell then
+                local room = pSq:getRoom()
+                local pList = cell:getPlayerList()
+                if pList and pList.size then
+                    for p = 0, pList:size() - 1 do
+                        local other = pList:get(p)
+                        if other and not other:isDead() then
+                            local oSq = other:getCurrentSquare()
+                            if oSq then
+                                if room and oSq:getRoom() == room then
+                                    count = count + 1
+                                elseif not room and math.abs(oSq:getX() - pSq:getX()) <= 10 and math.abs(oSq:getY() - pSq:getY()) <= 10 then
+                                    count = count + 1
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            data.companionCount = count
+        end
+
+        if (data.companionCount or 0) >= 2 then
+            -- Alivia tédio e infelicidade com a convivência
+            if bd then
+                pcall(function()
+                    if bd.getBoredomLevel and bd.setBoredomLevel then
+                        local b = bd:getBoredomLevel()
+                        if b > 0 then bd:setBoredomLevel(math.max(0.0, b - 0.05)) end
+                    end
+                    if bd.getUnhappinessLevel and bd.setUnhappinessLevel then
+                        local u = bd:getUnhappinessLevel()
+                        if u > 0 then bd:setUnhappinessLevel(math.max(0.0, u - 0.02)) end
+                    end
+                end)
+            end
+
+            if not data.socialActive then
+                data.socialActive = true
+                pcall(function()
+                    if player.setHaloNote then
+                        player:setHaloNote("Living House: Boa Companhia! (Tedio e Tristeza reduzidos)", 120, 240, 180, 280)
+                    end
+                end)
+            end
+        else
+            data.socialActive = false
+        end
+    end
 end
 
 -- =============================================================================

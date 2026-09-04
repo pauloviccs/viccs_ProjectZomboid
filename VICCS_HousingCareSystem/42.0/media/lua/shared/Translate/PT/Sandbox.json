@@ -195,5 +195,13 @@
     "Sandbox_EnableSeasonalComfort": "Ativar Conforto Sazonal (Clima e Estacoes)",
     "Sandbox_EnableSeasonalComfort_tooltip": "Lareiras e fontes de calor concedem pontuacao dobrada no inverno rigoroso e geram desconforto se acesas no verao.",
     "Sandbox_HousingCareSystem_EnableSeasonalComfort": "Ativar Conforto Sazonal (Clima e Estacoes)",
-    "Sandbox_HousingCareSystem_EnableSeasonalComfort_tooltip": "Lareiras e fontes de calor concedem pontuacao dobrada no inverno rigoroso e geram desconforto se acesas no verao."
+    "Sandbox_HousingCareSystem_EnableSeasonalComfort_tooltip": "Lareiras e fontes de calor concedem pontuacao dobrada no inverno rigoroso e geram desconforto se acesas no verao.",
+    "Sandbox_EnableSocialBonus": "Ativar Vida Social / Companhia (Multiplayer)",
+    "Sandbox_EnableSocialBonus_tooltip": "Concede reducao continua de tedio e tristeza quando dois ou mais sobreviventes estao juntos no mesmo comodo do refugio.",
+    "Sandbox_HousingCareSystem_EnableSocialBonus": "Ativar Vida Social / Companhia (Multiplayer)",
+    "Sandbox_HousingCareSystem_EnableSocialBonus_tooltip": "Concede reducao continua de tedio e tristeza quando dois ou mais sobreviventes estao juntos no mesmo comodo do refugio.",
+    "Sandbox_ServerTelemetryEnabled": "Ativar Telemetria do Servidor (/lv_status)",
+    "Sandbox_ServerTelemetryEnabled_tooltip": "Permite aos jogadores e administradores consultar o relatorio de infraestrutura (gerador, agua, higiene) via chat.",
+    "Sandbox_HousingCareSystem_ServerTelemetryEnabled": "Ativar Telemetria do Servidor (/lv_status)",
+    "Sandbox_HousingCareSystem_ServerTelemetryEnabled_tooltip": "Permite aos jogadores e administradores consultar o relatorio de infraestrutura (gerador, agua, higiene) via chat."
 }

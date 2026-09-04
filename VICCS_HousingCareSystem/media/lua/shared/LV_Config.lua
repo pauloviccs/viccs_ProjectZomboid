@@ -82,6 +82,10 @@ local DEFAULTS = {
     PassiveDustDailyAmount = 0.8,
     EnableSpotlessBonus = true,
     EnableSeasonalComfort = true,
+
+    -- Infraestrutura, Comunidade & Servidor (Fase 2)
+    EnableSocialBonus = true,
+    ServerTelemetryEnabled = true,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.
