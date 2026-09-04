@@ -133,6 +133,32 @@ function LV_MoodleUI:render()
         })
     end
 
+    -- Novos Moodlets de Rotina, Hábitos e Produtividade (Update 2)
+    local routineData = LV_RoutineSystem and LV_RoutineSystem.getRoutineData and LV_RoutineSystem.getRoutineData(player)
+    local currentHour = getGameTime():getWorldAgeHours()
+
+    if routineData then
+        if routineData.morningCozyExpiryHour and currentHour < routineData.morningCozyExpiryHour then
+            table.insert(activeMoodles, {
+                kind = "morningCozy",
+                remaining = math.max(0, routineData.morningCozyExpiryHour - currentHour),
+            })
+        end
+
+        if routineData.streakActive and routineData.streakDays and routineData.streakDays >= 3 then
+            table.insert(activeMoodles, {
+                kind = "routineStreak",
+                days = routineData.streakDays,
+            })
+        end
+
+        if routineData.spotlessActive then
+            table.insert(activeMoodles, {
+                kind = "spotlessHome",
+            })
+        end
+    end
+
     if #activeMoodles == 0 then return end
 
     local screenW = getCore():getScreenWidth()
@@ -202,6 +228,50 @@ function LV_MoodleUI:render()
             if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
                mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
                 self:renderRelievedTooltip(def, relY)
+            end
+
+        elseif item.kind == "morningCozy" then
+            local def = LV_MoodleDefs.MorningCozy
+            local tex = def and def.vanillaIcon and getTexture(def.vanillaIcon)
+            if tex then
+                self:drawTextureScaled(tex, 0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            else
+                self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.95, 0.75, 0.3)
+                self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            end
+            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
+               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+                local timeStr = string.format("Duracao restante: %.1fh", item.remaining or 0)
+                self:drawTooltipBox(def.defaultTitle, def.defaultDesc, timeStr, {0.95, 0.75, 0.3}, relY)
+            end
+
+        elseif item.kind == "routineStreak" then
+            local def = LV_MoodleDefs.RoutineStreak
+            local tex = def and def.vanillaIcon and getTexture(def.vanillaIcon)
+            if tex then
+                self:drawTextureScaled(tex, 0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            else
+                self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.2, 0.9, 0.75)
+                self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            end
+            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
+               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+                local streakStr = string.format("Streak Ativo: %d dias consecutivos", item.days or 3)
+                self:drawTooltipBox(def.defaultTitle, def.defaultDesc, streakStr, {0.2, 0.9, 0.75}, relY)
+            end
+
+        elseif item.kind == "spotlessHome" then
+            local def = LV_MoodleDefs.SpotlessHome
+            local tex = def and def.vanillaIcon and getTexture(def.vanillaIcon)
+            if tex then
+                self:drawTextureScaled(tex, 0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            else
+                self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.3, 0.85, 0.95)
+                self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            end
+            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
+               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+                self:drawTooltipBox(def.defaultTitle, def.defaultDesc, "Ambiente focado (XP de estudo acelerado)", {0.3, 0.85, 0.95}, relY)
             end
         end
     end

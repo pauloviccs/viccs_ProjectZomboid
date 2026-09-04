@@ -74,6 +74,14 @@ local DEFAULTS = {
 
     -- Manchas Visuais nos Tiles (Sangue e Overlays de Sujeira)
     EnableVisualDirtTiles = true,
+
+    -- Hábitos, Rotinas Táticas & Sazonalidade (Update 2)
+    EnableMorningRoutine = true,
+    EnableRoutineStreaks = true,
+    EnablePassiveDust = true,
+    PassiveDustDailyAmount = 0.8,
+    EnableSpotlessBonus = true,
+    EnableSeasonalComfort = true,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.

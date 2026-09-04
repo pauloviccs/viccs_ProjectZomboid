@@ -196,6 +196,11 @@ local function onSleepUpdate(player)
             end
         end
 
+        -- Integração com a Rotina Matinal (Manhã Aconchegante)
+        if LV_RoutineSystem and LV_RoutineSystem.onWakeUp then
+            LV_RoutineSystem.onWakeUp(player, hoursSlept, hadBedAtSleep, hadPillowAtSleep, bodyDirt < 70)
+        end
+
         sleepStartWorldHour = -1
     end
 end

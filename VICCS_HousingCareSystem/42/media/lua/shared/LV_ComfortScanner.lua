@@ -457,21 +457,53 @@ function LV_ComfortScanner.processSquare(sq, res)
                 table.insert(res.discoveredItems, "Quadro/Decoracao")
             end
 
-            -- 7. Fogões, Fornos, Lareiras e Churrasqueiras
+            -- 7. Fogões, Fornos, Lareiras e Churrasqueiras com Sazonalidade Tática
+            local isFireplace = spriteName:find("fireplace") ~= nil or
+                                spriteName:find("campfire") ~= nil or
+                                (instanceof and instanceof(obj, "IsoFireplace"))
+
             local isCooking = (IsoFlagType and IsoFlagType.stove and safeHasFlag(props, IsoFlagType.stove)) or
                               spriteName:find("stove") ~= nil or
                               spriteName:find("oven") ~= nil or
-                              spriteName:find("fireplace") ~= nil or
                               spriteName:find("barbecue") ~= nil or
-                              spriteName:find("campfire") ~= nil or
                               spriteName:find("grill") ~= nil or
                               spriteName:find("appliances_cooking_") ~= nil or
-                              (instanceof and (instanceof(obj, "IsoStove") or instanceof(obj, "IsoFireplace") or instanceof(obj, "IsoBarbecue")))
+                              (instanceof and (instanceof(obj, "IsoStove") or instanceof(obj, "IsoBarbecue")))
 
-            if isCooking and not res.foundTypes["cooking"] then
+            if isFireplace and not res.foundTypes["fireplace_heat"] then
+                local isWinter = false
+                local isSummer = false
+                local gt = getGameTime()
+                if gt then
+                    local s = gt.getSeason and gt:getSeason()
+                    local m = gt.getMonth and gt:getMonth()
+                    if s == 5 or m == 11 or m == 0 or m == 1 then
+                        isWinter = true
+                    elseif s == 2 or s == 3 or m == 5 or m == 6 or m == 7 then
+                        isSummer = true
+                    end
+                end
+
+                local isLit = (obj.isLit and obj:isLit()) or (obj.isActivated and obj:isActivated()) or false
+                if isWinter then
+                    -- Inverno: Lareiras concedem o dobro de conforto térmico
+                    res.furnitureScore = res.furnitureScore + 24
+                    res.foundTypes["fireplace_heat"] = true
+                    table.insert(res.discoveredItems, "Lareira Aconchegante (Inverno)")
+                elseif isSummer and isLit then
+                    -- Verão: Fogo aceso em ambiente fechado gera desconforto térmico
+                    res.cleanlinessPenalty = res.cleanlinessPenalty + 8
+                    res.squalorTrash = res.squalorTrash + 8
+                    table.insert(res.discoveredItems, "Calor Excessivo (Verao)")
+                else
+                    res.furnitureScore = res.furnitureScore + 12
+                    res.foundTypes["fireplace_heat"] = true
+                    table.insert(res.discoveredItems, "Lareira")
+                end
+            elseif isCooking and not res.foundTypes["cooking"] then
                 res.furnitureScore = res.furnitureScore + 12
                 res.foundTypes["cooking"] = true
-                table.insert(res.discoveredItems, "Fogao/Lareira")
+                table.insert(res.discoveredItems, "Fogao/Cozinha")
             end
 
             -- 8. Fontes de Luz

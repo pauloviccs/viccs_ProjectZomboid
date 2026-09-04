@@ -166,6 +166,37 @@ LV_MoodleDefs.Relieved = {
     vanillaIcon = "media/ui/Moodles/32/Mood_Happy.png",
 }
 
+--- Moodlets da Rotina Tática e Hábitos Humanos (Update 2)
+LV_MoodleDefs.MorningCozy = {
+    id = "LV_MorningCozy",
+    titleKey = "UI_LV_MorningCozy_Title",
+    descKey = "UI_LV_MorningCozy_Desc",
+    defaultTitle = "Manha Aconchegante",
+    defaultDesc = "Ritual matinal completo: corpo descansado, rosto lavado e cafe quente. Fadiga reduzida e resistencia elevada!",
+    color = {r=0.95, g=0.75, b=0.30},
+    vanillaIcon = "media/ui/Moodles/32/Mood_Happy.png",
+}
+
+LV_MoodleDefs.RoutineStreak = {
+    id = "LV_RoutineStreak",
+    titleKey = "UI_LV_RoutineStreak_Title",
+    descKey = "UI_LV_RoutineStreak_Desc",
+    defaultTitle = "Rotina Estabelecida",
+    defaultDesc = "Constancia e cuidado com o lar criaram uma mente resiliente. Panico e estresse reduzidos mesmo fora da base!",
+    color = {r=0.20, g=0.90, b=0.75},
+    vanillaIcon = "media/ui/Moodles/32/Mood_Endurance_Good.png",
+}
+
+LV_MoodleDefs.SpotlessHome = {
+    id = "LV_SpotlessHome",
+    titleKey = "UI_LV_SpotlessHome_Title",
+    descKey = "UI_LV_SpotlessHome_Desc",
+    defaultTitle = "Casa Impecavel",
+    defaultDesc = "Ambiente perfeitamente higienizado e acolhedor. Proporciona foco absoluto para leitura e estudo!",
+    color = {r=0.30, g=0.85, b=0.95},
+    vanillaIcon = "media/ui/Moodles/32/Mood_Concentrating.png",
+}
+
 --- Retorna o texto traduzido ou o default seguro
 function LV_MoodleDefs.getText(key, default)
     if getTextOrNull and getTextOrNull(key) then

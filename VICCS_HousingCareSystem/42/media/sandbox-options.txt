@@ -402,5 +402,52 @@ option HousingCareSystem.EnableVisualDirtTiles
     translation = EnableVisualDirtTiles,
 }
 
+option HousingCareSystem.EnableMorningRoutine
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableMorningRoutine,
+}
 
+option HousingCareSystem.EnableRoutineStreaks
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableRoutineStreaks,
+}
 
+option HousingCareSystem.EnablePassiveDust
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnablePassiveDust,
+}
+
+option HousingCareSystem.PassiveDustDailyAmount
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 0.8,
+    page = HousingCareSystem,
+    translation = PassiveDustDailyAmount,
+}
+
+option HousingCareSystem.EnableSpotlessBonus
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableSpotlessBonus,
+}
+
+option HousingCareSystem.EnableSeasonalComfort
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableSeasonalComfort,
+}

@@ -5,7 +5,8 @@
 -- Descrição:
 --   Orquestrador de eventos do cliente com suporte total a saves em andamento.
 --   Dispara varredura imediata ao entrar no jogo, transições de cômodos e tecla 'K'.
--- =============================================================================
+require "LV_Config"
+require "LV_RoutineSystem"
 
 local lastCheckHour = -1
 local lastRoom = nil

@@ -41,5 +41,11 @@
     "UI_LV_NeedToilet3_Title": "Urgencia Fisiologica!",
     "UI_LV_NeedToilet3_Desc": "Aperto insuportavel! Causando estresse e dor de barriga.",
     "UI_LV_Relieved_Title": "Aliviado",
-    "UI_LV_Relieved_Desc": "Sensacao de leveza e tranquilidade apos usar um banheiro higienizado."
+    "UI_LV_Relieved_Desc": "Sensacao de leveza e tranquilidade apos usar um banheiro higienizado.",
+    "UI_LV_MorningCozy_Title": "Manha Aconchegante",
+    "UI_LV_MorningCozy_Desc": "Ritual matinal completo: corpo descansado, rosto lavado e cafe quente. Fadiga reduzida e resistencia elevada!",
+    "UI_LV_RoutineStreak_Title": "Rotina Estabelecida",
+    "UI_LV_RoutineStreak_Desc": "Constancia e cuidado com o lar criaram uma mente resiliente. Panico e estresse reduzidos mesmo fora da base!",
+    "UI_LV_SpotlessHome_Title": "Casa Impecavel",
+    "UI_LV_SpotlessHome_Desc": "Ambiente perfeitamente higienizado e acolhedor. Proporciona foco absoluto para leitura e estudo!"
 }

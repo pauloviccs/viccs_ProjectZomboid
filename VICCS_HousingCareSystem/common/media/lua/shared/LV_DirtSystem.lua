@@ -400,16 +400,37 @@ function LV_DirtSystem.onPlayerMove(player)
     end
 end
 
--- Invalida o cache de sujeira corporal sempre que o jogador concluir a ação de banho
+-- Invalida o cache de sujeira corporal e notifica a rotina matinal ao concluir o banho/lavagem
 Events.OnGameStart.Add(function()
     if ISWashYourself and ISWashYourself.perform then
         local orig_ISWashYourself_perform = ISWashYourself.perform
         function ISWashYourself:perform()
             orig_ISWashYourself_perform(self)
-            if self.character and LV_DirtSystem and LV_DirtSystem.invalidatePlayerBodyDirtCache then
-                LV_DirtSystem.invalidatePlayerBodyDirtCache(self.character)
+            if self.character then
+                if LV_DirtSystem and LV_DirtSystem.invalidatePlayerBodyDirtCache then
+                    LV_DirtSystem.invalidatePlayerBodyDirtCache(self.character)
+                end
+                if LV_RoutineSystem and LV_RoutineSystem.onWash then
+                    LV_RoutineSystem.onWash(self.character)
+                end
             end
         end
     end
 end)
+
+-- Acúmulo sutil de poeira passiva por passagem de dias (Housekeeping)
+Events.EveryDays.Add(function()
+    if not LV_Config or not LV_Config.isEnabled() then return end
+    if not LV_Config.get("EnablePassiveDust") then return end
+
+    if LV_ComfortScanner and LV_ComfortScanner.safehouseCache then
+        local dustRate = (LV_Config.get and LV_Config.get("PassiveDustDailyAmount")) or 0.8
+        for locKey, cache in pairs(LV_ComfortScanner.safehouseCache) do
+            if locKey ~= "outside" and cache then
+                cache.floorDirt = math.min(100.0, (cache.floorDirt or 0) + dustRate)
+            end
+        end
+    end
+end)
+
 
