@@ -97,7 +97,7 @@ local KEYWORD_CATEGORY_MAP = {
     carpentry = "Building",
     wall = "Building",
     door = "Building",
-    window = "Building",
+    buildwindow = "Building",
 
     -- Decoração & Organização
     moveable = "Decorating",
@@ -138,37 +138,45 @@ end
 --- Verifica se o personagem está em uma área de base ou abrigo válida.
 local function isCharacterInValidHomeArea(character)
     if not character then return false end
-
-    -- 1. Verifica estado do BuffManager (se já reconheceu o abrigo)
-    if LV_BuffManager and LV_BuffManager.getPlayerData then
-        local data = LV_BuffManager.getPlayerData(character)
-        if data and (data.isInShelter or (data.comfortScore and data.comfortScore > 0)) then
-            return true
-        end
-    end
-
-    -- 2. Verifica se o azulejo atual é interior (Room) ou possui teto
     local sq = character:getCurrentSquare()
-    if sq then
-        if sq:getRoom() ~= nil or sq:isInARoom() or sq:haveRoof() then
-            return true
+    if not sq then return false end
+
+    -- 1. Se o ComfortScanner estiver disponível, usa a governança oficial do Lar
+    if LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus then
+        local ok, own = pcall(LV_ComfortScanner.getBuildingOwnershipStatus, sq, character)
+        if ok and own then
+            if own.isOutside then return false end
+            if LV_Config and LV_Config.isBaseOwnershipRequired and LV_Config.isBaseOwnershipRequired() then
+                return own.isClaimed == true
+            else
+                return true
+            end
         end
     end
 
-    -- 3. Verifica Safehouse oficial se aplicável
-    local shClass = SafeHouse or Safehouse
-    if shClass and shClass.getSafehouse and sq then
-        local ok, sh = pcall(shClass.getSafehouse, sq)
-        if ok and sh then return true end
+    -- 2. Fallback de abrigo seguro: verifica interior sem chamar métodos inexistentes da JVM
+    local isInside = false
+    if sq.isOutside then
+        local okOut, out = pcall(sq.isOutside, sq)
+        if okOut and not out then isInside = true end
+    end
+    if not isInside and sq.getRoom then
+        local okR, rm = pcall(sq.getRoom, sq)
+        if okR and rm ~= nil then isInside = true end
     end
 
-    return false
+    return isInside
 end
 
 --- Identifica a categoria a partir do nome ou tipo de ação
 local function detectCategoryFromActionName(actionStr)
     if not actionStr or actionStr == "" then return nil end
     local lower = tostring(actionStr):lower()
+
+    -- Ignora ações de navegação por janelas/portas ou arrombamento
+    if lower:find("climb") or lower:find("openclose") or lower:find("smash") or lower:find("lock") then
+        return nil
+    end
 
     for keyword, catName in pairs(KEYWORD_CATEGORY_MAP) do
         if lower:find(keyword) then
@@ -258,32 +266,37 @@ local function onPlayerUpdateObserver(player)
         return
     end
 
-    local queue = ISTimedActionQueue and ISTimedActionQueue.getTimedActionQueue(player)
-    local activeAction = (queue and queue.queue and #queue.queue > 0) and queue.queue[1] or nil
+    local ok, err = pcall(function()
+        local queue = ISTimedActionQueue and ISTimedActionQueue.getTimedActionQueue(player)
+        local activeAction = (queue and queue.queue and #queue.queue > 0) and queue.queue[1] or nil
 
-    if activeAction then
-        local actName = activeAction.Type or (activeAction.action and tostring(activeAction.action)) or tostring(activeAction)
-        local progress = 0.0
+        if activeAction then
+            local actName = activeAction.Type or (activeAction.action and tostring(activeAction.action)) or tostring(activeAction)
+            local progress = 0.0
 
-        if activeAction.getJobDelta then
-            local ok, d = pcall(activeAction.getJobDelta, activeAction)
-            if ok and type(d) == "number" then progress = d end
-        elseif activeAction.time and activeAction.time > 0 and activeAction.currentTime then
-            progress = activeAction.currentTime / activeAction.time
-        end
-
-        lastObservedActionName = actName
-        lastObservedProgress = progress
-    else
-        -- Ação acabou de terminar! Se atingiu pelo menos 80% do progresso antes de sair da fila:
-        if lastObservedActionName and lastObservedProgress >= 0.80 then
-            local cat = detectCategoryFromActionName(lastObservedActionName)
-            if cat then
-                LV_HomemakingActions.triggerCompletedCategory(player, cat)
+            if activeAction.getJobDelta then
+                local okD, d = pcall(activeAction.getJobDelta, activeAction)
+                if okD and type(d) == "number" then progress = d end
+            elseif activeAction.time and activeAction.time > 0 and activeAction.currentTime then
+                progress = activeAction.currentTime / activeAction.time
             end
+
+            lastObservedActionName = actName
+            lastObservedProgress = progress
+        else
+            -- Ação acabou de terminar! Se atingiu pelo menos 80% do progresso antes de sair da fila:
+            if lastObservedActionName and lastObservedProgress >= 0.80 then
+                local cat = detectCategoryFromActionName(lastObservedActionName)
+                if cat then
+                    LV_HomemakingActions.triggerCompletedCategory(player, cat)
+                end
+            end
+            lastObservedActionName = nil
+            lastObservedProgress = 0.0
         end
-        lastObservedActionName = nil
-        lastObservedProgress = 0.0
+    end)
+    if not ok then
+        print("[LarVivo] ERRO capturado em onPlayerUpdateObserver: " .. tostring(err))
     end
 end
 
