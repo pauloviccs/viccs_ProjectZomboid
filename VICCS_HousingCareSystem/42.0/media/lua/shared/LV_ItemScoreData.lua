@@ -52,6 +52,45 @@ LV_ItemScoreData.FurnitureScore = {
     fan              = 8,   -- Ventiladores residenciais
 }
 
+--- Arquétipos de pontuação balanceada para Tiles de Mobílias, Eletrônicos e Decoração
+LV_ItemScoreData.TileArchetypes = {
+    bed              = { score = 25, category = "HEAVY_FURNITURE", label = "Cama de Descanso", maxPerRoom = 3 },
+    couch            = { score = 15, category = "HEAVY_FURNITURE", label = "Sofa Acolchoado", maxPerRoom = 4 },
+    chair            = { score = 10, category = "HEAVY_FURNITURE", label = "Cadeira/Poltrona", maxPerRoom = 8 },
+    table            = { score = 12, category = "HEAVY_FURNITURE", label = "Mesa/Balcao", maxPerRoom = 6 },
+    storage          = { score = 12, category = "HEAVY_FURNITURE", label = "Armario/Comoda", maxPerRoom = 8 },
+    bookshelf        = { score = 12, category = "HEAVY_FURNITURE", label = "Estante de Livros", maxPerRoom = 6 },
+    stove_oven       = { score = 15, category = "APPLIANCES_ELECTRONICS", label = "Fogao/Forno", maxPerRoom = 3 },
+    fridge           = { score = 15, category = "APPLIANCES_ELECTRONICS", label = "Geladeira", maxPerRoom = 3 },
+    radio_tv         = { score = 12, category = "APPLIANCES_ELECTRONICS", label = "Televisao/Radio", maxPerRoom = 4 },
+    light_source_on  = { score = 15, category = "APPLIANCES_ELECTRONICS", label = "Luz Ativa", maxPerRoom = 8 },
+    light_source_off = { score = 4,  category = "APPLIANCES_ELECTRONICS", label = "Luz Apagada", maxPerRoom = 8 },
+    heat_source_on   = { score = 24, category = "APPLIANCES_ELECTRONICS", label = "Aquecimento Ativo (Inverno)", maxPerRoom = 2 },
+    heat_source_off  = { score = 10, category = "APPLIANCES_ELECTRONICS", label = "Lareira/Aquecedor", maxPerRoom = 2 },
+    fan_cooling      = { score = 10, category = "APPLIANCES_ELECTRONICS", label = "Ventilador (Verao)", maxPerRoom = 4 },
+    rug              = { score = 12, category = "SURFACE_DECOR", label = "Tapete/Pele", maxPerRoom = 6 },
+    rug_winter       = { score = 18, category = "SURFACE_DECOR", label = "Tapete Isolante (Inverno)", maxPerRoom = 6 },
+    wall_decor       = { score = 8,  category = "SURFACE_DECOR", label = "Quadro/Decoracao Parede", maxPerRoom = 8 },
+    plant            = { score = 10, category = "SURFACE_DECOR", label = "Vaso de Planta", maxPerRoom = 6 },
+    curtain          = { score = 6,  category = "SURFACE_DECOR", label = "Cortina", maxPerRoom = 8 },
+    clock            = { score = 8,  category = "SURFACE_DECOR", label = "Relogio de Parede", maxPerRoom = 4 },
+    mirror           = { score = 8,  category = "SURFACE_DECOR", label = "Espelho", maxPerRoom = 4 },
+}
+
+--- Retorna os dados do arquétipo de tile
+function LV_ItemScoreData.getTileArchetype(key)
+    if not key then return nil end
+    return LV_ItemScoreData.TileArchetypes[key]
+end
+
+--- Interface unificada de EnvironmentScore solicitada pela arquitetura
+LV_ItemScoreData.EnvironmentScore = {
+    TileArchetypes = LV_ItemScoreData.TileArchetypes,
+    Categories = nil, -- Atribuído abaixo
+    getDiminishedScore = nil, -- Atribuído abaixo
+    evaluateItem = nil, -- Atribuído abaixo
+}
+
 --- Categorias de Ambiente para Curva de Rendimento Decrescente
 LV_ItemScoreData.Categories = {
     HEAVY_FURNITURE        = "Mobilias Principais",
@@ -60,6 +99,7 @@ LV_ItemScoreData.Categories = {
     ORGANIC_COMFORT_3D     = "Conforto Organico 3D",
     PANTRY_SUPPLIES_3D     = "Despensa & Suprimentos 3D",
 }
+LV_ItemScoreData.EnvironmentScore.Categories = LV_ItemScoreData.Categories
 
 --- Retorna a pontuação ajustada pela Curva de Rendimento Decrescente
 function LV_ItemScoreData.getDiminishedScore(baseScore, itemCount, isEnabled)
@@ -228,3 +268,9 @@ LV_ItemScoreData.Penalties = {
     TrashObject  = 8,   -- Pontos de squalor por entulho / sprite de lixo no chão
     LooseClutter = 1,   -- Pontos de squalor por item solto em excesso no chão
 }
+
+-- Amarrações de compatibilidade da interface EnvironmentScore
+LV_ItemScoreData.EnvironmentScore.getDiminishedScore = LV_ItemScoreData.getDiminishedScore
+LV_ItemScoreData.EnvironmentScore.evaluateItem = LV_ItemScoreData.evaluateItem
+LV_ItemScoreData.EnvironmentScore.getTileArchetype = LV_ItemScoreData.getTileArchetype
+

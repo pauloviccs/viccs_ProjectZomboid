@@ -1,0 +1,16 @@
+module Base
+{
+    item Toothpaste
+    {
+        DisplayCategory = Household,
+        ItemType = base:drainable,
+        Type = Drainable,
+        Weight = 0.2,
+        Icon = Toothpaste,
+        UseDelta = 0.05,
+        UseWhileEquipped = false,
+        cantBeConsolided = true,
+        WorldStaticModel = Toothpaste,
+        Tags = base:toothpaste,
+    }
+}

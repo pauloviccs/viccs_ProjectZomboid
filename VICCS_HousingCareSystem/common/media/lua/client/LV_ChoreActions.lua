@@ -201,16 +201,83 @@ end
 function ISBrushTeethAction:perform()
     self:stopSound()
 
-    -- 1. Consumo suave de pasta de dente se for Drainable
+    -- 1. Consumo balanceado de pasta de dente (5% por escovação = 20 usos)
     if self.toothpaste then
-        if self.toothpaste.Use then
-            pcall(function() self.toothpaste:Use() end)
-        elseif self.toothpaste.getUsedDelta and self.toothpaste.setUsedDelta then
-            local cur = self.toothpaste:getUsedDelta()
-            self.toothpaste:setUsedDelta(math.max(0.0, cur - 0.1))
-            if self.toothpaste:getUsedDelta() <= 0.001 then
-                if self.character:getInventory() then
-                    self.character:getInventory():Remove(self.toothpaste)
+        local USE_COST = 0.05
+        local consumed = false
+
+        -- Se for Drainable / DrainableComboItem
+        if self.toothpaste.getUsedDelta and self.toothpaste.setUsedDelta then
+            local okD, curDelta = pcall(self.toothpaste.getUsedDelta, self.toothpaste)
+            if okD and type(curDelta) == "number" then
+                local step = USE_COST
+                if self.toothpaste.getUseDelta then
+                    local okS, customStep = pcall(self.toothpaste.getUseDelta, self.toothpaste)
+                    if okS and type(customStep) == "number" and customStep > 0 then
+                        step = customStep
+                    end
+                end
+
+                local newDelta = math.max(0.0, curDelta - step)
+                pcall(self.toothpaste.setUsedDelta, self.toothpaste, newDelta)
+                consumed = true
+
+                -- Sincroniza também com ModData para máxima integridade
+                if self.toothpaste.getModData then
+                    local okM, md = pcall(self.toothpaste.getModData, self.toothpaste)
+                    if okM and md then
+                        md.LV_ToothpasteUses = math.floor(newDelta * 20 + 0.5)
+                        if self.toothpaste.transmitModData then
+                            pcall(self.toothpaste.transmitModData, self.toothpaste)
+                        end
+                    end
+                end
+
+                if newDelta <= 0.001 then
+                    -- Tubo esgotado: remove do inventário
+                    if self.character and self.character.setHaloNote then
+                        pcall(function() self.character:setHaloNote("Tubo de pasta de dente esgotado!", 240, 180, 80, 260) end)
+                    end
+                    local inv = self.character:getInventory()
+                    if inv and inv.Remove then
+                        pcall(inv.Remove, inv, self.toothpaste)
+                    end
+                elseif newDelta <= 0.10 then
+                    -- Alerta suave de que está acabando
+                    if self.character and self.character.setHaloNote then
+                        pcall(function() self.character:setHaloNote(string.format("Pasta de dente quase no fim (%d%% restante)!", math.ceil(newDelta * 100)), 220, 220, 100, 240) end)
+                    end
+                end
+            end
+        end
+
+        -- Fallback de ModData para itens sem Drainable nativo
+        if not consumed and self.toothpaste.getModData then
+            local okMd, md = pcall(self.toothpaste.getModData, self.toothpaste)
+            if okMd and md then
+                local curUses = md.LV_ToothpasteUses
+                if curUses == nil then curUses = 20 end
+                local newUses = math.max(0, tonumber(curUses) - 1)
+                md.LV_ToothpasteUses = newUses
+                if self.toothpaste.transmitModData then
+                    pcall(self.toothpaste.transmitModData, self.toothpaste)
+                end
+                if self.toothpaste.setUsedDelta then
+                    pcall(self.toothpaste.setUsedDelta, self.toothpaste, newUses / 20.0)
+                end
+
+                if newUses <= 0 then
+                    if self.character and self.character.setHaloNote then
+                        pcall(function() self.character:setHaloNote("Tubo de pasta de dente esgotado!", 240, 180, 80, 260) end)
+                    end
+                    local inv = self.character:getInventory()
+                    if inv and inv.Remove then
+                        pcall(inv.Remove, inv, self.toothpaste)
+                    end
+                elseif newUses <= 2 then
+                    if self.character and self.character.setHaloNote then
+                        pcall(function() self.character:setHaloNote(string.format("Pasta de dente quase no fim (%d/20 usos)!", newUses), 220, 220, 100, 240) end)
+                    end
                 end
             end
         end
@@ -328,26 +395,53 @@ local function isToothpasteItem(it)
     return false
 end
 
+local function getToothpasteRemaining(it)
+    if not it then return 0.0 end
+    if it.getCurrentUsesFloat then
+        local ok, uses = pcall(it.getCurrentUsesFloat, it)
+        if ok and type(uses) == "number" then
+            return math.max(0.0, math.min(1.0, uses))
+        end
+    end
+    if it.getUsedDelta then
+        local ok, delta = pcall(it.getUsedDelta, it)
+        if ok and type(delta) == "number" then
+            return math.max(0.0, math.min(1.0, delta))
+        end
+    end
+    if it.getModData then
+        local ok, md = pcall(it.getModData, it)
+        if ok and md and md.LV_ToothpasteUses ~= nil then
+            return math.max(0.0, math.min(1.0, (tonumber(md.LV_ToothpasteUses) or 0) / 20.0))
+        end
+    end
+    return 1.0
+end
+
 local function findToothbrushAndPaste(character)
-    if not character then return nil, nil end
+    if not character then return nil, nil, false, 0 end
     local inv = character:getInventory()
     local brush = nil
-    local paste = nil
+    local candidatePastes = {}
+
+    local function checkItem(it)
+        if not it then return end
+        if not brush and isToothbrushItem(it) then
+            brush = it
+        end
+        if isToothpasteItem(it) then
+            table.insert(candidatePastes, it)
+        end
+    end
 
     -- 1. Verifica itens equipados nas mãos do personagem
     if character.getPrimaryHandItem then
         local ok, pHand = pcall(character.getPrimaryHandItem, character)
-        if ok and pHand then
-            if isToothbrushItem(pHand) then brush = pHand end
-            if isToothpasteItem(pHand) then paste = pHand end
-        end
+        if ok and pHand then checkItem(pHand) end
     end
     if character.getSecondaryHandItem then
         local ok, sHand = pcall(character.getSecondaryHandItem, character)
-        if ok and sHand then
-            if not brush and isToothbrushItem(sHand) then brush = sHand end
-            if not paste and isToothpasteItem(sHand) then paste = sHand end
-        end
+        if ok and sHand then checkItem(sHand) end
     end
 
     -- 2. Busca direta por tipos oficiais vanilla no inventário
@@ -360,18 +454,10 @@ local function findToothbrushAndPaste(character)
                 if ok2 and b2 then brush = b2 end
             end
         end
-        if not paste and inv.getFirstTypeRecurse then
-            local ok, p = pcall(inv.getFirstTypeRecurse, inv, "Base.Toothpaste")
-            if ok and p then paste = p end
-            if not paste then
-                local ok2, p2 = pcall(inv.getFirstTypeRecurse, inv, "Toothpaste")
-                if ok2 and p2 then paste = p2 end
-            end
-        end
     end
 
     -- 3. Varredura recursiva completa em todas as bolsas, slots e containers do inventário
-    if (not brush or not paste) and inv then
+    if inv then
         local visited = {}
         local function scanContainer(cont)
             if not cont or visited[cont] then return end
@@ -390,8 +476,7 @@ local function findToothbrushAndPaste(character)
                     local okIt, itVal = pcall(items.get, items, i)
                     if okIt and itVal then it = itVal end
                     if it then
-                        if not brush and isToothbrushItem(it) then brush = it end
-                        if not paste and isToothpasteItem(it) then paste = it end
+                        checkItem(it)
                         if it.getInventory then
                             local okInv, subInv = pcall(it.getInventory, it)
                             if okInv and subInv then
@@ -399,14 +484,31 @@ local function findToothbrushAndPaste(character)
                             end
                         end
                     end
-                    if brush and paste then return end
                 end
             end
         end
         scanContainer(inv)
     end
 
-    return brush, paste
+    -- 4. Avaliar as pastas candidatas encontradas
+    local bestPaste = nil
+    local bestRemaining = 0
+    local hasAnyPaste = (#candidatePastes > 0)
+
+    -- Prioriza o tubo que já está aberto/em uso com menor quantidade restante > 0
+    local lowestNonZero = 999
+    for _, p in ipairs(candidatePastes) do
+        local rem = getToothpasteRemaining(p)
+        if rem > 0.001 then
+            if rem < lowestNonZero then
+                lowestNonZero = rem
+                bestPaste = p
+                bestRemaining = rem
+            end
+        end
+    end
+
+    return brush, bestPaste, hasAnyPaste, bestRemaining
 end
 
 local function safeCheckProp(props, propName)
@@ -712,10 +814,14 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
 
         -- A. OPÇÃO DE ESCOVAR OS DENTES (Higiene Pessoal)
         if sinkObject then
-            local brush, paste = findToothbrushAndPaste(player)
+            local brush, paste, hasAnyPaste, remaining = findToothbrushAndPaste(player)
             local hasWater = hasWaterInSink(sinkObject)
 
             if brush and paste then
+                local pct = math.floor((remaining * 100) + 0.5)
+                if pct > 100 then pct = 100 end
+                if pct <= 0 then pct = 1 end
+
                 if hasWater then
                     local onBrushTeeth = function(sink, pObj, brushItem, pasteItem)
                         local inv = pObj:getInventory()
@@ -736,15 +842,18 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
                         end
                         ISTimedActionQueue.add(ISBrushTeethAction:new(pObj, sink, brushItem, pasteItem, 120))
                     end
-                    context:addOption("Escovar os Dentes (Higiene Bucal)", sinkObject, onBrushTeeth, player, brush, paste)
+                    context:addOption(string.format("Escovar os Dentes (Pasta: %d%%)", pct), sinkObject, onBrushTeeth, player, brush, paste)
                 else
-                    local opt = context:addOption("Escovar os Dentes (Sem Agua na Pia)", nil, nil)
+                    local opt = context:addOption(string.format("Escovar os Dentes (Sem Agua na Pia) [Pasta: %d%%]", pct), nil, nil)
                     opt.notAvailable = true
                 end
-            elseif brush and not paste then
+            elseif brush and hasAnyPaste and not paste then
+                local opt = context:addOption("Escovar os Dentes (Tubo de Pasta Vazio)", nil, nil)
+                opt.notAvailable = true
+            elseif brush and not hasAnyPaste then
                 local opt = context:addOption("Escovar os Dentes (Necessita Pasta de Dente)", nil, nil)
                 opt.notAvailable = true
-            elseif not brush and paste then
+            elseif not brush and (paste or hasAnyPaste) then
                 local opt = context:addOption("Escovar os Dentes (Necessita Escova de Dentes)", nil, nil)
                 opt.notAvailable = true
             else
@@ -825,4 +934,64 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
         print("[LivingHouse] Aviso seguro em onFillWorldObjectContextMenu: " .. tostring(errMaster))
     end
 end
+
+-- =============================================================================
+-- HOOK: Renderização da Barra "Restante:" (Remaining) no Painel de Inventário e Tooltip
+-- Garante que a barra verde com a durabilidade seja exibida tanto no ISInventoryPane
+-- quanto no ISToolTipInv, mesmo para itens já existentes em saves prévios.
+-- =============================================================================
+local function setupToothpasteUIHooks()
+    if ISInventoryPane and ISInventoryPane.drawItemDetails and not ISInventoryPane._lv_toothpaste_hooked then
+        ISInventoryPane._lv_toothpaste_hooked = true
+        local orig_drawItemDetails = ISInventoryPane.drawItemDetails
+        function ISInventoryPane:drawItemDetails(item, y, xoff, yoff, red)
+            if item and isToothpasteItem(item) then
+                local hdrHgt = self.headerHgt
+                local top = hdrHgt + y * self.itemHgt + yoff
+                local hc = getCore():getGoodHighlitedColor()
+                local fgBar = {r=hc:getR(), g=hc:getG(), b=hc:getB(), a=1}
+                local fgText = {r=0.6, g=0.8, b=0.5, a=0.6}
+                if red then fgText = {r=0.0, g=0.0, b=0.5, a=0.7} end
+                local text = getText("IGUI_invpanel_Remaining") .. ":"
+                local fraction = getToothpasteRemaining(item)
+                self:drawTextAndProgressBar(text, fraction, xoff, top, fgText, fgBar)
+                return
+            end
+            return orig_drawItemDetails(self, item, y, xoff, yoff, red)
+        end
+    end
+
+    if ISToolTipInv and ISToolTipInv.render and not ISToolTipInv._lv_toothpaste_hooked then
+        ISToolTipInv._lv_toothpaste_hooked = true
+        local orig_ISToolTipInv_render = ISToolTipInv.render
+        function ISToolTipInv:render()
+            orig_ISToolTipInv_render(self)
+            if self.item and isToothpasteItem(self.item) and self:getIsVisible() then
+                local isDrainable = false
+                if instanceof then
+                    local okI, resI = pcall(instanceof, self.item, "Drainable")
+                    if okI and resI then isDrainable = true end
+                end
+                -- Se não for Drainable nativo no Java, o DoTooltip não desenha a barra.
+                -- Desenhamos a barra de Restante no rodapé do tooltip:
+                if not isDrainable then
+                    local fraction = getToothpasteRemaining(self.item)
+                    local text = getText("IGUI_invpanel_Remaining") .. ":"
+                    local textWid = getTextManager():MeasureStringX(UIFont.Small, text)
+                    local y = self:getHeight() - 16
+                    local hc = getCore():getGoodHighlitedColor()
+                    local fgBar = {r=hc:getR(), g=hc:getG(), b=hc:getB(), a=1}
+                    self:drawText(text, 10, y, 0.6, 0.8, 0.5, 0.9, UIFont.Small)
+                    local barX = 10 + textWid + 8
+                    local barW = math.max(60, self:getWidth() - barX - 12)
+                    self:drawProgressBar(barX, y + 4, barW, 4, fraction, fgBar)
+                end
+            end
+        end
+    end
+end
+
+setupToothpasteUIHooks()
+Events.OnGameStart.Add(setupToothpasteUIHooks)
+
 

@@ -179,6 +179,19 @@ function LV_HouseDashboard:refreshData(force)
         end
     end
 
+    local breakdown = LV_ComfortScanner and LV_ComfortScanner.getRoomBreakdown and LV_ComfortScanner.getRoomBreakdown()
+    if breakdown then
+        res.safehouseScore = breakdown.safehouseScore or res.comfortScore
+        res.safehouseTier = breakdown.safehouseTier or res.comfortTier
+        res.roomScore = breakdown.roomScore or res.comfortScore
+        res.roomTier = breakdown.roomTier or res.comfortTier
+    else
+        res.safehouseScore = res.comfortScore
+        res.safehouseTier = res.comfortTier
+        res.roomScore = res.comfortScore
+        res.roomTier = res.comfortTier
+    end
+
     local routineData = LV_RoutineSystem and LV_RoutineSystem.getRoutineData and LV_RoutineSystem.getRoutineData(player)
     if routineData then
         res.streakDays = routineData.streakDays or 0
@@ -346,7 +359,7 @@ function LV_HouseDashboard:render()
     self:drawTextRight("[COMODO (K)]", self.width - PAD - 26, PAD + 2, 0.45, 0.85, 0.90, 0.90, FONT_S)
     self:drawTextRight("[X]", self.width - PAD, PAD + 2, 0.70, 0.70, 0.70, 1.0, FONT_S)
 
-    local subTitle = string.format("Local: %s", data.safehouseName or "Refugio")
+    local subTitle = string.format("Refugio: %s [Tier %d - %d pts]", data.safehouseName or "Base", data.safehouseTier or 0, data.safehouseScore or 0)
     self:drawText(subTitle, PAD + 4, PAD + 22, 0.70, 0.75, 0.80, 1.0, FONT_S)
 
     -- Linha Divisória 1

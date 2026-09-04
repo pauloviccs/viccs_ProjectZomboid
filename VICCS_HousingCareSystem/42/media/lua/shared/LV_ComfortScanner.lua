@@ -304,6 +304,57 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
     scanQueue.results = initialResults
 end
 
+--- Registra a pontuação de um arquétipo de tile no cômodo aplicando diminishing returns e tetos
+local function registerTileScore(res, archetypeKey, customLabel)
+    if not res or not archetypeKey then return end
+    local arch = LV_ItemScoreData and LV_ItemScoreData.getTileArchetype and LV_ItemScoreData.getTileArchetype(archetypeKey)
+    if not arch then return end
+
+    res.foundTypes = res.foundTypes or {}
+    local typeCount = (res.foundTypes[archetypeKey] or 0) + 1
+    res.foundTypes[archetypeKey] = typeCount
+
+    local maxArchetype = arch.maxPerRoom or 6
+    if typeCount > maxArchetype then
+        return -- teto atingido para este arquétipo no cômodo
+    end
+
+    local cat = arch.category or "HEAVY_FURNITURE"
+    res.categoryCounts = res.categoryCounts or {}
+    local catCount = (res.categoryCounts[cat] or 0) + 1
+    res.categoryCounts[cat] = catCount
+
+    local maxPerCat = 12
+    if catCount <= maxPerCat then
+        local diminishing = (LV_Config and LV_Config.get and LV_Config.get("EnableDiminishingReturns") ~= false)
+        local score = LV_ItemScoreData.getDiminishedScore(arch.score, typeCount, diminishing)
+
+        if cat == "HEAVY_FURNITURE" then
+            res.furnitureScore = res.furnitureScore + score
+        elseif cat == "APPLIANCES_ELECTRONICS" then
+            res.lightingScore = res.lightingScore + score
+        elseif cat == "SURFACE_DECOR" then
+            res.decorScore = res.decorScore + score
+        end
+
+        if res.categoryStats and res.categoryStats[cat] ~= nil then
+            res.categoryStats[cat] = res.categoryStats[cat] + score
+        end
+
+        local label = customLabel or arch.label or archetypeKey
+        table.insert(res.discoveredItems, label)
+        if res.scoredItemsList then
+            table.insert(res.scoredItemsList, {
+                name = label,
+                score = score,
+                baseScore = arch.score,
+                category = cat,
+                count = typeCount
+            })
+        end
+    end
+end
+
 --- Inspeciona um tile individual calculando métricas de conforto e squalor.
 function LV_ComfortScanner.processSquare(sq, res)
     if not sq or not res then return end
@@ -414,10 +465,8 @@ function LV_ComfortScanner.processSquare(sq, res)
                           spriteName:find("carpentry_02_6") ~= nil or
                           (instanceof and instanceof(obj, "IsoThumpable") and obj.isBed and obj:isBed())
 
-            if isBed and not res.foundTypes["bed"] then
-                res.furnitureScore = res.furnitureScore + 25
-                res.foundTypes["bed"] = true
-                table.insert(res.discoveredItems, "Cama")
+            if isBed then
+                registerTileScore(res, "bed", "Cama de Descanso")
             end
 
             -- 2. Assentos (Cadeiras, Poltronas, Sofás, Bancos)
@@ -432,10 +481,12 @@ function LV_ComfortScanner.processSquare(sq, res)
                               spriteName:find("carpentry_01_4") ~= nil or
                               (instanceof and instanceof(obj, "IsoThumpable") and obj.isChair and obj:isChair())
 
-            if isSeating and not res.foundTypes["seating"] then
-                res.furnitureScore = res.furnitureScore + 15
-                res.foundTypes["seating"] = true
-                table.insert(res.discoveredItems, "Assento/Sofa")
+            if isSeating then
+                if spriteName:find("sofa") or spriteName:find("couch") then
+                    registerTileScore(res, "couch", "Sofa Acolchoado")
+                else
+                    registerTileScore(res, "chair", "Cadeira/Poltrona")
+                end
             end
 
             -- 3. Mesas e Balcões
@@ -448,10 +499,8 @@ function LV_ComfortScanner.processSquare(sq, res)
                             spriteName:find("carpentry_01_5") ~= nil or
                             (instanceof and instanceof(obj, "IsoThumpable") and obj.isTable and obj:isTable())
 
-            if isTable and not res.foundTypes["table"] then
-                res.furnitureScore = res.furnitureScore + 15
-                res.foundTypes["table"] = true
-                table.insert(res.discoveredItems, "Mesa/Balcao")
+            if isTable then
+                registerTileScore(res, "table", "Mesa/Balcao")
             end
 
             -- 4. Armários, Roupeiros, Estantes, Cômodas, Cristaleiras e Baús
@@ -472,10 +521,12 @@ function LV_ComfortScanner.processSquare(sq, res)
                               spriteName:find("carpentry_02_1") ~= nil or
                               (obj.getContainer and obj:getContainer() ~= nil)
 
-            if isStorage and not res.foundTypes["storage"] then
-                res.furnitureScore = res.furnitureScore + 15
-                res.foundTypes["storage"] = true
-                table.insert(res.discoveredItems, "Armario/Comoda/Cristaleira")
+            if isStorage then
+                if spriteName:find("book") then
+                    registerTileScore(res, "bookshelf", "Estante de Livros")
+                else
+                    registerTileScore(res, "storage", "Armario/Comoda")
+                end
             end
 
             local cc = res.climate or {}
@@ -491,16 +542,12 @@ function LV_ComfortScanner.processSquare(sq, res)
                           spriteName:find("hide") ~= nil or
                           spriteName:find("mat") ~= nil
 
-            if isRug and not res.foundTypes["rug"] then
-                local rugScore = 12
+            if isRug then
                 if seasonalEnabled and cc.isWinter then
-                    rugScore = 18 -- +6 pts extras por isolamento térmico de piso frio no inverno
-                    table.insert(res.discoveredItems, "Tapete Acolchoado (Isolamento Frio)")
+                    registerTileScore(res, "rug_winter", "Tapete Acolchoado (Isolamento Inverno)")
                 else
-                    table.insert(res.discoveredItems, "Tapete/Pele")
+                    registerTileScore(res, "rug", "Tapete/Pele")
                 end
-                res.furnitureScore = res.furnitureScore + rugScore
-                res.foundTypes["rug"] = true
             end
 
             -- 6. Quadros, Pôsteres, Espelhos e Decorações de Parede (com Sombra Térmica no Verão)
@@ -514,17 +561,23 @@ function LV_ComfortScanner.processSquare(sq, res)
                                 spriteName:find("location_") ~= nil or
                                 (instanceof and instanceof(obj, "IsoCurtain"))
 
-            if isWallDecor and not res.foundTypes["wall_decor"] then
-                res.furnitureScore = res.furnitureScore + 12
-                res.foundTypes["wall_decor"] = true
-                table.insert(res.discoveredItems, "Quadro/Decoracao")
+            if isWallDecor then
+                if spriteName:find("clock") then
+                    registerTileScore(res, "clock", "Relogio de Parede")
+                elseif spriteName:find("mirror") then
+                    registerTileScore(res, "mirror", "Espelho")
+                elseif spriteName:find("curtain") or (instanceof and instanceof(obj, "IsoCurtain")) then
+                    registerTileScore(res, "curtain", "Cortina")
+                else
+                    registerTileScore(res, "wall_decor", "Quadro/Decoracao")
+                end
             end
 
             -- Cortinas fechadas bloqueando sol direto em dias escaldantes
             if (instanceof and instanceof(obj, "IsoCurtain")) and seasonalEnabled and cc.isSummer and not res.foundTypes["sun_curtain"] then
                 if obj.IsOpen and not obj:IsOpen() then
-                    res.furnitureScore = res.furnitureScore + 4
-                    res.foundTypes["sun_curtain"] = true
+                    res.decorScore = res.decorScore + 4
+                    res.foundTypes["sun_curtain"] = 1
                     table.insert(res.discoveredItems, "Sombra Termica (Cortinas Fechadas)")
                 end
             end
@@ -548,38 +601,28 @@ function LV_ComfortScanner.processSquare(sq, res)
                               spriteName:find("appliances_cooking_") ~= nil or
                               (instanceof and (instanceof(obj, "IsoStove") or instanceof(obj, "IsoBarbecue")))
 
-            if (isFireplace or isHeater or isAntiqueStove) and not res.foundTypes["heat_source"] then
+            if isFireplace or isHeater or isAntiqueStove then
                 local isLit = (obj.isLit and obj:isLit()) or (obj.isActivated and obj:isActivated()) or false
                 if isHeater and not isLit and sq.haveElectricity and sq:haveElectricity() then
                     isLit = true
                 end
 
                 if seasonalEnabled and cc.isWinter then
-                    -- Inverno: Fontes de calor ativas concedem pontuação dobrada (+24 pontos)
                     if isLit then
-                        res.furnitureScore = res.furnitureScore + 24
-                        res.foundTypes["heat_source"] = true
+                        registerTileScore(res, "heat_source_on", "Aquecimento Ativo (Inverno)")
                         res.hasActiveHeatInWinter = true
-                        table.insert(res.discoveredItems, "Aquecimento Ativo (Inverno)")
                     else
-                        res.furnitureScore = res.furnitureScore + 12
-                        res.foundTypes["heat_source"] = true
-                        table.insert(res.discoveredItems, "Lareira/Aquecedor Apagado")
+                        registerTileScore(res, "heat_source_off", "Lareira/Aquecedor Apagado")
                     end
                 elseif seasonalEnabled and cc.isSummer and isLit and not sq:isOutside() then
-                    -- Verão: Fogo aceso em ambiente fechado gera desconforto e calor sufocante
                     res.cleanlinessPenalty = res.cleanlinessPenalty + 12
                     res.squalorTrash = res.squalorTrash + 12
                     table.insert(res.discoveredItems, "Calor Sufocante (Fogo no Verao)")
                 else
-                    res.furnitureScore = res.furnitureScore + 12
-                    res.foundTypes["heat_source"] = true
-                    table.insert(res.discoveredItems, "Lareira/Fonte de Calor")
+                    registerTileScore(res, "heat_source_off", "Lareira/Fonte de Calor")
                 end
-            elseif isCooking and not res.foundTypes["cooking"] then
-                res.furnitureScore = res.furnitureScore + 12
-                res.foundTypes["cooking"] = true
-                table.insert(res.discoveredItems, "Fogao/Cozinha")
+            elseif isCooking then
+                registerTileScore(res, "stove_oven", "Fogao/Cozinha")
             end
 
             -- 8. Fontes de Luz e Ventiladores (Resfriamento de Verão)
@@ -590,38 +633,34 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isFan and seasonalEnabled and cc.isSummer and not res.foundTypes["fan_cooling"] then
                 local hasPower = (obj.isActivated and obj:isActivated()) or (sq.haveElectricity and sq:haveElectricity()) or false
                 if hasPower then
-                    res.furnitureScore = res.furnitureScore + 10
-                    res.foundTypes["fan_cooling"] = true
+                    registerTileScore(res, "fan_cooling", "Ventilacao Refrescante (Verao)")
                     res.hasSummerCooling = true
-                    table.insert(res.discoveredItems, "Ventilacao Refrescante (Verao)")
                 end
             end
 
             local isLightOn = (instanceof and instanceof(obj, "IsoLightSwitch") and obj.isActivated and obj:isActivated()) or
-
                               (obj.isLightSource and obj:isLightSource()) or
                               spriteName:find("lamp") ~= nil or
                               spriteName:find("candle") ~= nil or
                               spriteName:find("lantern") ~= nil or
                               spriteName:find("lighting_") ~= nil
 
-            if isLightOn and not res.foundTypes["light"] then
-                res.lightingScore = res.lightingScore + 15
-                res.foundTypes["light"] = true
-                table.insert(res.discoveredItems, "Iluminacao")
+            if isLightOn then
+                registerTileScore(res, "light_source_on", "Iluminacao Ativa")
             end
 
-            -- 9. Eletrônicos (Rádio, TV, Telefone)
+            -- 9. Eletrônicos (Rádio, TV, Telefone, Geladeira)
+            local isFridge = spriteName:find("fridge") ~= nil or spriteName:find("refrigerator") ~= nil or spriteName:find("appliances_refrigeration_") ~= nil
             local isMedia = spriteName:find("radio") ~= nil or
                             spriteName:find("television") ~= nil or
                             spriteName:find("tv") ~= nil or
                             spriteName:find("telephone") ~= nil or
                             (instanceof and (instanceof(obj, "IsoRadio") or instanceof(obj, "IsoTelevision")))
 
-            if isMedia and not res.foundTypes["media"] then
-                res.furnitureScore = res.furnitureScore + 10
-                res.foundTypes["media"] = true
-                table.insert(res.discoveredItems, "TV/Radio/Telefone")
+            if isFridge then
+                registerTileScore(res, "fridge", "Geladeira")
+            elseif isMedia then
+                registerTileScore(res, "radio_tv", "TV/Radio/Telefone")
             end
 
             -- 10. Plantas Decorativas
@@ -630,10 +669,8 @@ function LV_ComfortScanner.processSquare(sq, res)
                             spriteName:find("vegetation_indoor_") ~= nil or
                             spriteName:find("fittings_indoor_") ~= nil
 
-            if isPlant and not res.foundTypes["plant"] then
-                res.furnitureScore = res.furnitureScore + 10
-                res.foundTypes["plant"] = true
-                table.insert(res.discoveredItems, "Planta Decorativa")
+            if isPlant then
+                registerTileScore(res, "plant", "Planta Decorativa")
             end
 
             -- 11. Peças Sanitárias e Higiene (Vaso, Pia, Banheira, Chuveiro)
@@ -841,9 +878,77 @@ function LV_ComfortScanner.finalizeScore(player, res)
         end
     end
 
-    -- 6. Cache Estruturado do Detalhamento do Cômodo (Room Breakdown)
+    -- 6. Cache Estruturado do Detalhamento do Cômodo e Agregação da Safehouse Geral
     local pSq = player and player.getCurrentSquare and player:getCurrentSquare()
     local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, pSq)) or "room_default"
+
+    -- Identificação de Safehouse para cálculo do Tier Geral da Base de forma separada
+    local shClass = SafeHouse or Safehouse
+    local curSafehouse = nil
+    if shClass and shClass.getSafehouse and pSq then
+        local okSh, shObj = pcall(shClass.getSafehouse, pSq)
+        if okSh and shObj then curSafehouse = shObj end
+    end
+
+    LV_ComfortScanner.SafehousesData = LV_ComfortScanner.SafehousesData or {}
+    local safehouseScore = comfortScore
+    local safehouseTier = roomTier
+
+    if curSafehouse then
+        local shId = (curSafehouse.getTitle and curSafehouse:getTitle()) or (curSafehouse.getId and curSafehouse:getId()) or (res.baseName or "Safehouse")
+        LV_ComfortScanner.SafehousesData[shId] = LV_ComfortScanner.SafehousesData[shId] or { rooms = {} }
+        local shData = LV_ComfortScanner.SafehousesData[shId]
+
+        shData.rooms[locKey] = {
+            score = comfortScore,
+            tier = roomTier,
+            name = res.baseName or locKey,
+            squalor = squalorScore,
+            time = (getGameTime and getGameTime():getWorldAgeHours()) or 0
+        }
+
+        local sumScore = 0
+        local sumSqualor = 0
+        local roomCount = 0
+        for _, r in pairs(shData.rooms) do
+            sumScore = sumScore + (r.score or 0)
+            sumSqualor = sumSqualor + (r.squalor or 0)
+            roomCount = roomCount + 1
+        end
+
+        local avgScore = (roomCount > 0) and (sumScore / roomCount) or comfortScore
+        local avgSqualor = (roomCount > 0) and (sumSqualor / roomCount) or squalorScore
+
+        -- Bônus de infraestrutura da Safehouse
+        local infraBonus = 0
+        if LV_HouseDashboard and LV_HouseDashboard.getInstance then
+            local dash = LV_HouseDashboard.getInstance()
+            local dData = dash and dash.cachedData
+            if dData then
+                if dData.hasGenerator and dData.isActivated then
+                    infraBonus = infraBonus + 10
+                end
+                if dData.waterTotal and dData.waterTotal >= 200 then
+                    infraBonus = infraBonus + 8
+                end
+            end
+        end
+
+        local netShScore = avgScore + infraBonus
+        if avgSqualor > 15 then
+            netShScore = netShScore - (avgSqualor * 0.40)
+        end
+        safehouseScore = math.max(0, math.min(100, math.floor(netShScore)))
+
+        if safehouseScore >= t4 then safehouseTier = 4
+        elseif safehouseScore >= t3 then safehouseTier = 3
+        elseif safehouseScore >= t2 then safehouseTier = 2
+        elseif safehouseScore >= t1 then safehouseTier = 1
+        else safehouseTier = 0 end
+
+        shData.safehouseScore = safehouseScore
+        shData.safehouseTier = safehouseTier
+    end
     
     LV_ComfortScanner.RoomBreakdown = LV_ComfortScanner.RoomBreakdown or {}
     LV_ComfortScanner.RoomBreakdown[locKey] = {
@@ -851,8 +956,8 @@ function LV_ComfortScanner.finalizeScore(player, res)
         roomName = res.baseName or "Comodo",
         roomScore = comfortScore,
         roomTier = roomTier,
-        safehouseScore = comfortScore,
-        safehouseTier = roomTier,
+        safehouseScore = safehouseScore,
+        safehouseTier = safehouseTier,
         cleanPoints = cleanPoints,
         furniturePoints = furniturePoints,
         lightingPoints = lightingPoints,
