@@ -18,35 +18,35 @@ local CATEGORIES = {
         defaultPercent = 15,
         cooldownSeconds = 40,
         haloKey = "UI_LV_Halo_Cleaning",
-        defaultHalo = "+15% Duração do Lar (Limpeza)"
+        defaultHalo = "+15% Duracao do Lar (Limpeza)"
     },
     Cooking = {
         name = "Cooking",
         defaultPercent = 20,
         cooldownSeconds = 90,
         haloKey = "UI_LV_Halo_Cooking",
-        defaultHalo = "+20% Duração do Lar (Culinária)"
+        defaultHalo = "+20% Duracao do Lar (Culinaria)"
     },
     Farming = {
         name = "Farming",
         defaultPercent = 15,
         cooldownSeconds = 30,
         haloKey = "UI_LV_Halo_Farming",
-        defaultHalo = "+15% Duração do Lar (Jardinagem)"
+        defaultHalo = "+15% Duracao do Lar (Jardinagem)"
     },
     Building = {
         name = "Building",
         defaultPercent = 25,
         cooldownSeconds = 60,
         haloKey = "UI_LV_Halo_Building",
-        defaultHalo = "+25% Duração do Lar (Construção)"
+        defaultHalo = "+25% Duracao do Lar (Construcao)"
     },
     Decorating = {
         name = "Decorating",
         defaultPercent = 15,
         cooldownSeconds = 120,
         haloKey = "UI_LV_Halo_Decorating",
-        defaultHalo = "+15% Duração do Lar (Decoração)"
+        defaultHalo = "+15% Duracao do Lar (Decoracao)"
     }
 }
 
@@ -193,12 +193,19 @@ function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, 
     local percent = bonusPercent or catDef.defaultPercent
     local addedHours = LV_BuffManager.addHomemakingBonus(character, categoryName, percent)
 
+    -- Se for culinária, adiciona sujeira orgânica na cozinha/cômodo
+    if categoryName == "Cooking" and LV_DirtSystem and LV_DirtSystem.onCooking then
+        pcall(function() LV_DirtSystem.onCooking(character) end)
+    end
+
     if addedHours and addedHours > 0 then
         local haloText = LV_MoodleDefs and LV_MoodleDefs.getText(catDef.haloKey, catDef.defaultHalo) or catDef.defaultHalo
-        if HaloTextHelper and HaloTextHelper.addText then
-            HaloTextHelper.addText(character, haloText, 80, 240, 130)
+        if HaloTextHelper and HaloTextHelper.addGoodText then
+            pcall(function() HaloTextHelper.addGoodText(character, tostring(haloText)) end)
+        elseif HaloTextHelper and HaloTextHelper.addText then
+            pcall(function() HaloTextHelper.addText(character, tostring(haloText)) end)
         elseif character.setHaloNote then
-            character:setHaloNote(haloText, 80, 240, 130, 250)
+            pcall(function() character:setHaloNote(tostring(haloText), 80, 240, 130, 250) end)
         end
     end
 end

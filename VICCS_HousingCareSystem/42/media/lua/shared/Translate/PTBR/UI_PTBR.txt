@@ -37,4 +37,14 @@ UI_PTBR = {
     UI_LV_Halo_Building = "+25% Duracao do Lar (Construcao)",
     UI_LV_Halo_Decorating = "+15% Duracao do Lar (Decoracao)",
     UI_LV_HUD_HomemakingBonus = "Bonus de Tarefas: +%sh",
+
+    UI_LV_NeedToilet1_Title = "Vontade de ir ao Banheiro",
+    UI_LV_NeedToilet1_Desc = "Seu corpo comeca a pedir atencao fisiologica.",
+    UI_LV_NeedToilet2_Title = "Aperto Crescente",
+    UI_LV_NeedToilet2_Desc = "Desconforto abdominal moderado. Procure um banheiro em breve.",
+    UI_LV_NeedToilet3_Title = "Urgencia Fisiologica!",
+    UI_LV_NeedToilet3_Desc = "Aperto insuportavel! Causando estresse e dor de barriga.",
+
+    UI_LV_Relieved_Title = "Aliviado",
+    UI_LV_Relieved_Desc = "Sensacao de leveza e tranquilidade apos usar um banheiro higienizado.",
 }

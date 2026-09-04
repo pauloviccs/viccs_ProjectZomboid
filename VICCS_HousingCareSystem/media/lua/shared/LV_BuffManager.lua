@@ -369,7 +369,7 @@ local function onPlayerUpdateBuffs(player)
                 activateBuffs(player, data.targetComfortScore, data.targetSqualorScore, duration)
                 pcall(function()
                     if player.setHaloNote then
-                        player:setHaloNote("Lar Vivo: Corpo Relaxado! Bônus de Lar Ativado", 80, 255, 140, 250)
+                        player:setHaloNote("Living House: Corpo Relaxado! Bonus de Lar Ativado", 80, 255, 140, 250)
                     end
                 end)
             end

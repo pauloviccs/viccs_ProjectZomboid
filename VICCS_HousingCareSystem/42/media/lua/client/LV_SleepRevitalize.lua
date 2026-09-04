@@ -128,7 +128,33 @@ local function onSleepUpdate(player)
             local bodyDamage = player:getBodyDamage()
             local stats = player:getStats()
 
-            if hadPillowAtSleep then
+            local bodyDirt = (LV_DirtSystem and LV_DirtSystem.getPlayerBodyDirt and LV_DirtSystem.getPlayerBodyDirt(player, true)) or 0
+            if bodyDirt >= 70 then
+                -- Dormiu com o corpo imundo: sono ruim, estresse residual e contaminação do quarto
+                if bodyDamage and bodyDamage.getUnhappinessLevel and bodyDamage.setUnhappinessLevel then
+                    pcall(function()
+                        bodyDamage:setUnhappinessLevel(math.min(100, bodyDamage:getUnhappinessLevel() + 20))
+                    end)
+                end
+                if stats and stats.Stress ~= nil then
+                    stats.Stress = math.min(1.0, stats.Stress + 0.25)
+                end
+
+                pcall(function()
+                    if player.setHaloNote then
+                        player:setHaloNote("Living House: Sono Desconfortavel (Corpo e Roupas Imundas)", 230, 120, 80, 280)
+                    end
+                end)
+
+                -- Suja o piso do cômodo
+                local sq = player:getCurrentSquare()
+                if sq and LV_DirtSystem and LV_DirtSystem.addFloorDirt then
+                    local locKey = LV_DirtSystem.getCurrentLocationKey(player, sq)
+                    if locKey ~= "outside" then
+                        LV_DirtSystem.addFloorDirt(locKey, 15.0)
+                    end
+                end
+            elseif hadPillowAtSleep then
                 -- Sono Perfeito com Travesseiro
                 if bodyDamage then
                     pcall(function()
@@ -149,7 +175,7 @@ local function onSleepUpdate(player)
 
                 pcall(function()
                     if player.setHaloNote then
-                        player:setHaloNote("Lar Vivo: Sono Reparador (Acordou Revigorado!)", 80, 255, 140, 300)
+                        player:setHaloNote("Living House: Sono Reparador (Acordou Revigorado!)", 80, 255, 140, 300)
                     end
                 end)
             else
@@ -164,7 +190,7 @@ local function onSleepUpdate(player)
 
                 pcall(function()
                     if player.setHaloNote then
-                        player:setHaloNote("Lar Vivo: Bom Descanso (Cama Confortavel)", 120, 240, 160, 250)
+                        player:setHaloNote("Living House: Bom Descanso (Cama Confortavel)", 120, 240, 160, 250)
                     end
                 end)
             end

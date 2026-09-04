@@ -3,10 +3,14 @@
 -- =============================================================================
 -- Autor: VICCS
 -- Descrição:
---   Renderiza o Moodlet do Lar Vivo (Conforto ou Insalubridade) na coluna lateral
---   direita da tela, perfeitamente alinhado abaixo dos Moodlets vanilla do jogo.
---   Usa texturas PNG nativas com renderização em camada superior e tooltip oficial.
+--   Renderiza os Moodlets do Lar Vivo (Conforto, Insalubridade, Necessidade
+--   de Banheiro e Aliviado) na coluna lateral direita da tela, perfeitamente
+--   alinhados abaixo dos Moodlets vanilla do jogo.
 -- =============================================================================
+
+require "LV_Config"
+require "LV_MoodleDefs"
+require "LV_BladderNeed"
 
 LV_MoodleUI = ISUIElement:derive("LV_MoodleUI")
 
@@ -15,7 +19,6 @@ local MOODLE_STEP = 38
 local MARGIN_RIGHT = 12
 local BASE_TOP = 65
 
---- Mapeamento de texturas exclusivas do mod (com caminhos em minúsculo e padrão)
 local ICONS = {
     Comfort = {
         [1] = {"media/ui/moodles/lv_comfort_1.png", "media/ui/Moodles/LV_Comfort_1.png"},
@@ -31,14 +34,12 @@ local ICONS = {
     }
 }
 
---- Lista de moodlets vanilla conhecidos para cálculo exato de quantos estão na tela
 local VANILLA_MOODLE_TYPES = {
     "Endurance", "Tired", "Hungry", "Panic", "Sick", "Bored", "Unhappy", "Bleeding",
     "Wet", "HasACold", "Injured", "Pain", "HeavyLoad", "Drunk", "Dead", "Zombie",
     "FoodEaten", "Hyperthermia", "Hypothermia", "Windchill", "Stress"
 }
 
---- Obtém a textura de forma segura
 local function fetchTexture(isComfort, tier)
     tier = math.max(1, math.min(4, tier or 1))
     local paths = isComfort and ICONS.Comfort[tier] or ICONS.Squalor[tier]
@@ -54,7 +55,6 @@ end
 local cachedVanillaCount = 0
 local lastVanillaCheckTime = 0
 
---- Conta quantos Moodles vanilla estão visíveis com cache de 0.2s para evitar ponte Java/Lua constante
 local function getActiveVanillaMoodlesCount(player)
     if not player then return 0 end
     local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
@@ -81,7 +81,7 @@ local function getActiveVanillaMoodlesCount(player)
 end
 
 function LV_MoodleUI:new()
-    local o = ISUIElement:new(0, 0, MOODLE_SIZE, MOODLE_SIZE)
+    local o = ISUIElement:new(0, 0, MOODLE_SIZE, MOODLE_SIZE * 3)
     setmetatable(o, self)
     self.__index = self
     o.visible = true
@@ -90,118 +90,184 @@ function LV_MoodleUI:new()
 end
 
 function LV_MoodleUI:prerender()
-    -- Renderização completa tratada no render()
+    -- Renderização tratada no render()
 end
 
 function LV_MoodleUI:render()
     if not LV_Config or not LV_Config.isEnabled() then return end
     local player = getPlayer()
-    if not player then return end
+    if not player or player:isDead() then return end
 
-    if not LV_BuffManager or not LV_BuffManager.getPlayerData then return end
-    local data = LV_BuffManager.getPlayerData(player)
+    local data = LV_BuffManager and LV_BuffManager.getPlayerData and LV_BuffManager.getPlayerData(player)
     if not data then return end
+
+    -- 1. Coleta a lista de moodlets ativos para renderizar
+    local activeMoodles = {}
 
     local comfortTier = data.comfortTier or 0
     local squalorTier = data.squalorTier or 0
-
-    -- Se não tem bônus de conforto nem debuff de sujeira ativo, não desenha
-    if comfortTier <= 0 and squalorTier <= 0 then
-        return
+    if comfortTier > 0 then
+        table.insert(activeMoodles, {
+            kind = "comfort",
+            tier = comfortTier,
+            data = data,
+        })
+    elseif squalorTier > 0 then
+        table.insert(activeMoodles, {
+            kind = "squalor",
+            tier = squalorTier,
+            data = data,
+        })
     end
 
-    local isComfort = comfortTier > 0
-    local tier = isComfort and comfortTier or squalorTier
+    local toiletTier = (LV_BladderNeed and LV_BladderNeed.getTier and LV_BladderNeed.getTier(player)) or 0
+    if toiletTier > 0 then
+        table.insert(activeMoodles, {
+            kind = "toilet",
+            tier = toiletTier,
+            need = LV_BladderNeed.getNeed(player),
+        })
+    elseif LV_BladderNeed and LV_BladderNeed.isRelievedActive and LV_BladderNeed.isRelievedActive(player) then
+        table.insert(activeMoodles, {
+            kind = "relieved",
+        })
+    end
 
-    -- 1. Calcula a posição exata na coluna da direita abaixo dos moodlets vanilla
+    if #activeMoodles == 0 then return end
+
     local screenW = getCore():getScreenWidth()
     local vanillaCount = getActiveVanillaMoodlesCount(player)
     local targetX = screenW - MOODLE_SIZE - MARGIN_RIGHT
-    local targetY = BASE_TOP + (vanillaCount * MOODLE_STEP)
+    local startY = BASE_TOP + (vanillaCount * MOODLE_STEP)
 
-    if self:getX() ~= targetX then self:setX(targetX) end
-    if self:getY() ~= targetY then self:setY(targetY) end
-    if self:getWidth() ~= MOODLE_SIZE then self:setWidth(MOODLE_SIZE) end
-    if self:getHeight() ~= MOODLE_SIZE then self:setHeight(MOODLE_SIZE) end
+    self:setX(targetX)
+    self:setY(startY)
+    self:setWidth(MOODLE_SIZE)
+    self:setHeight(#activeMoodles * MOODLE_STEP)
 
-    -- 2. Busca e desenha a textura PNG do Moodlet
-    local texture = fetchTexture(isComfort, tier)
-
-    if texture then
-        self:drawTextureScaled(texture, 0, 0, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
-    else
-        -- Fallback gráfico circular impecável
-        local bgR = isComfort and 0.12 or 0.75
-        local bgG = isComfort and 0.80 or 0.18
-        local bgB = isComfort and 0.35 or 0.18
-        self:drawRect(0, 0, MOODLE_SIZE, MOODLE_SIZE, 0.95, bgR, bgG, bgB)
-        self:drawRectBorder(0, 0, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
-        self:drawText(tostring(tier), 12, 8, 1, 1, 1, 1.0, UIFont.Medium)
-    end
-
-    -- 3. Tooltip ao passar o mouse por cima
     local mouseX = getMouseX()
     local mouseY = getMouseY()
 
-    if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
-       mouseY >= targetY and mouseY <= (targetY + MOODLE_SIZE) then
-        self:renderTooltip(player, data, isComfort, tier)
+    for idx, item in ipairs(activeMoodles) do
+        local relY = (idx - 1) * MOODLE_STEP
+
+        if item.kind == "comfort" or item.kind == "squalor" then
+            local isComfort = (item.kind == "comfort")
+            local tex = fetchTexture(isComfort, item.tier)
+            if tex then
+                self:drawTextureScaled(tex, 0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            else
+                local bgR = isComfort and 0.12 or 0.75
+                local bgG = isComfort and 0.80 or 0.18
+                local bgB = isComfort and 0.35 or 0.18
+                self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.95, bgR, bgG, bgB)
+                self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+                self:drawText(tostring(item.tier), 12, relY + 8, 1, 1, 1, 1.0, UIFont.Medium)
+            end
+
+            -- Tooltip
+            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
+               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+                self:renderBaseTooltip(player, item.data, isComfort, item.tier, relY)
+            end
+
+        elseif item.kind == "toilet" then
+            local def = LV_MoodleDefs.NeedToiletTiers[item.tier]
+            local tex = def and def.vanillaIcon and getTexture(def.vanillaIcon)
+            if tex then
+                self:drawTextureScaled(tex, 0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            else
+                local c = (def and def.color) or {r=0.9, g=0.3, b=0.2}
+                self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, c.r, c.g, c.b)
+                self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            end
+
+            -- Tooltip
+            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
+               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+                self:renderToiletTooltip(def, item.need, relY)
+            end
+
+        elseif item.kind == "relieved" then
+            local def = LV_MoodleDefs.Relieved
+            local tex = def and def.vanillaIcon and getTexture(def.vanillaIcon)
+            if tex then
+                self:drawTextureScaled(tex, 0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            else
+                self:drawRect(0, relY, MOODLE_SIZE, MOODLE_SIZE, 0.92, 0.3, 0.85, 0.5)
+                self:drawRectBorder(0, relY, MOODLE_SIZE, MOODLE_SIZE, 1.0, 1, 1, 1)
+            end
+
+            -- Tooltip
+            if mouseX >= targetX and mouseX <= (targetX + MOODLE_SIZE) and
+               mouseY >= (startY + relY) and mouseY <= (startY + relY + MOODLE_SIZE) then
+                self:renderRelievedTooltip(def, relY)
+            end
+        end
     end
 end
 
---- Renderiza o Tooltip vanilla do Moodlet
-function LV_MoodleUI:renderTooltip(player, data, isComfort, tier)
-    local title = ""
-    local desc = ""
-    local timeStr = ""
-
+function LV_MoodleUI:renderBaseTooltip(player, data, isComfort, tier, relY)
     local currentHour = getGameTime():getWorldAgeHours()
     local expHour = isComfort and data.comfortExpiryWorldHour or data.squalorExpiryWorldHour
     local remaining = math.max(0, expHour - currentHour)
     local baseName = (data.baseName and data.baseName ~= "" and data.baseName ~= "Lar") and data.baseName or nil
 
+    local title, desc
     if isComfort then
+        local def = LV_MoodleDefs.ComfortTiers and LV_MoodleDefs.ComfortTiers[tier]
         local keyTitle = "UI_LV_Tier" .. tier .. "_Title"
         local keyDesc = "UI_LV_Tier" .. tier .. "_Desc"
-        title = LV_MoodleDefs and LV_MoodleDefs.getText(keyTitle, "Aconchego do Lar (Tier " .. tier .. ")") or ("Aconchego (Tier " .. tier .. ")")
-        if baseName then title = baseName .. " — " .. title end
-        desc = LV_MoodleDefs and LV_MoodleDefs.getText(keyDesc, "Reduz o panico e estresse, regenera vigor.") or "Corpo protegido e revigorado pelo aconchego do lar."
-        timeStr = string.format("Duracao restante: %.1fh (In-Game)", remaining)
+        title = LV_MoodleDefs.getText(keyTitle, (def and def.defaultTitle) or ("Aconchego do Lar (Tier " .. tier .. ")"))
+        if baseName then title = baseName .. " - " .. title end
+        desc = LV_MoodleDefs.getText(keyDesc, (def and def.defaultDesc) or "Reduz o panico e estresse, regenera vigor.")
     else
+        local def = LV_MoodleDefs.SqualorTiers and LV_MoodleDefs.SqualorTiers[tier]
         local keyTitle = "UI_LV_Squalor" .. tier .. "_Title"
         local keyDesc = "UI_LV_Squalor" .. tier .. "_Desc"
-        title = LV_MoodleDefs and LV_MoodleDefs.getText(keyTitle, "Ambiente Insalubre (Nivel " .. tier .. ")") or ("Insalubridade (" .. tier .. ")")
-        if baseName then title = baseName .. " — " .. title end
-        desc = LV_MoodleDefs and LV_MoodleDefs.getText(keyDesc, "Gera desconforto, nauseas e infelicidade.") or "Penalidade por sujeira e podridao."
-        timeStr = string.format("Efeito ativo: %.1fh", remaining)
+        title = LV_MoodleDefs.getText(keyTitle, (def and def.defaultTitle) or ("Ambiente Insalubre (Nivel " .. tier .. ")"))
+        if baseName then title = baseName .. " - " .. title end
+        desc = LV_MoodleDefs.getText(keyDesc, (def and def.defaultDesc) or "Gera desconforto, nauseas e infelicidade.")
     end
+    local timeStr = string.format("Duracao restante: %.1fh (In-Game)", remaining)
 
-    local fontTitle = UIFont.Small
-    local fontDesc = UIFont.Small
-    local titleW = getTextManager():MeasureStringX(fontTitle, title)
-    local descW = getTextManager():MeasureStringX(fontDesc, desc)
-    local timeW = getTextManager():MeasureStringX(fontDesc, timeStr)
-
-    local boxW = math.max(titleW, math.max(descW, timeW)) + 24
-    local boxH = 65
-    local boxX = self:getX() - boxW - 8
-    local boxY = self:getY()
-
-    -- Fundo preto clássico vanilla
-    self:drawRect(boxX - self:getX(), boxY - self:getY(), boxW, boxH, 0.92, 0.08, 0.08, 0.08)
-    self:drawRectBorder(boxX - self:getX(), boxY - self:getY(), boxW, boxH, 0.9, 0.7, 0.7, 0.7)
-
-    -- Textos
-    local textR = isComfort and 0.4 or 0.95
-    local textG = isComfort and 1.0 or 0.35
-    local textB = isComfort and 0.5 or 0.35
-
-    self:drawText(title, (boxX - self:getX()) + 10, (boxY - self:getY()) + 8, textR, textG, textB, 1.0, fontTitle)
-    self:drawText(desc, (boxX - self:getX()) + 10, (boxY - self:getY()) + 26, 0.85, 0.85, 0.85, 1.0, fontDesc)
-    self:drawText(timeStr, (boxX - self:getX()) + 10, (boxY - self:getY()) + 44, 0.65, 0.85, 0.65, 1.0, fontDesc)
+    self:drawTooltipBox(title, desc, timeStr, isComfort and {0.4, 1.0, 0.5} or {0.95, 0.4, 0.3}, relY)
 end
 
---- Inicialização automática e garantida do Moodlet
+function LV_MoodleUI:renderToiletTooltip(def, need, relY)
+    local title = def and def.defaultTitle or "Necessidade de Banheiro"
+    local desc = def and def.defaultDesc or "Seu corpo precisa de alivio sanitario."
+    local valStr = string.format("Intensidade do Aperto: %d%%", math.floor(need or 0))
+    self:drawTooltipBox(title, desc, valStr, {0.95, 0.75, 0.25}, relY)
+end
+
+function LV_MoodleUI:renderRelievedTooltip(def, relY)
+    local title = def and def.defaultTitle or "Aliviado"
+    local desc = def and def.defaultDesc or "Sensacao de bem-estar apos usar um banheiro higienizado."
+    local valStr = "Estresse e tedio aliviados."
+    self:drawTooltipBox(title, desc, valStr, {0.35, 0.90, 0.55}, relY)
+end
+
+function LV_MoodleUI:drawTooltipBox(title, desc, footer, titleColor, relY)
+    local font = UIFont.Small
+    local tm = getTextManager()
+    local titleW = tm:MeasureStringX(font, title)
+    local descW = tm:MeasureStringX(font, desc)
+    local footerW = tm:MeasureStringX(font, footer)
+
+    local boxW = math.max(titleW, math.max(descW, footerW)) + 24
+    local boxH = 65
+    local boxX = -boxW - 8
+    local boxY = relY
+
+    self:drawRect(boxX, boxY, boxW, boxH, 0.92, 0.08, 0.08, 0.08)
+    self:drawRectBorder(boxX, boxY, boxW, boxH, 0.90, 0.7, 0.7, 0.7)
+
+    self:drawText(title, boxX + 10, boxY + 8, titleColor[1], titleColor[2], titleColor[3], 1.0, font)
+    self:drawText(desc, boxX + 10, boxY + 26, 0.85, 0.85, 0.85, 1.0, font)
+    self:drawText(footer, boxX + 10, boxY + 44, 0.65, 0.85, 0.65, 1.0, font)
+end
+
 local moodleInstance = nil
 local function initMoodleUI()
     if not moodleInstance then
@@ -210,7 +276,7 @@ local function initMoodleUI()
         moodleInstance:instantiate()
         moodleInstance:addToUIManager()
         moodleInstance:setAlwaysOnTop(true)
-        print("[LarVivo] LV_MoodleUI inicializado com sucesso e posicionado na coluna direita!")
+        print("[LarVivo] LV_MoodleUI multi-moodle inicializado com sucesso!")
     end
 end
 

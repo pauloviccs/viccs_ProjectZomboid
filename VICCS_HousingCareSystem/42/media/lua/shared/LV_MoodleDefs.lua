@@ -56,10 +56,10 @@ LV_MoodleDefs.SqualorTiers = {
         id = "LV_Squalor1",
         titleKey = "UI_LV_Squalor1_Title",
         descKey = "UI_LV_Squalor1_Desc",
-        defaultTitle = "Ambiente Desagradavel (Nivel I)",
+        defaultTitle = "Desagradavel (Nivel I)",
         defaultDesc = "O ambiente sujo comeca a incomodar, gerando leve infelicidade.",
         color = {r=0.8, g=0.7, b=0.2},
-        vanillaIcon = "media/ui/Moodle_Unhappy_1.png",
+        vanillaIcon = "media/ui/Moodles/32/Mood_NoxiousSmell.png",
     },
     [2] = {
         id = "LV_Squalor2",
@@ -68,7 +68,7 @@ LV_MoodleDefs.SqualorTiers = {
         defaultTitle = "Ambiente Insalubre (Nivel II)",
         defaultDesc = "Cheiro forte de sujeira: aumento de estresse e menor regeneracao de resistencia.",
         color = {r=0.9, g=0.5, b=0.1},
-        vanillaIcon = "media/ui/Moodle_Unhappy_2.png",
+        vanillaIcon = "media/ui/Moodles/32/Mood_NoxiousSmell.png",
     },
     [3] = {
         id = "LV_Squalor3",
@@ -77,7 +77,7 @@ LV_MoodleDefs.SqualorTiers = {
         defaultTitle = "Antro Imundo (Nivel III)",
         defaultDesc = "O cheiro de podridao e sangue causa enjoo frequente e cansaco mental.",
         color = {r=0.9, g=0.3, b=0.1},
-        vanillaIcon = "media/ui/Moodle_Sick_2.png",
+        vanillaIcon = "media/ui/Moodles/32/Mood_Nauseous.png",
     },
     [4] = {
         id = "LV_Squalor4",
@@ -86,7 +86,7 @@ LV_MoodleDefs.SqualorTiers = {
         defaultTitle = "Foco de Doenca (Nivel IV)",
         defaultDesc = "Ambiente altamente contaminado! Risco severo de febre, infeccao e nauseas continuas.",
         color = {r=0.8, g=0.1, b=0.1},
-        vanillaIcon = "media/ui/Moodle_Sick_4.png",
+        vanillaIcon = "media/ui/Moodles/32/Mood_Ill.png",
     },
 }
 
@@ -122,6 +122,48 @@ LV_MoodleDefs.ExtendedCatalog = {
         title = "Alerta",
         desc = "Reduz o estresse sofrido em situacoes de combate intenso.",
     },
+}
+
+--- Moodlets de Necessidade Fisiológica (Banheiro / Bexiga)
+LV_MoodleDefs.NeedToiletTiers = {
+    [1] = {
+        id = "LV_NeedToilet1",
+        titleKey = "UI_LV_NeedToilet1_Title",
+        descKey = "UI_LV_NeedToilet1_Desc",
+        defaultTitle = "Vontade de ir ao Banheiro",
+        defaultDesc = "Seu corpo comeca a pedir atencao fisiologica.",
+        color = {r=0.85, g=0.80, b=0.30},
+        vanillaIcon = "media/ui/Moodles/32/Mood_Discomfort.png",
+    },
+    [2] = {
+        id = "LV_NeedToilet2",
+        titleKey = "UI_LV_NeedToilet2_Title",
+        descKey = "UI_LV_NeedToilet2_Desc",
+        defaultTitle = "Aperto Crescente",
+        defaultDesc = "Desconforto abdominal moderado. Procure um banheiro em breve.",
+        color = {r=0.90, g=0.55, b=0.20},
+        vanillaIcon = "media/ui/Moodles/32/Mood_Pained.png",
+    },
+    [3] = {
+        id = "LV_NeedToilet3",
+        titleKey = "UI_LV_NeedToilet3_Title",
+        descKey = "UI_LV_NeedToilet3_Desc",
+        defaultTitle = "Urgencia Fisiologica!",
+        defaultDesc = "Aperto insuportavel! Causando estresse e dor de barriga.",
+        color = {r=0.95, g=0.20, b=0.20},
+        vanillaIcon = "media/ui/Moodles/32/Mood_Ill.png",
+    },
+}
+
+--- Moodle Positivo de Banheiro Limpo
+LV_MoodleDefs.Relieved = {
+    id = "LV_Relieved",
+    titleKey = "UI_LV_Relieved_Title",
+    descKey = "UI_LV_Relieved_Desc",
+    defaultTitle = "Aliviado",
+    defaultDesc = "Sensacao de leveza e tranquilidade apos usar um banheiro higienizado.",
+    color = {r=0.30, g=0.85, b=0.50},
+    vanillaIcon = "media/ui/Moodles/32/Mood_Happy.png",
 }
 
 --- Retorna o texto traduzido ou o default seguro

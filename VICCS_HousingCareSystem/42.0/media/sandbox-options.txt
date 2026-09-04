@@ -298,3 +298,109 @@ option HousingCareSystem.HomemakingCooldownSeconds
     translation = HomemakingCooldownSeconds,
 }
 
+option HousingCareSystem.DirtSystemEnabled
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = DirtSystemEnabled,
+}
+
+option HousingCareSystem.FootDirtGainRate
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = FootDirtGainRate,
+}
+
+option HousingCareSystem.FloorDirtTransferRate
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = FloorDirtTransferRate,
+}
+
+option HousingCareSystem.CookingDirtAmount
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = CookingDirtAmount,
+}
+
+option HousingCareSystem.ChoreCooldownSeconds
+{
+    type = integer,
+    min = 5,
+    max = 300,
+    default = 45,
+    page = HousingCareSystem,
+    translation = ChoreCooldownSeconds,
+}
+
+option HousingCareSystem.DirtToSqualorWeight
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = DirtToSqualorWeight,
+}
+
+option HousingCareSystem.BladderNeedEnabled
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = BladderNeedEnabled,
+}
+
+option HousingCareSystem.BladderGainPerHour
+{
+    type = double,
+    min = 0.1,
+    max = 15.0,
+    default = 2.5,
+    page = HousingCareSystem,
+    translation = BladderGainPerHour,
+}
+
+option HousingCareSystem.BladderGainAfterEatingMultiplier
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 1.5,
+    page = HousingCareSystem,
+    translation = BladderGainAfterEatingMultiplier,
+}
+
+option HousingCareSystem.BladderNotifyThreshold
+{
+    type = integer,
+    min = 20,
+    max = 90,
+    default = 60,
+    page = HousingCareSystem,
+    translation = BladderNotifyThreshold,
+}
+
+option HousingCareSystem.EnableVisualDirtTiles
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableVisualDirtTiles,
+}
+
+
+

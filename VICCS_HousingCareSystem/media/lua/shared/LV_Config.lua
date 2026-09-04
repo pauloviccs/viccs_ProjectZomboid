@@ -55,6 +55,25 @@ local DEFAULTS = {
     HomemakingBonusScale = 1.0,
     HomemakingMaxBonusHours = 8.0,
     HomemakingCooldownSeconds = 45,
+
+    -- Ciclo de Higiene, Sujeira Dinamica e Faxina (Chores)
+    DirtSystemEnabled = true,
+    FootDirtGainRate = 1.0,
+    FloorDirtTransferRate = 1.0,
+    CookingDirtAmount = 1.0,
+    ChoreCooldownSeconds = 45,
+    DirtToSqualorWeight = 1.0,
+
+    -- Necessidades Fisiologicas (Bladder / Toilet Need)
+    BladderNeedEnabled = true,
+    BladderGainPerHour = 2.5,
+    BladderGainAfterEatingMultiplier = 1.5,
+    BladderNotifyThreshold = 60,
+    ToiletDirtPerUsePee = 10.0,
+    ToiletDirtPerUsePoop = 25.0,
+
+    -- Manchas Visuais nos Tiles (Sangue e Overlays de Sujeira)
+    EnableVisualDirtTiles = true,
 }
 
 --- Obtém o valor de uma opção de configuração de forma segura com fallback.
@@ -91,5 +110,20 @@ end
 --- Verifica se o sistema de tarefas domésticas (Homemaking) está ativo.
 function LV_Config.isHomemakingEnabled()
     return LV_Config.isEnabled() and (LV_Config.get("HomemakingEnabled") == true)
+end
+
+--- Verifica se o sistema de sujeira dinâmica e faxina está ativo.
+function LV_Config.isDirtSystemEnabled()
+    return LV_Config.isEnabled() and (LV_Config.get("DirtSystemEnabled") == true)
+end
+
+--- Verifica se a necessidade fisiológica está ativa.
+function LV_Config.isBladderNeedEnabled()
+    return LV_Config.isEnabled() and (LV_Config.get("BladderNeedEnabled") == true)
+end
+
+--- Verifica se a geração visual de manchas no piso (sangue e sujeira) está ativa.
+function LV_Config.isVisualDirtEnabled()
+    return LV_Config.isEnabled() and (LV_Config.get("EnableVisualDirtTiles") == true)
 end
 

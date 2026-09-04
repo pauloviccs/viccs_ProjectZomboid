@@ -32,6 +32,11 @@ local function onEveryHoursCheck()
     local player = getPlayer()
     if not player then return end
 
+    -- Atualização de necessidade fisiológica
+    if LV_BladderNeed and LV_BladderNeed.onEveryHours then
+        pcall(LV_BladderNeed.onEveryHours, player)
+    end
+
     local interval = LV_Config.get("ComfortCheckIntervalHours") or 6
     local currentHour = getGameTime():getWorldAgeHours()
 
@@ -46,6 +51,16 @@ local lastMoveScanTime = 0
 --- Monitora movimentação entre cômodos ou deslocamento na base com throttle inteligente.
 local function onPlayerPositionUpdate(player)
     if not LV_Config or not LV_Config.isEnabled() or not player then return end
+
+    -- Simulação e acúmulo de sujeira nos pés/piso
+    if LV_DirtSystem and LV_DirtSystem.onPlayerMove then
+        pcall(LV_DirtSystem.onPlayerMove, player)
+    end
+
+    -- Processamento de dano/cólicas e moodlets vanilla de bexiga
+    if LV_BladderNeed and LV_BladderNeed.updateHealthImpact then
+        pcall(LV_BladderNeed.updateHealthImpact, player)
+    end
 
     local sq = player:getCurrentSquare()
     if not sq then return end
@@ -74,14 +89,36 @@ local function onPlayerPositionUpdate(player)
     end
 end
 
+--- Listener para consumo de comida e aumento de necessidade fisiológica
+local function onEatFood(player, food)
+    if LV_BladderNeed and LV_BladderNeed.onEatFood then
+        pcall(LV_BladderNeed.onEatFood, player, food)
+    end
+end
+
+--- Listener para menus de contexto no mundo (Faxina e Banheiro)
+local function onFillContextMenu(playerNum, context, worldObjects, test)
+    if LV_ChoreActions and LV_ChoreActions.onFillWorldObjectContextMenu then
+        pcall(LV_ChoreActions.onFillWorldObjectContextMenu, playerNum, context, worldObjects, test)
+    end
+    if LV_ToiletActions and LV_ToiletActions.onFillWorldObjectContextMenu then
+        pcall(LV_ToiletActions.onFillWorldObjectContextMenu, playerNum, context, worldObjects, test)
+    end
+end
+
 --- Inicialização e varredura forçada ao carregar o personagem no mundo.
 local function onGameReady()
     local player = getPlayer()
     if not player then return end
 
-    print("[LarVivo] OnGameStart disparado. Agendando primeira varredura da base...")
+    print("[LivingHouse] OnGameStart disparado. Agendando primeira varredura da base...")
     lastCheckHour = getGameTime():getWorldAgeHours()
     LV_ComfortScanner.startScan(player, true)
+
+    -- Inicializa HUD para ficar sempre visível (estilo CHStatusHUD)
+    if LV_HUD and LV_HUD.showHUD then
+        pcall(LV_HUD.showHUD)
+    end
 end
 
 --- Captura de atalhos de teclado (Tecla 'K' = Keycode 37).
@@ -93,17 +130,43 @@ local function onKeyPressed(key)
             LV_ComfortScanner.startScan(player, true)
             LV_HUD.toggleHUD()
 
-            local data = LV_BuffManager.getPlayerData(player)
-            local baseStr = (data and data.baseName and data.baseName ~= "" and data.baseName ~= "Lar") and (data.baseName .. " — ") or ""
+            local baseStr = (data and data.baseName and data.baseName ~= "" and data.baseName ~= "Lar" and data.baseName ~= "Living House") and (data.baseName .. " - ") or ""
             if data and data.comfortTier and data.comfortTier > 0 then
-                local msg = string.format("Lar Vivo: %sConforto %d pts (Tier %d)", baseStr, data.comfortScore or 0, data.comfortTier or 0)
+                local msg = string.format("Living House: %sConforto %d pts (Tier %d)", baseStr, data.comfortScore or 0, data.comfortTier or 0)
                 showNotification(player, msg, 80, 240, 120)
             else
-                showNotification(player, "Lar Vivo: Varredura Concluída (Sem bônus)", 220, 220, 220)
+                showNotification(player, "Living House: Varredura Concluida (Sem bonus)", 220, 220, 220)
             end
         end
     end
 end
+
+--- Configuração de hooks seguros em ações de consumo de comida e água
+local function setupActionHooks()
+    if ISEatFoodAction and not ISEatFoodAction._LV_hooked then
+        ISEatFoodAction._LV_hooked = true
+        local orig_perform = ISEatFoodAction.perform
+        function ISEatFoodAction:perform()
+            orig_perform(self)
+            if self.character and self.item and LV_BladderNeed and LV_BladderNeed.onEatFood then
+                pcall(LV_BladderNeed.onEatFood, self.character, self.item)
+            end
+        end
+    end
+
+    if ISTakeWaterAction and not ISTakeWaterAction._LV_hooked then
+        ISTakeWaterAction._LV_hooked = true
+        local orig_perform = ISTakeWaterAction.perform
+        function ISTakeWaterAction:perform()
+            orig_perform(self)
+            if self.character and not self.item and LV_BladderNeed and LV_BladderNeed.onEatFood then
+                pcall(LV_BladderNeed.onEatFood, self.character, nil)
+            end
+        end
+    end
+end
+
+setupActionHooks()
 
 Events.EveryHours.Add(onEveryHoursCheck)
 Events.OnPlayerUpdate.Add(onPlayerPositionUpdate)
@@ -115,5 +178,10 @@ Events.OnCreatePlayer.Add(function(pNum, player)
     end
 end)
 Events.OnKeyPressed.Add(onKeyPressed)
+if Events.OnEatFood then
+    Events.OnEatFood.Add(onEatFood)
+end
+Events.OnFillWorldObjectContextMenu.Add(onFillContextMenu)
 
 print("[LarVivo] LV_ClientEvents carregado e escutando eventos de jogo!")
+

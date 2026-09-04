@@ -37,4 +37,14 @@ UI_CH = {
     UI_LV_Halo_Building = "+25% 居所增益持續時間 (建造)",
     UI_LV_Halo_Decorating = "+15% 居所增益持續時間 (裝飾)",
     UI_LV_HUD_HomemakingBonus = "家務加成: +%sh",
+
+    UI_LV_NeedToilet1_Title = "如廁需求",
+    UI_LV_NeedToilet1_Desc = "身體開始產生如廁需求。",
+    UI_LV_NeedToilet2_Title = "尿急 (中度)",
+    UI_LV_NeedToilet2_Desc = "腹部產生中度不適感，請儘快尋找洗手間。",
+    UI_LV_NeedToilet3_Title = "極度內急！",
+    UI_LV_NeedToilet3_Desc = "難以忍耐！引起壓力與劇烈不適。",
+
+    UI_LV_Relieved_Title = "神清氣爽",
+    UI_LV_Relieved_Desc = "在乾淨整潔的洗手間如廁後身心輕鬆舒暢。",
 }

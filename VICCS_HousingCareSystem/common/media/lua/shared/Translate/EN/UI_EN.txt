@@ -37,4 +37,14 @@ UI_EN = {
     UI_LV_Halo_Building = "+25% Home Duration (Building)",
     UI_LV_Halo_Decorating = "+15% Home Duration (Decorating)",
     UI_LV_HUD_HomemakingBonus = "Chores Bonus: +%sh",
+
+    UI_LV_NeedToilet1_Title = "Need to use the Bathroom",
+    UI_LV_NeedToilet1_Desc = "Your body is asking for physiological relief.",
+    UI_LV_NeedToilet2_Title = "Growing Urgency",
+    UI_LV_NeedToilet2_Desc = "Moderate abdominal discomfort. Find a restroom soon.",
+    UI_LV_NeedToilet3_Title = "Urgent Need!",
+    UI_LV_NeedToilet3_Desc = "Unbearable pressure! Causing stress and physical distress.",
+
+    UI_LV_Relieved_Title = "Relieved",
+    UI_LV_Relieved_Desc = "Feeling light and comfortable after using a clean bathroom.",
 }

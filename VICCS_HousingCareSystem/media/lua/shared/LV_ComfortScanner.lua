@@ -40,6 +40,7 @@ local scanQueue = {
 
 --- Cache de resultados globais da Safehouse para evitar processamento redundante
 local safehouseCache = {}
+LV_ComfortScanner.safehouseCache = safehouseCache
 
 --- Verifica se o jogador atende ao requisito de Safehouse no MP e retorna a SafeHouse ativa se houver.
 local function checkSafehouseRequirement(square, player)
@@ -296,6 +297,51 @@ function LV_ComfortScanner.processSquare(sq, res)
                 res.squalorTrash = res.squalorTrash + (LV_ItemScoreData.Penalties.TrashObject or 8)
             end
 
+            -- Detecção de Lixeiras / Latas de Lixo Cheias ou com Comida Podre
+            local container = obj.getContainer and obj:getContainer()
+            local isBin = (container and (container:getType() == "bin" or container:getType() == "trashcan" or container:getType() == "garbageeater")) or
+                          spriteName:find("trashbin") or spriteName:find("trash_can") or spriteName:find("garbage")
+            if container and isBin then
+                local w = (container.getContentsWeight and container:getContentsWeight()) or 0
+                local hasRotten = false
+                local itms = container.getItems and container:getItems()
+                if itms and itms.size then
+                    for it = 0, math.min(20, itms:size() - 1) do
+                        local curItm = itms:get(it)
+                        if curItm and curItm.isRotten and curItm:isRotten() then
+                            hasRotten = true
+                            break
+                        end
+                    end
+                end
+
+                if w > 1.5 or hasRotten then
+                    local trashPenalty = hasRotten and 20 or 12
+                    res.cleanlinessPenalty = res.cleanlinessPenalty + trashPenalty
+                    res.squalorTrash = res.squalorTrash + trashPenalty
+
+                    -- Se o jogador estiver no raio de proximidade (<= 3 tiles), emite mau cheiro e enjoo
+                    local pSq = player and player.getCurrentSquare and player:getCurrentSquare()
+                    if pSq then
+                        local dx = math.abs(pSq:getX() - sq:getX())
+                        local dy = math.abs(pSq:getY() - sq:getY())
+                        if dx <= 3 and dy <= 3 then
+                            local stats = player.getStats and player:getStats()
+                            if stats and CharacterStat and stats.set and stats.get then
+                                pcall(function()
+                                    if CharacterStat.DISCOMFORT then
+                                        stats:set(CharacterStat.DISCOMFORT, math.min(100, (stats:get(CharacterStat.DISCOMFORT) or 0) + 20))
+                                    end
+                                    if CharacterStat.FOOD_SICKNESS then
+                                        stats:set(CharacterStat.FOOD_SICKNESS, math.min(45, (stats:get(CharacterStat.FOOD_SICKNESS) or 0) + 4))
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+
             -- Bônus de Artesanato / Construção Própria do Jogador
             local isCrafted = (instanceof and instanceof(obj, "IsoThumpable")) or spriteName:find("carpentry_") ~= nil
             if isCrafted and not res.foundTypes["crafted_bonus"] then
@@ -335,7 +381,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isSeating and not res.foundTypes["seating"] then
                 res.furnitureScore = res.furnitureScore + 15
                 res.foundTypes["seating"] = true
-                table.insert(res.discoveredItems, "Assento/Sofá")
+                table.insert(res.discoveredItems, "Assento/Sofa")
             end
 
             -- 3. Mesas e Balcões
@@ -351,7 +397,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isTable and not res.foundTypes["table"] then
                 res.furnitureScore = res.furnitureScore + 15
                 res.foundTypes["table"] = true
-                table.insert(res.discoveredItems, "Mesa/Balcão")
+                table.insert(res.discoveredItems, "Mesa/Balcao")
             end
 
             -- 4. Armários, Roupeiros, Estantes, Cômodas, Cristaleiras e Baús
@@ -375,7 +421,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isStorage and not res.foundTypes["storage"] then
                 res.furnitureScore = res.furnitureScore + 15
                 res.foundTypes["storage"] = true
-                table.insert(res.discoveredItems, "Armário/Cômoda/Cristaleira")
+                table.insert(res.discoveredItems, "Armario/Comoda/Cristaleira")
             end
 
             -- 5. Tapetes e Peles no Chão
@@ -408,7 +454,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isWallDecor and not res.foundTypes["wall_decor"] then
                 res.furnitureScore = res.furnitureScore + 12
                 res.foundTypes["wall_decor"] = true
-                table.insert(res.discoveredItems, "Quadro/Decoração")
+                table.insert(res.discoveredItems, "Quadro/Decoracao")
             end
 
             -- 7. Fogões, Fornos, Lareiras e Churrasqueiras
@@ -425,7 +471,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isCooking and not res.foundTypes["cooking"] then
                 res.furnitureScore = res.furnitureScore + 12
                 res.foundTypes["cooking"] = true
-                table.insert(res.discoveredItems, "Fogão/Lareira")
+                table.insert(res.discoveredItems, "Fogao/Lareira")
             end
 
             -- 8. Fontes de Luz
@@ -439,7 +485,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isLightOn and not res.foundTypes["light"] then
                 res.lightingScore = res.lightingScore + 15
                 res.foundTypes["light"] = true
-                table.insert(res.discoveredItems, "Iluminação")
+                table.insert(res.discoveredItems, "Iluminacao")
             end
 
             -- 9. Eletrônicos (Rádio, TV, Telefone)
@@ -452,7 +498,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isMedia and not res.foundTypes["media"] then
                 res.furnitureScore = res.furnitureScore + 10
                 res.foundTypes["media"] = true
-                table.insert(res.discoveredItems, "TV/Rádio/Telefone")
+                table.insert(res.discoveredItems, "TV/Radio/Telefone")
             end
 
             -- 10. Plantas Decorativas
@@ -465,6 +511,45 @@ function LV_ComfortScanner.processSquare(sq, res)
                 res.furnitureScore = res.furnitureScore + 10
                 res.foundTypes["plant"] = true
                 table.insert(res.discoveredItems, "Planta Decorativa")
+            end
+
+            -- 11. Peças Sanitárias e Higiene (Vaso, Pia, Banheira, Chuveiro)
+            local isToilet = (instanceof and instanceof(obj, "IsoToilet")) or
+                             spriteName:find("toilet") ~= nil or
+                             spriteName:find("fixtures_bathroom_01_0") ~= nil or
+                             spriteName:find("fixtures_bathroom_01_1") ~= nil or
+                             spriteName:find("fixtures_bathroom_01_2") ~= nil or
+                             spriteName:find("fixtures_bathroom_01_3") ~= nil
+
+            local isSink = spriteName:find("sink") ~= nil or
+                           spriteName:find("fixtures_sinks_") ~= nil or
+                           spriteName:find("fixtures_bathroom_01_16") ~= nil or
+                           spriteName:find("fixtures_bathroom_01_17") ~= nil or
+                           spriteName:find("fixtures_bathroom_01_18") ~= nil or
+                           spriteName:find("fixtures_bathroom_01_19") ~= nil
+
+            local isBathShower = spriteName:find("bath") ~= nil or
+                                 spriteName:find("shower") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_2") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_3") ~= nil
+
+            if isToilet or isSink or isBathShower then
+                local fixMd = (obj.getModData and obj:getModData())
+                local fixDirt = (fixMd and fixMd.LV_FixtureDirt) or 0
+                if fixDirt > 0 then
+                    -- Fixture suja penaliza a higiene e alimenta o Squalor
+                    res.cleanlinessPenalty = res.cleanlinessPenalty + (fixDirt * 0.25)
+                    res.squalorDirt = (res.squalorDirt or 0) + (fixDirt * 0.35)
+                else
+                    -- Fixture limpa e higienizada pontua como conforto sanitário
+                    local fixType = isToilet and "toilet" or (isSink and "sink" or "bath")
+                    if not res.foundTypes["fixture_" .. fixType] then
+                        res.furnitureScore = res.furnitureScore + 10
+                        res.foundTypes["fixture_" .. fixType] = true
+                        local fixLabel = isToilet and "Vaso Sanitario Higienizado" or (isSink and "Pia Limpa" or "Banheira/Chuveiro Limpo")
+                        table.insert(res.discoveredItems, fixLabel)
+                    end
+                end
             end
         end
     end
@@ -549,7 +634,17 @@ function LV_ComfortScanner.finalizeScore(player, res)
     -- 2. Cálculo de Squalor / Insalubridade Global da Base (0 a 100)
     local squalorScore = 0
     if LV_Config.isSqualorEnabled() then
-        local rawBlood = math.min(100, res.squalorBlood * 3)
+        -- Incorpora sujeira agregada de piso da Safehouse ou cômodo
+        local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, player:getCurrentSquare())) or "outside"
+        local floorDirt = (LV_DirtSystem and LV_DirtSystem.getFloorDirt and LV_DirtSystem.getFloorDirt(locKey)) or 0
+        if floorDirt > 0 then
+            res.cleanlinessPenalty = res.cleanlinessPenalty + (floorDirt * 0.20)
+            res.squalorDirt = (res.squalorDirt or 0) + (floorDirt * 0.40)
+        end
+
+        local dirtWeight = (LV_Config and LV_Config.get and LV_Config.get("DirtToSqualorWeight")) or 1.0
+        local totalDirtAndBlood = (res.squalorBlood * 3) + ((res.squalorDirt or 0) * dirtWeight)
+        local rawBlood = math.min(100, totalDirtAndBlood)
         local rawBodies = math.min(100, res.squalorBodies * 2)
         local rawRotten = math.min(100, (res.squalorRotten + res.squalorTrash) * 3)
         local rawClutter = math.min(100, res.squalorClutter * 5)

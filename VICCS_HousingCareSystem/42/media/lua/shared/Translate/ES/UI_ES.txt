@@ -37,4 +37,14 @@ UI_ES = {
     UI_LV_Halo_Building = "+25% Duracion del Hogar (Construccion)",
     UI_LV_Halo_Decorating = "+15% Duracion del Hogar (Decoracion)",
     UI_LV_HUD_HomemakingBonus = "Bonus de Tareas: +%sh",
+
+    UI_LV_NeedToilet1_Title = "Ganas de ir al Baño",
+    UI_LV_NeedToilet1_Desc = "Tu cuerpo pide atención fisiológica.",
+    UI_LV_NeedToilet2_Title = "Apremio Creciente",
+    UI_LV_NeedToilet2_Desc = "Malestar abdominal moderado. Busca un baño pronto.",
+    UI_LV_NeedToilet3_Title = "¡Urgencia Fisiológica!",
+    UI_LV_NeedToilet3_Desc = "¡Apremio insoportable! Causa estrés y dolor físico.",
+
+    UI_LV_Relieved_Title = "Aliviado",
+    UI_LV_Relieved_Desc = "Sensación de bienestar y tranquilidad tras usar un baño limpio.",
 }
