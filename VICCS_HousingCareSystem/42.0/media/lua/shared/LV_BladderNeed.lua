@@ -199,22 +199,105 @@ function LV_BladderNeed.onEatFood(player, food)
 end
 
 --- Alivia a necessidade fisiológica (ao usar vaso sanitário ou na natureza).
-function LV_BladderNeed.relieve(player, isCleanToilet)
+--- @param player IsoPlayer
+--- @param isCleanToilet boolean
+--- @param hasToiletPaper boolean|nil
+--- @param isNature boolean|nil
+function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
     if not player then return end
+    if hasToiletPaper == nil then hasToiletPaper = true end
+    if isNature == nil then isNature = false end
 
-    -- Zera com forceReset = true
+    -- Zera a necessidade com forceReset = true
     LV_BladderNeed.setNeed(player, 0.0, true)
     local md = player:getModData()
     md.LV_BladderLastHour = getGameTime():getWorldAgeHours()
 
     local stats = player.getStats and player:getStats()
-    if stats then
-        if stats.setStress and stats.getStress then
-            stats:setStress(math.max(0, stats:getStress() - 0.20))
+    if stats and stats.setPain then
+        stats:setPain(0)
+    end
+
+    -- CASO 1: Alívio na Natureza (atrás de árvores/arbustos)
+    if isNature then
+        -- Suja virilha, pernas e roupas
+        pcall(function()
+            if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
+                player:addDirt(BloodBodyPartType.Groin, 30)
+                if BloodBodyPartType.LowerLeg_L then player:addDirt(BloodBodyPartType.LowerLeg_L, 15) end
+                if BloodBodyPartType.LowerLeg_R then player:addDirt(BloodBodyPartType.LowerLeg_R, 15) end
+            end
+            local wornItems = player:getWornItems()
+            if wornItems then
+                for i = 0, wornItems:size() - 1 do
+                    local item = wornItems:getItemByIndex(i)
+                    if item and item.getBodyLocation then
+                        local loc = tostring(item:getBodyLocation()):lower()
+                        if loc:find("pants") or loc:find("underwear") or loc:find("legs") or loc:find("shoes") then
+                            if item.setDirtyness and item.getDirtyness then
+                                item:setDirtyness(math.min(100, item:getDirtyness() + 25))
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+
+        print("[LivingHouse] Necessidade aliviada na natureza (arvore/arbusto). Roupas sujas.")
+        pcall(function()
+            if player.setHaloNote then
+                player:setHaloNote("Living House: Aliviado na natureza... roupas e calcados sujos.", 220, 180, 90, 220)
+            end
+        end)
+        return
+    end
+
+    -- CASO 2: Vaso Sanitário SEM Papel Higiênico (Edge case grave)
+    if not hasToiletPaper then
+        -- Aumenta estresse e aplica desconforto vanilla
+        if stats then
+            if stats.setStress and stats.getStress then
+                stats:setStress(math.min(1.0, stats:getStress() + 0.30))
+            end
+            if CharacterStat and CharacterStat.DISCOMFORT and stats.set and stats.get then
+                local disc = math.min(100, (stats:get(CharacterStat.DISCOMFORT) or 0) + 40)
+                stats:set(CharacterStat.DISCOMFORT, disc)
+            end
         end
-        if stats.setPain and stats.getPain then
-            stats:setPain(0)
-        end
+
+        -- Suja diretamente as roupas íntimas e calças do personagem
+        pcall(function()
+            if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
+                player:addDirt(BloodBodyPartType.Groin, 45)
+            end
+            local wornItems = player:getWornItems()
+            if wornItems then
+                for i = 0, wornItems:size() - 1 do
+                    local item = wornItems:getItemByIndex(i)
+                    if item and item.getBodyLocation then
+                        local loc = tostring(item:getBodyLocation()):lower()
+                        if loc:find("pants") or loc:find("underwear") or loc:find("legs") then
+                            if item.setDirtyness and item.getDirtyness then
+                                item:setDirtyness(math.min(100, item:getDirtyness() + 35))
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+
+        print("[LivingHouse] Necessidade aliviada no vaso SEM papel higienico! Penalidade aplicada.")
+        pcall(function()
+            if player.setHaloNote then
+                player:setHaloNote("Living House: Sem papel higienico! Desconforto extremo e roupas sujas.", 240, 70, 60, 250)
+            end
+        end)
+        return
+    end
+
+    -- CASO 3: Vaso Sanitário COM Papel Higiênico (Happy Path)
+    if stats and stats.setStress and stats.getStress then
+        stats:setStress(math.max(0, stats:getStress() - 0.20))
     end
 
     local bd = player.getBodyDamage and player:getBodyDamage()
@@ -236,7 +319,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet)
             end
         end)
     else
-        print("[LivingHouse] Necessidade aliviada na natureza / instalacao basica.")
+        print("[LivingHouse] Necessidade aliviada em instalacao basica/suja.")
         pcall(function()
             if player.setHaloNote then
                 player:setHaloNote("Living House: Aliviado.", 200, 200, 200, 200)

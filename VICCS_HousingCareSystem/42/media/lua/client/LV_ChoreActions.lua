@@ -127,6 +127,65 @@ function ISCleanFloorAction:start()
     end
 end
 
+function ISCleanFloorAction:perform()
+    local sq = self.character and self.character:getCurrentSquare()
+    if sq then
+        -- 1. Remove manchas de sangue vanilla do chão
+        local floor = sq:getFloor()
+        if floor then
+            pcall(function()
+                if floor.getBlood and floor:getBlood() > 0 then
+                    floor:removeBlood()
+                end
+            end)
+        end
+
+        -- 2. Remove overlays visuais de sujeira (overlay_grime_floor_*)
+        local objs = sq:getObjects()
+        if objs then
+            for i = objs:size() - 1, 0, -1 do
+                local obj = objs:get(i)
+                if obj and obj.getSprite and obj:getSprite() then
+                    local sName = obj:getSprite():getName()
+                    if sName and sName:find("overlay_grime_floor_") then
+                        sq:RemoveTileObject(obj)
+                    end
+                end
+            end
+        end
+
+        -- 3. Zera nível de poeira e sujeira lógica do square no modData
+        local sqMd = sq:getModData()
+        if sqMd and sqMd.LV_DirtLevel then
+            sqMd.LV_DirtLevel = 0
+            if sq.transmitModData then pcall(function() sq:transmitModData() end) end
+        end
+
+        -- 4. Notifica motor de tarefas domésticas e concede estatísticas
+        pcall(function()
+            local pMd = self.character:getModData()
+            pMd.LV_FloorsCleaned = (pMd.LV_FloorsCleaned or 0) + 1
+            if LV_HomemakingActions and LV_HomemakingActions.onChoreCompleted then
+                LV_HomemakingActions.onChoreCompleted(self.character, "CleanFloor")
+            end
+        end)
+
+        -- 5. Feedback visual de satisfação com o lar
+        pcall(function()
+            if self.character.setHaloNote then
+                self.character:setHaloNote("Living House: Piso higienizado com sucesso!", 120, 220, 160, 200)
+            end
+        end)
+
+        -- 6. Força recálculo imediato de conforto do cômodo
+        if LV_ComfortScanner and LV_ComfortScanner.startScan then
+            LV_ComfortScanner.startScan(self.character, true)
+        end
+    end
+
+    ISBaseTimedAction.perform(self)
+end
+
 function ISCleanFloorAction:new(character, time)
     local o = ISBaseTimedAction.new(self, character)
     o.stopOnWalk = true
@@ -631,6 +690,60 @@ local function isSinkObject(v)
     return ok and res == true
 end
 
+local function isToiletObject(v)
+    if not v then return false end
+    local ok, res = pcall(function()
+        if instanceof and instanceof(v, "IsoToilet") then return true end
+
+        local sName = ""
+        if v.getSprite then
+            local okSp, sprite = pcall(v.getSprite, v)
+            if okSp and sprite and sprite.getName then
+                local okNm, rawName = pcall(sprite.getName, sprite)
+                if okNm and rawName then
+                    sName = tostring(rawName):lower()
+                end
+            end
+        end
+
+        if sName ~= "" then
+            if sName:find("toilet") or sName:find("latrine") or sName:find("outhouse") then
+                return true
+            end
+            -- fixtures_bathroom_01_0 a 11 (residenciais, comerciais/cabines, presidio)
+            for i = 0, 11 do
+                if sName:find("fixtures_bathroom_01_" .. tostring(i)) then
+                    return true
+                end
+            end
+            -- fixtures_bathroom_02_* (latrinas, quimicos, outhouses)
+            if sName:find("fixtures_bathroom_02_") then
+                return true
+            end
+        end
+
+        -- Checagem por propriedades do sprite
+        if v.getSprite then
+            local okSp, sprite = pcall(v.getSprite, v)
+            if okSp and sprite and sprite.getProperties then
+                local okProps, props = pcall(sprite.getProperties, sprite)
+                if okProps and props and props.Val then
+                    local ok1, cName = pcall(props.Val, props, "CustomName")
+                    local ok2, gName = pcall(props.Val, props, "GroupName")
+                    cName = ok1 and cName and tostring(cName):lower() or ""
+                    gName = ok2 and gName and tostring(gName):lower() or ""
+                    if cName:find("toilet") or cName:find("vaso") or cName:find("privada") or
+                       gName:find("toilet") or gName:find("vaso") or gName:find("privada") then
+                        return true
+                    end
+                end
+            end
+        end
+        return false
+    end)
+    return ok and res == true
+end
+
 local function hasWaterInSink(sinkObj)
     if not sinkObj then return false end
     local ok, res = pcall(function()
@@ -794,7 +907,7 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
                         local okNm, rawName = pcall(sprite.getName, sprite)
                         local sName = (okNm and rawName) and tostring(rawName):lower() or ""
 
-                        if (instanceof and instanceof(v, "IsoToilet")) or sName:find("toilet") or sName:find("fixtures_bathroom_01_0") or sName:find("fixtures_bathroom_01_1") or sName:find("fixtures_bathroom_01_2") or sName:find("fixtures_bathroom_01_3") then
+                        if isToiletObject(v) then
                             clickedFixture = v
                             fixtureLabel = "Vaso Sanitario"
                         elseif isSinkObject(v) then

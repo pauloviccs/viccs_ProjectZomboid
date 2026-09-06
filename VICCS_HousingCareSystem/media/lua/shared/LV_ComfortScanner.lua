@@ -838,6 +838,24 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "fridge", "Geladeira")
             elseif isMedia then
                 registerTileScore(res, "radio_tv", "TV/Radio/Telefone")
+                -- Checagem de entretenimento ativo (TV/Rádio ligado emitindo sinal)
+                local isPlaying = false
+                if obj.getDeviceData then
+                    local okDd, dd = pcall(obj.getDeviceData, obj)
+                    if okDd and dd and dd.getIsTurnedOn then
+                        local okOn, isOn = pcall(dd.getIsTurnedOn, dd)
+                        if okOn and isOn == true then
+                            isPlaying = true
+                        end
+                    end
+                end
+                if isPlaying then
+                    res.hasActiveMedia = true
+                    if not res.foundTypes["active_media"] then
+                        res.foundTypes["active_media"] = true
+                        table.insert(res.discoveredItems, "Entretenimento Ativo (TV/Radio Ligado)")
+                    end
+                end
             end
 
             -- 10. Plantas Decorativas
@@ -850,13 +868,20 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "plant", "Planta Decorativa")
             end
 
-            -- 11. Peças Sanitárias e Higiene (Vaso, Pia, Banheira, Chuveiro)
+            -- 11. Peças Sanitárias e Higiene (Vaso, Cabines, Pia, Banheira, Chuveiro)
             local isToilet = (instanceof and instanceof(obj, "IsoToilet")) or
                              spriteName:find("toilet") ~= nil or
-                             spriteName:find("fixtures_bathroom_01_0") ~= nil or
-                             spriteName:find("fixtures_bathroom_01_1") ~= nil or
-                             spriteName:find("fixtures_bathroom_01_2") ~= nil or
-                             spriteName:find("fixtures_bathroom_01_3") ~= nil
+                             spriteName:find("latrine") ~= nil or
+                             spriteName:find("outhouse") ~= nil or
+                             spriteName:find("fixtures_bathroom_02_") ~= nil
+            if not isToilet then
+                for idx = 0, 11 do
+                    if spriteName:find("fixtures_bathroom_01_" .. tostring(idx)) ~= nil then
+                        isToilet = true
+                        break
+                    end
+                end
+            end
 
             local isSink = spriteName:find("sink") ~= nil or
                            spriteName:find("fixtures_sinks_") ~= nil or
@@ -867,8 +892,12 @@ function LV_ComfortScanner.processSquare(sq, res)
 
             local isBathShower = spriteName:find("bath") ~= nil or
                                  spriteName:find("shower") ~= nil or
-                                 spriteName:find("fixtures_bathroom_01_2") ~= nil or
-                                 spriteName:find("fixtures_bathroom_01_3") ~= nil
+                                 spriteName:find("fixtures_bathroom_01_24") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_25") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_26") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_27") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_32") ~= nil or
+                                 spriteName:find("fixtures_bathroom_01_33") ~= nil
 
             if isToilet or isSink or isBathShower then
                 local fixMd = (obj.getModData and obj:getModData())
@@ -1143,11 +1172,24 @@ function LV_ComfortScanner.finalizeScore(player, res)
         craftBonus = craftBonus,
         squalorScore = squalorScore,
         seasonalNote = seasonalNote,
+        hasActiveMedia = res.hasActiveMedia or false,
+        hasActiveHeatInWinter = res.hasActiveHeatInWinter or false,
+        rottenFoodCount = math.floor((res.squalorRotten or 0) / 12),
         itemsList = res.scoredItemsList or {},
         categoryStats = res.categoryStats or {},
         timestamp = (getGameTime and getGameTime():getWorldAgeHours()) or 0
     }
     LV_ComfortScanner.LastRoomBreakdown = LV_ComfortScanner.RoomBreakdown[locKey]
+
+    -- Armazena no modData do sobrevivente para consumo de outros subsistemas
+    pcall(function()
+        local pMd = player:getModData()
+        pMd.LV_HasActiveMedia = res.hasActiveMedia or false
+        pMd.LV_HasActiveHeatInWinter = res.hasActiveHeatInWinter or false
+        pMd.LV_RoomRottenCount = math.floor((res.squalorRotten or 0) / 12)
+        pMd.LV_CurrentRoomTier = roomTier
+        pMd.LV_CurrentRoomScore = comfortScore
+    end)
 
     local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
     print(string.format("[LarVivo] Varredura Concluída: Cômodo '%s' [Tier %d] = %d pts, Insalubridade = %d%% | Sazonal: '%s' | Itens: [%s]", tostring(res.baseName or "Lar"), roomTier, comfortScore, squalorScore, seasonalNote, itemsSummary))

@@ -220,11 +220,25 @@ LV_ItemScoreData.TagLookup = {
 function LV_ItemScoreData.evaluateItem(item)
     if not item then return nil end
 
-    -- 1. Detecção de Alimento Estragado (Higiene e Degradação 3D)
-    if instanceof and instanceof(item, "Food") and item.isRotten and item:isRotten() then
+    -- 1. Detecção Robusta de Alimento Estragado (Higiene e Degradação 3D)
+    local isRottenFood = false
+    if item.isRotten then
+        local okR, r = pcall(item.isRotten, item)
+        if okR and r == true then isRottenFood = true end
+    end
+    if not isRottenFood and item.getAge and item.getOffAge then
+        pcall(function()
+            local off = item:getOffAge()
+            if off and off > 0 and item:getAge() > off then
+                isRottenFood = true
+            end
+        end)
+    end
+
+    if isRottenFood then
         return {
             score = 0,
-            squalor = 12,
+            squalor = (LV_ItemScoreData.Penalties and LV_ItemScoreData.Penalties.RottenFood) or 12,
             isRotten = true,
             label = (item.getName and item:getName()) or "Comida Podre",
             category = "SQUALOR_DEBRIS"

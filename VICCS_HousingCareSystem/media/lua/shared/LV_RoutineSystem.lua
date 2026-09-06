@@ -229,7 +229,18 @@ function LV_RoutineSystem.checkDailyStreak(player)
     else
         -- Base negligenciada
         data.daysDegraded = (data.daysDegraded or 0) + 1
-        if data.daysDegraded >= 2 then
+        -- Se Squalor Tier >= 3: perda abrupta de streak com aviso sonoro/halo
+        if squalorTier >= 3 then
+            if data.streakActive or (data.streakDays and data.streakDays > 0) then
+                pcall(function()
+                    if player.setHaloNote then
+                        player:setHaloNote("Living House: Lar Degradado! O abandono extremo zerou sua rotina!", 255, 60, 50, 320)
+                    end
+                end)
+                data.streakActive = false
+                data.streakDays = 0
+            end
+        elseif data.daysDegraded >= 2 then
             if data.streakActive then
                 data.streakActive = false
                 pcall(function()
@@ -369,8 +380,8 @@ function LV_RoutineSystem.updateRoutineEffects(player)
             data.companionCount = count
         end
 
+        -- A. Efeito de Companhia Ativa (Multiplayer / NPCs)
         if (data.companionCount or 0) >= 1 then
-            -- Alivia tédio e infelicidade com a convivência
             if bd then
                 pcall(function()
                     if bd.getBoredomLevel and bd.setBoredomLevel then
@@ -394,6 +405,37 @@ function LV_RoutineSystem.updateRoutineEffects(player)
             end
         else
             data.socialActive = false
+        end
+
+        -- B. "Noite ao Redor do Fogo" (Lareira de Inverno - Acessível Solo e em Grupo)
+        local pMd = player:getModData()
+        local hasWinterFireplace = pMd and pMd.LV_HasActiveHeatInWinter
+        if hasWinterFireplace then
+            if not data.fireplaceNightActive then
+                data.fireplaceNightActive = true
+                local hasCompany = (data.companionCount or 0) >= 1
+                local msg = hasCompany and "Living House: Noite ao Redor do Fogo com Companhia! (Aconchego maximo)"
+                                       or "Living House: Noite ao Redor do Fogo! (Aconchego e calor no inverno)"
+                pcall(function()
+                    if player.setHaloNote then
+                        player:setHaloNote(msg, 255, 180, 70, 320)
+                    end
+                end)
+            end
+
+            -- Bônus intensivo contra depressão e frio do inverno (com boost extra se houver companhia)
+            local extraCompanyBoost = ((data.companionCount or 0) >= 1) and 0.03 or 0.0
+            if bd and bd.getUnhappinessLevel and bd.setUnhappinessLevel then
+                pcall(function() bd:setUnhappinessLevel(math.max(0.0, bd:getUnhappinessLevel() - (0.05 + extraCompanyBoost))) end)
+            end
+            if bd and bd.getBoredomLevel and bd.setBoredomLevel then
+                pcall(function() bd:setBoredomLevel(math.max(0.0, bd:getBoredomLevel() - (0.04 + extraCompanyBoost))) end)
+            end
+            if stats and stats.setStress and stats.getStress then
+                pcall(function() stats:setStress(math.max(0.0, stats:getStress() - 0.0003)) end)
+            end
+        else
+            data.fireplaceNightActive = false
         end
     end
 end

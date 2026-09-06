@@ -368,6 +368,52 @@ function LV_RoomInspectorDashboard:render()
     curY = curY + 6
 
     -- =========================================================================
+    -- SEÇÃO 3.5: TAREFAS DOMÉSTICAS DO DIA (CHECKLIST ESTILO SIMS)
+    -- =========================================================================
+    self:drawText("TAREFAS DO DIA (CHECKLIST):", PAD + 4, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 1.0, FONT_S)
+    curY = curY + hgt + 2
+
+    local player = getPlayer()
+    local bNeed = (LV_BladderNeed and LV_BladderNeed.getNeed and player and LV_BladderNeed.getNeed(player)) or 0
+    local dNeed = (LV_DentalNeed and LV_DentalNeed.getNeed and player and LV_DentalNeed.getNeed(player)) or 0
+    local pMd = player and player:getModData()
+    local rottenCount = (data.rottenFoodCount) or (pMd and pMd.LV_RoomRottenCount) or 0
+    local floorDirt = (data.squalorDirt or 0)
+
+    -- 1. Status do Piso
+    if floorDirt > 10 then
+        self:drawText(" [!] Limpar e varrer piso do comodo", PAD + 8, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_S)
+    else
+        self:drawText(" [OK] Piso limpo e asseado", PAD + 8, curY, ACCENT_GREEN[1], ACCENT_GREEN[2], ACCENT_GREEN[3], 0.9, FONT_S)
+    end
+    curY = curY + hgt
+
+    -- 2. Alimento Estragado
+    if rottenCount > 0 then
+        self:drawText(string.format(" [X] Descartar %d comida(s) podre(s) no chao!", rottenCount), PAD + 8, curY, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3], 1.0, FONT_S)
+        curY = curY + hgt
+    end
+
+    -- 3. Higiene Bucal
+    if dNeed >= 45 then
+        self:drawText(string.format(" [!] Escovar dentes na pia (Higiene: %d%%)", math.floor(100 - dNeed)), PAD + 8, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_S)
+    else
+        self:drawText(" [OK] Higiene bucal em dia (Halito fresco)", PAD + 8, curY, ACCENT_GREEN[1], ACCENT_GREEN[2], ACCENT_GREEN[3], 0.9, FONT_S)
+    end
+    curY = curY + hgt
+
+    -- 4. Necessidade Fisiológica
+    if bNeed >= 50 then
+        self:drawText(string.format(" [!] Usar vaso sanitario (Aperto: %d%%)", math.floor(bNeed)), PAD + 8, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_S)
+        curY = curY + hgt
+    end
+
+    -- Linha Divisória 5
+    curY = curY + 4
+    self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
+    curY = curY + 6
+
+    -- =========================================================================
     -- SEÇÃO 4: DIAGNÓSTICO DO LAR (ELI5 - O QUE FALTA PARA SUBIR DE TIER)
     -- =========================================================================
     local nextTier = math.min(4, roomTier + 1)

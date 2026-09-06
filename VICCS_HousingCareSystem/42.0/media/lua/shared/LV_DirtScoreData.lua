@@ -69,7 +69,13 @@ LV_DirtScoreData.ToiletPaper = {
 LV_DirtScoreData.FixturePatterns = {
     toilet = {
         className = "IsoToilet",
-        keywords = { "toilet", "fixtures_bathroom_01_0", "fixtures_bathroom_01_1", "fixtures_bathroom_01_2", "fixtures_bathroom_01_3" },
+        keywords = { 
+            "toilet", "latrine", "outhouse",
+            "fixtures_bathroom_01_0", "fixtures_bathroom_01_1", "fixtures_bathroom_01_2", "fixtures_bathroom_01_3",
+            "fixtures_bathroom_01_4", "fixtures_bathroom_01_5", "fixtures_bathroom_01_6", "fixtures_bathroom_01_7",
+            "fixtures_bathroom_01_8", "fixtures_bathroom_01_9", "fixtures_bathroom_01_10", "fixtures_bathroom_01_11",
+            "fixtures_bathroom_02_"
+        },
         name = "Vaso Sanitario",
     },
     sink = {
@@ -88,3 +94,10 @@ LV_DirtScoreData.FixturePatterns = {
         name = "Chuveiro",
     },
 }
+
+--- Penalidade por comida estragada no chão fora de recipientes
+LV_DirtScoreData.RottenFoodPenalty = {
+    PerItem = -6.0,    -- Redução de conforto por alimento estragado solto no cômodo
+    MaxItems = 5,      -- Teto de proteção de performance da Kahlua VM (máx -30.0 pts)
+}
+
