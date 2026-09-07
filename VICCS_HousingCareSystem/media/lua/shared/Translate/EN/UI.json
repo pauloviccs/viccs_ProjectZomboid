@@ -48,5 +48,13 @@
     "UI_LV_RoutineStreak_Title": "Established Routine",
     "UI_LV_RoutineStreak_Desc": "Consistency and home care forged mental resilience. Panic and stress reduced even outside base!",
     "UI_LV_SpotlessHome_Title": "Spotless Home",
-    "UI_LV_SpotlessHome_Desc": "Perfectly clean and comforting shelter. Grants peak focus, accelerating study and book reading!"
+    "UI_LV_SpotlessHome_Desc": "Perfectly clean and comforting shelter. Grants peak focus, accelerating study and book reading!",
+    "UI_LV_Stovetop_Cooking": "Stovetop Cooking: %s (%s%%)",
+    "UI_LV_Stovetop_Cooked": "Meal Ready: %s",
+    "UI_LV_Stovetop_Burnt": "Burning on Stove: %s",
+    "UI_LV_Appliance_Title": "Appliances & Fixtures",
+    "UI_LV_Appliance_Operational": "All Systems Operational (Fixtures Intact)",
+    "UI_LV_Appliance_Critical": "CRITICAL: %d Appliance(s) Damaged / Broken!",
+    "UI_LV_Appliance_Warning": "WARNING: %d Appliance(s) Require Maintenance / Cleaning",
+    "UI_LV_Appliance_Maintain": "Maintain %s"
 }

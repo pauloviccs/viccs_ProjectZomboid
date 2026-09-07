@@ -2,15 +2,15 @@
 -- Housing Care System (Lar Vivo) - Buff & Moodlet Engine (LV_BuffManager.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Gerencia os estados de Conforto, Squalor e Aclimatação na Base.
---   Aplica buffs/debuffs nas estatísticas do personagem de forma 100% segura.
---   Garante persistência de 8 horas in-game fora da base.
+-- Descricao:
+--   Gerencia os estados de Conforto, Squalor e Aclimatacao na Base.
+--   Aplica buffs/debuffs nas estatisticas do personagem de forma 100% segura.
+--   Garante persistencia de 8 horas in-game fora da base.
 -- =============================================================================
 
 LV_BuffManager = LV_BuffManager or {}
 
---- Tabela interna com dados de sessão do jogador local
+--- Tabela interna com dados de sessao do jogador local
 local localPlayerData = {
     comfortScore = 0,
     comfortTier = 0,
@@ -27,13 +27,13 @@ local localPlayerData = {
     baseName = "Lar",
     lastScanHour = -1,
 
-    -- Dados do Motor de Tarefas Domésticas (Homemaking)
+    -- Dados do Motor de Tarefas Domesticas (Homemaking)
     homemakingBonusHours = 0.0,
     homemakingDailyHours = 0.0,
     homemakingDailyActions = 0,
     homemakingLastDay = -1,
 
-    -- Sazonalidade Tática & Clima
+    -- Sazonalidade Tatica & Clima
     seasonalNote = "Clima Estavel"
 }
 
@@ -98,7 +98,7 @@ Events.OnCreatePlayer.Add(function(pNum, player)
     if player then ensureModDataLoaded(player, true) end
 end)
 
---- Modificadores diretos e 100% seguros para o PZ B42 sem reflexão dinâmica
+--- Modificadores diretos e 100% seguros para o PZ B42 sem reflexao dinamica
 local function modifyPanic(stats, delta)
     if not stats or not stats.getPanic or not stats.setPanic then return end
     local cur = stats:getPanic()
@@ -135,14 +135,14 @@ local function modifySickness(stats, delta)
     stats:setSickness(math.max(0.0, math.min(100.0, cur + delta)))
 end
 
---- Auxiliar seguro para ajustar o nível de infelicidade (Unhappiness) sem quebrar no B42.
+--- Auxiliar seguro para ajustar o nivel de infelicidade (Unhappiness) sem quebrar no B42.
 local function modifyUnhappiness(bodyDamage, delta)
     if not bodyDamage or not bodyDamage.getUnhappinessLevel or not bodyDamage.setUnhappinessLevel then return end
     local cur = bodyDamage:getUnhappinessLevel()
     bodyDamage:setUnhappinessLevel(math.max(0.0, math.min(100.0, cur + delta)))
 end
 
---- Converte uma pontuação de Conforto (0-100) no Tier correspondente (0-4).
+--- Converte uma pontuacao de Conforto (0-100) no Tier correspondente (0-4).
 function LV_BuffManager.getComfortTierFromScore(score)
     if not score or score <= 0 then return 0 end
 
@@ -158,7 +158,7 @@ function LV_BuffManager.getComfortTierFromScore(score)
     else return 0 end
 end
 
---- Converte uma pontuação de Squalor (0-100) no Tier de Debuff correspondente (0-4).
+--- Converte uma pontuacao de Squalor (0-100) no Tier de Debuff correspondente (0-4).
 function LV_BuffManager.getSqualorTierFromScore(score)
     if not score or score <= 0 then return 0 end
 
@@ -174,7 +174,7 @@ function LV_BuffManager.getSqualorTierFromScore(score)
     else return 0 end
 end
 
---- Ativação dos benefícios após aclimatação ou trigger manual
+--- Ativacao dos beneficios apos aclimatacao ou trigger manual
 local function activateBuffs(player, comfortScore, squalorScore, duration)
     local currentHour = getGameTime():getWorldAgeHours()
     local newComfortTier = LV_BuffManager.getComfortTierFromScore(comfortScore)
@@ -235,12 +235,12 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
         localPlayerData.targetComfortScore = comfortScore
         localPlayerData.targetSqualorScore = squalorScore
 
-        -- Se a aclimatação for 0 ou se for trigger manual (K) ou se já estiver aclimatado
+        -- Se a aclimatacao for 0 ou se for trigger manual (K) ou se ja estiver aclimatado
         if reqAcclimatization <= 0 or isManualTrigger or localPlayerData.shelterDwellMinutes >= reqAcclimatization or localPlayerData.comfortTier > 0 then
             localPlayerData.shelterDwellMinutes = reqAcclimatization
             activateBuffs(player, comfortScore, squalorScore, duration)
         else
-            -- Inicializa contador de aclimatação
+            -- Inicializa contador de aclimatacao
             if localPlayerData.lastDwellWorldHour == -1 then
                 localPlayerData.lastDwellWorldHour = currentHour
             end
@@ -256,7 +256,7 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
     localPlayerData.lastScanHour = currentHour
 end
 
---- Disparado quando o jogador está em área externa/selvagem fora de abrigo ou em imóvel neutro.
+--- Disparado quando o jogador esta em area externa/selvagem fora de abrigo ou em imovel neutro.
 function LV_BuffManager.onUnsafeEnvironment(player)
     local currentHour = getGameTime():getWorldAgeHours()
     localPlayerData.isInShelter = false
@@ -265,7 +265,7 @@ function LV_BuffManager.onUnsafeEnvironment(player)
     localPlayerData.shelterDwellMinutes = 0
     localPlayerData.lastDwellWorldHour = -1
 
-    -- Se o jogador não possui base oficial no SP, anula buffs remanescentes imediatamente
+    -- Se o jogador nao possui base oficial no SP, anula buffs remanescentes imediatamente
     local pMd = player and player.getModData and player:getModData()
     local hasClaimedBase = (pMd and pMd.LV_ClaimedBaseBuildingId ~= nil)
     if not hasClaimedBase and (not isClient or not isClient()) then
@@ -280,7 +280,7 @@ function LV_BuffManager.onUnsafeEnvironment(player)
     localPlayerData.isInSqualorArea = false
 end
 
---- Concede bônus de extensão de tempo e reforço de conforto por tarefas domésticas no lar.
+--- Concede bonus de extensao de tempo e reforco de conforto por tarefas domesticas no lar.
 function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
     if not player or not LV_Config or not LV_Config.isHomemakingEnabled() then return 0 end
     bonusPercent = bonusPercent or 15
@@ -290,7 +290,7 @@ function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
     local maxBonusCap = (LV_Config and LV_Config.get and LV_Config.get("HomemakingMaxBonusHours")) or 8.0
     local baseDuration = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationBaseHours")) or 8.0
 
-    -- 1. Verifica virada de dia in-game para reset do cap diário
+    -- 1. Verifica virada de dia in-game para reset do cap diario
     local currentDay = math.floor(currentHour / 24)
     if localPlayerData.homemakingLastDay ~= currentDay then
         localPlayerData.homemakingLastDay = currentDay
@@ -298,7 +298,7 @@ function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
         localPlayerData.homemakingDailyActions = 0
     end
 
-    -- 2. Se já atingiu o teto diário de bônus por tarefas
+    -- 2. Se ja atingiu o teto diario de bonus por tarefas
     if localPlayerData.homemakingDailyHours >= maxBonusCap then
         return 0
     end
@@ -308,7 +308,7 @@ function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
     local allowedIncrement = math.min(rawIncrement, maxBonusCap - localPlayerData.homemakingDailyHours)
     if allowedIncrement <= 0 then return 0 end
 
-    -- 4. Se o jogador ainda não tem expiração ativa, mas está em abrigo com pontuação
+    -- 4. Se o jogador ainda nao tem expiracao ativa, mas esta em abrigo com pontuacao
     if localPlayerData.comfortExpiryWorldHour <= currentHour then
         if localPlayerData.targetComfortScore > 0 or localPlayerData.comfortScore > 0 then
             local score = math.max(localPlayerData.targetComfortScore, localPlayerData.comfortScore)
@@ -316,12 +316,12 @@ function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
         elseif localPlayerData.comfortTier > 0 then
             localPlayerData.comfortExpiryWorldHour = currentHour + baseDuration
         else
-            -- Ativa ao menos Tier 1 temporário pelo cuidado com a base
+            -- Ativa ao menos Tier 1 temporario pelo cuidado com a base
             activateBuffs(player, 25, 0, baseDuration)
         end
     end
 
-    -- 5. Estende a expiração com teto seguro
+    -- 5. Estende a expiracao com teto seguro
     local maxDurationAbsolute = (LV_Config and LV_Config.get and LV_Config.get("BuffDurationMaxHours")) or 12.0
     local maxAllowedExpiry = currentHour + maxDurationAbsolute + maxBonusCap
     local baseExpiry = math.max(currentHour, localPlayerData.comfortExpiryWorldHour)
@@ -334,7 +334,7 @@ function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
         localPlayerData.homemakingDailyHours = (localPlayerData.homemakingDailyHours or 0) + actualAdded
         localPlayerData.homemakingDailyActions = (localPlayerData.homemakingDailyActions or 0) + 1
 
-        -- Sincroniza com ModData do personagem para persistência universal
+        -- Sincroniza com ModData do personagem para persistencia universal
         pcall(function()
             local modData = player:getModData()
             if modData then
@@ -353,7 +353,7 @@ function LV_BuffManager.addHomemakingBonus(player, category, bonusPercent)
     return 0
 end
 
---- Retorna os dados consolidados de Homemaking para UI e diagnósticos.
+--- Retorna os dados consolidados de Homemaking para UI e diagnosticos.
 function LV_BuffManager.getHomemakingData(player)
     return {
         bonusHours = localPlayerData.homemakingBonusHours or 0,
@@ -364,7 +364,7 @@ function LV_BuffManager.getHomemakingData(player)
 end
 
 
---- Acelera cicatrização natural de ferimentos leves em tiers altos.
+--- Acelera cicatrizacao natural de ferimentos leves em tiers altos.
 local function applyHealingBuff(player)
     if not player then return end
     local bodyDamage = player:getBodyDamage()
@@ -393,7 +393,7 @@ local function applyHealingBuff(player)
     end
 end
 
---- Loop de atualização contínua dos efeitos no jogador (Events.OnPlayerUpdate).
+--- Loop de atualizacao continua dos efeitos no jogador (Events.OnPlayerUpdate).
 local function onPlayerUpdateBuffs(player)
     if not LV_Config or not LV_Config.isEnabled() or not player then return end
     local data = localPlayerData
@@ -401,7 +401,7 @@ local function onPlayerUpdateBuffs(player)
 
     local currentHour = getGameTime():getWorldAgeHours()
 
-    -- 1. Gerenciamento de Aclimatação Contínua na Base
+    -- 1. Gerenciamento de Aclimatacao Continua na Base
     if data.isInShelter and data.comfortTier == 0 and data.targetComfortScore > 0 then
         local reqAcclimatization = (LV_Config and LV_Config.get and LV_Config.get("AcclimatizationMinutes")) or 30
         if data.lastDwellWorldHour ~= -1 then
@@ -431,15 +431,15 @@ local function onPlayerUpdateBuffs(player)
     local squalorMult = (LV_Config and LV_Config.get and LV_Config.get("SqualorMagnitudeMultiplier")) or 1.0
 
     -- =========================================================================
-    -- A. EFEITOS POSITIVOS (BUFFS DE CONFORTO DURANTE O RELÓGIO DO JOGO)
+    -- A. EFEITOS POSITIVOS (BUFFS DE CONFORTO DURANTE O RELOGIO DO JOGO)
     -- =========================================================================
     if data.comfortTier > 0 and currentHour < data.comfortExpiryWorldHour then
         local cTier = data.comfortTier
 
-        -- Tier 1+: Redução de Pânico
+        -- Tier 1+: Reducao de Panico
         modifyPanic(stats, -(0.15 * buffMult))
 
-        -- Tier 2+: Regeneração de Endurance & Menor Cansaço
+        -- Tier 2+: Regeneracao de Endurance & Menor Cansaco
         if cTier >= 2 then
             modifyEndurance(stats, (0.0002 * buffMult))
 
@@ -448,7 +448,7 @@ local function onPlayerUpdateBuffs(player)
             end
         end
 
-        -- Tier 3+: Redução de Infelicidade & Saciado
+        -- Tier 3+: Reducao de Infelicidade & Saciado
         if cTier >= 3 then
             modifyUnhappiness(bodyDamage, -(0.05 * buffMult))
 
@@ -461,7 +461,7 @@ local function onPlayerUpdateBuffs(player)
             end
         end
 
-        -- Tier 4: Santuário (Redução contínua de Estresse & Cura Avançada)
+        -- Tier 4: Santuario (Reducao continua de Estresse & Cura Avancada)
         if cTier >= 4 then
             modifyStress(stats, -(0.02 * buffMult))
             applyHealingBuff(player)
@@ -500,4 +500,4 @@ end
 
 Events.OnPlayerUpdate.Add(onPlayerUpdateBuffs)
 
-print("[LarVivo] LV_BuffManager carregado e ativo com sistema de aclimatação e persistência in-game!")
+print("[LarVivo] LV_BuffManager carregado e ativo com sistema de aclimatacao e persistencia in-game!")

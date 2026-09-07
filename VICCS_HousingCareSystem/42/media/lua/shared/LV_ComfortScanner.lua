@@ -2,19 +2,19 @@
 -- Housing Care System (Lar Vivo) - Whole Safehouse & Room Scanner (LV_ComfortScanner.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Módulo de varredura inteligente em duas camadas:
---   1. Conforto do Cômodo Imediato (50% do peso)
---   2. Índice Global de Higiene e Manutenção de toda a Safehouse (50% do peso)
---   Garante balanceamento justo para mansões pré-mobiliadas exigindo manutenção ativa.
+-- Descricao:
+--   Modulo de varredura inteligente em duas camadas:
+--   1. Conforto do Comodo Imediato (50% do peso)
+--   2. Indice Global de Higiene e Manutencao de toda a Safehouse (50% do peso)
+--   Garante balanceamento justo para mansoes pre-mobiliadas exigindo manutencao ativa.
 -- =============================================================================
 
 LV_ComfortScanner = LV_ComfortScanner or {}
 
---- Quantidade de tiles inspecionados por frame (Time-Slicing para performance máxima)
+--- Quantidade de tiles inspecionados por frame (Time-Slicing para performance maxima)
 local TILES_PER_FRAME = 25
 
---- Auxiliar seguro para checar flags no PropertyContainer do PZ B42 sem exceções de reflexão
+--- Auxiliar seguro para checar flags no PropertyContainer do PZ B42 sem excecoes de reflexao
 local function safeHasFlag(props, flag)
     if not props or not flag then return false end
     if props.Is then
@@ -56,7 +56,7 @@ function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
         }
     end
 
-    -- 1. Checagem de Área Externa (Ao ar livre)
+    -- 1. Checagem de Area Externa (Ao ar livre)
     if square.isOutside and square:isOutside() then
         return {
             status = "OUTSIDE",
@@ -73,18 +73,37 @@ function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
     local pMd = player.getModData and player:getModData()
     local building = (square.getBuilding and square:getBuilding()) or (square.getRoom and square:getRoom() and square:getRoom().getBuilding and square:getRoom():getBuilding())
     local bId = building and building.getID and building:getID()
+    local bDef = building and building.getDef and building:getDef()
+    local defId = bDef and bDef.getID and bDef:getID()
     local room = square.getRoom and square:getRoom()
     local roomName = (room and room.getName and room:getName()) or "Residencia"
 
-    -- Cálculo de Dimensões / Tamanho da Base (Tiles e Cômodos)
+    -- Calculo de Dimensoes / Tamanho da Base (Tiles e Comodos)
     local totalTiles = 0
     local roomCount = 0
-    if building and building.getRooms then
-        local okR, bRooms = pcall(building.getRooms, building)
-        if okR and bRooms and bRooms.size then
-            roomCount = bRooms:size()
-            for r = 0, roomCount - 1 do
+    local bRooms = building and (building.rooms or building.Rooms)
+    if bRooms and bRooms.size then
+        local okCount, num = pcall(bRooms.size, bRooms)
+        if okCount and num and num > 0 then
+            roomCount = num
+            for r = 0, num - 1 do
                 local rObj = bRooms:get(r)
+                if rObj and rObj.getSquares then
+                    local okS, rSquares = pcall(rObj.getSquares, rObj)
+                    if okS and rSquares and rSquares.size then
+                        totalTiles = totalTiles + rSquares:size()
+                    end
+                end
+            end
+        end
+    end
+    if roomCount == 0 and bDef and bDef.getRooms then
+        local okDefs, rDefs = pcall(bDef.getRooms, bDef)
+        if okDefs and rDefs and rDefs.size and rDefs:size() > 0 then
+            roomCount = rDefs:size()
+            for rd = 0, roomCount - 1 do
+                local rDef = rDefs:get(rd)
+                local rObj = rDef and rDef.getIsoRoom and rDef:getIsoRoom()
                 if rObj and rObj.getSquares then
                     local okS, rSquares = pcall(rObj.getSquares, rObj)
                     if okS and rSquares and rSquares.size then
@@ -102,7 +121,7 @@ function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
         end
     end
 
-    -- 2. Modo Casual: Se a exigência de posse foi explicitamente desativada na Sandbox
+    -- 2. Modo Casual: Se a exigencia de posse foi explicitamente desativada na Sandbox
     if LV_Config and LV_Config.isBaseOwnershipRequired and not LV_Config.isBaseOwnershipRequired() then
         return {
             status = "CLAIMED",
@@ -118,7 +137,7 @@ function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
         }
     end
 
-    -- 3. Modo Multiplayer: Validação oficial de Safehouse
+    -- 3. Modo Multiplayer: Validacao oficial de Safehouse
     local shClass = SafeHouse or Safehouse
     local activeSafehouse = nil
     if (isClient and isClient()) or (isServer and isServer()) then
@@ -215,9 +234,21 @@ function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
         end
     end
 
-    -- 4. Modo Single Player: Posse por Reivindicação do Sobrevivente
+    -- 4. Modo Single Player: Posse por Reivindicacao do Sobrevivente
     local claimedBId = pMd and pMd.LV_ClaimedBaseBuildingId
-    if claimedBId and bId and claimedBId == bId then
+    local claimedDefId = pMd and pMd.LV_ClaimedBaseDefId
+    local isClaimedMatch = false
+    if claimedBId and bId and claimedBId == bId then isClaimedMatch = true end
+    if not isClaimedMatch and claimedDefId and defId and claimedDefId == defId then isClaimedMatch = true end
+    if not isClaimedMatch and pMd and pMd.LV_ClaimedBounds and square then
+        local bnds = pMd.LV_ClaimedBounds
+        local sx, sy = square:getX(), square:getY()
+        if sx >= bnds.x1 and sx <= bnds.x2 and sy >= bnds.y1 and sy <= bnds.y2 then
+            isClaimedMatch = true
+        end
+    end
+
+    if isClaimedMatch then
         local customName = pMd.LV_ClaimedBaseName or "Meu Lar"
         return {
             status = "CLAIMED",
@@ -226,13 +257,13 @@ function LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
             baseName = customName,
             roomName = tostring(roomName),
             building = building,
-            buildingId = bId,
+            buildingId = bId or defId,
             totalTiles = totalTiles,
             roomCount = roomCount
         }
     end
 
-    -- Não é a base do jogador no SP -> Imóvel Neutro
+    -- Nao e a base do jogador no SP -> Imovel Neutro
     return {
         status = "UNCLAIMED",
         isOutside = false,
@@ -260,7 +291,7 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
     local square = player:getCurrentSquare()
     if not square then return end
 
-    -- 1. Verificação de Propriedade, Posse e Ambiente
+    -- 1. Verificacao de Propriedade, Posse e Ambiente
     local own = LV_ComfortScanner.getBuildingOwnershipStatus(square, player)
 
     if own.status == "OUTSIDE" then
@@ -344,9 +375,9 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
 
     print(string.format("[LarVivo] Iniciando varredura em '%s' no square (%d, %d, %d)...", baseName, square:getX(), square:getY(), square:getZ()))
 
-    -- 3. Coleta de Tiles para Análise
-    -- Camada A: Cômodo Imediato (raio de 6 tiles)
-    -- Camada B: Safehouse Global (se houver, amostra de cômodos da base inteira)
+    -- 3. Coleta de Tiles para Analise
+    -- Camada A: Comodo Imediato (raio de 6 tiles)
+    -- Camada B: Safehouse Global (se houver, amostra de comodos da base inteira)
     local squaresToScan = {}
     local px, py, pz = square:getX(), square:getY(), square:getZ()
     local cell = getCell()
@@ -369,12 +400,12 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         end
     end
 
-    -- Se estiver em Safehouse grande, adiciona amostragem dos outros cômodos da base para compor o Índice Global
+    -- Se estiver em Safehouse grande, adiciona amostragem dos outros comodos da base para compor o Indice Global
     local isWholeBaseScan = false
     if activeSafehouse and activeSafehouse.getW and activeSafehouse:getW() > 10 and cell then
         isWholeBaseScan = true
         local sx, sy, sw, shH = activeSafehouse:getX(), activeSafehouse:getY(), activeSafehouse:getW(), activeSafehouse:getH()
-        -- Amostragem estratégica (step de 3 tiles) para não sobrecarregar
+        -- Amostragem estrategica (step de 3 tiles) para nao sobrecarregar
         for x = sx, sx + sw - 1, 3 do
             for y = sy, sy + shH - 1, 3 do
                 local sq = cell:getGridSquare(x, y, pz)
@@ -391,7 +422,7 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         return
     end
 
-    -- 4. Contexto Climático e Sazonalidade Tática
+    -- 4. Contexto Climatico e Sazonalidade Tatica
     local climateContext = {
         seasonName = "Temperado",
         isWinter = false,
@@ -416,11 +447,11 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         if gt then
             local s = gt.getSeason and gt:getSeason()
             local m = gt.getMonth and gt:getMonth()
-            -- Inverno no hemisfério norte: Dezembro (11), Janeiro (0), Fevereiro (1) ou frio extremo
+            -- Inverno no hemisferio norte: Dezembro (11), Janeiro (0), Fevereiro (1) ou frio extremo
             if s == 5 or m == 11 or m == 0 or m == 1 or climateContext.isFreezing then
                 climateContext.isWinter = true
                 climateContext.seasonName = "Inverno"
-            -- Verão: Junho (5), Julho (6), Agosto (7) ou calor intenso
+            -- Verao: Junho (5), Julho (6), Agosto (7) ou calor intenso
             elseif s == 2 or s == 3 or m == 5 or m == 6 or m == 7 or climateContext.isHeatwave then
                 climateContext.isSummer = true
                 climateContext.seasonName = "Verao"
@@ -481,7 +512,7 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
     scanQueue.results = initialResults
 end
 
---- Registra a pontuação de um arquétipo de tile no cômodo aplicando diminishing returns e tetos
+--- Registra a pontuacao de um arquetipo de tile no comodo aplicando diminishing returns e tetos
 local function registerTileScore(res, archetypeKey, customLabel)
     if not res or not archetypeKey then return end
     local arch = LV_ItemScoreData and LV_ItemScoreData.getTileArchetype and LV_ItemScoreData.getTileArchetype(archetypeKey)
@@ -493,7 +524,7 @@ local function registerTileScore(res, archetypeKey, customLabel)
 
     local maxArchetype = arch.maxPerRoom or 6
     if typeCount > maxArchetype then
-        return -- teto atingido para este arquétipo no cômodo
+        return -- teto atingido para este arquetipo no comodo
     end
 
     local cat = arch.category or "HEAVY_FURNITURE"
@@ -532,11 +563,11 @@ local function registerTileScore(res, archetypeKey, customLabel)
     end
 end
 
---- Inspeciona um tile individual calculando métricas de conforto e squalor.
+--- Inspeciona um tile individual calculando metricas de conforto e squalor.
 function LV_ComfortScanner.processSquare(sq, res)
     if not sq or not res then return end
 
-    -- A. Cadáveres (Penalidade pesada de saúde pública)
+    -- A. Cadaveres (Penalidade pesada de saude publica)
     if sq.getDeadBodys then
         local deadBodys = sq:getDeadBodys()
         if deadBodys and deadBodys.size and deadBodys:size() > 0 then
@@ -546,7 +577,7 @@ function LV_ComfortScanner.processSquare(sq, res)
         end
     end
 
-    -- B. Mobílias, Decorações, Sangue e Sprites
+    -- B. Mobilias, Decoracoes, Sangue e Sprites
     if not sq.getObjects then return end
     local objects = sq:getObjects()
     if not objects or not objects.size then return end
@@ -564,7 +595,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             end
 
-            -- Detecção de Sangue no Chão
+            -- Deteccao de Sangue no Chao
             if spriteName ~= "" and spriteName:find("blood") then
                 res.cleanlinessPenalty = res.cleanlinessPenalty + (LV_ItemScoreData.Penalties.BloodSplats or 4)
                 res.squalorBlood = res.squalorBlood + (LV_ItemScoreData.Penalties.BloodSplats or 4)
@@ -573,13 +604,13 @@ function LV_ComfortScanner.processSquare(sq, res)
                 res.squalorBlood = res.squalorBlood + (LV_ItemScoreData.Penalties.BloodSplats or 4)
             end
 
-            -- Detecção de Entulho/Lixo/Sujeira no piso
+            -- Deteccao de Entulho/Lixo/Sujeira no piso
             if spriteName ~= "" and (spriteName:find("trash") or spriteName:find("rubbish") or spriteName:find("debris") or spriteName:find("dirt_") or spriteName:find("grime")) then
                 res.cleanlinessPenalty = res.cleanlinessPenalty + (LV_ItemScoreData.Penalties.TrashObject or 8)
                 res.squalorTrash = res.squalorTrash + (LV_ItemScoreData.Penalties.TrashObject or 8)
             end
 
-            -- Detecção de Lixeiras / Latas de Lixo Cheias ou com Comida Podre
+            -- Deteccao de Lixeiras / Latas de Lixo Cheias ou com Comida Podre
             local container = obj.getContainer and obj:getContainer()
             local isBin = (container and (container:getType() == "bin" or container:getType() == "trashcan" or container:getType() == "garbageeater")) or
                           spriteName:find("trashbin") or spriteName:find("trash_can") or spriteName:find("garbage")
@@ -603,6 +634,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                     res.squalorTrash = res.squalorTrash + trashPenalty
 
                     -- Se o jogador estiver no raio de proximidade (<= 3 tiles), emite mau cheiro e enjoo
+                    local player = getPlayer and getPlayer()
                     local pSq = player and player.getCurrentSquare and player:getCurrentSquare()
                     if pSq then
                         local dx = math.abs(pSq:getX() - sq:getX())
@@ -624,7 +656,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             end
 
-            -- Bônus de Artesanato / Construção Própria do Jogador
+            -- Bonus de Artesanato / Construcao Propria do Jogador
             local isCrafted = (instanceof and instanceof(obj, "IsoThumpable")) or spriteName:find("carpentry_") ~= nil
             if isCrafted and not res.foundTypes["crafted_bonus"] then
                 res.craftBonusScore = res.craftBonusScore + 5
@@ -646,7 +678,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "bed", "Cama de Descanso")
             end
 
-            -- 2. Assentos (Cadeiras, Poltronas, Sofás, Bancos)
+            -- 2. Assentos (Cadeiras, Poltronas, Sofas, Bancos)
             local isSeating = (IsoFlagType and IsoFlagType.chair and safeHasFlag(props, IsoFlagType.chair)) or
                               spriteName:find("chair") ~= nil or
                               spriteName:find("sofa") ~= nil or
@@ -666,7 +698,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             end
 
-            -- 3. Mesas e Balcões
+            -- 3. Mesas e Balcoes
             local isTable = (IsoFlagType and IsoFlagType.table and safeHasFlag(props, IsoFlagType.table)) or
                             spriteName:find("table") ~= nil or
                             spriteName:find("desk") ~= nil or
@@ -680,7 +712,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "table", "Mesa/Balcao")
             end
 
-            -- 4. Armários, Roupeiros, Estantes, Cômodas, Cristaleiras e Baús
+            -- 4. Armarios, Roupeiros, Estantes, Comodas, Cristaleiras e Baus
             local isStorage = spriteName:find("storage") ~= nil or
                               spriteName:find("wardrobe") ~= nil or
                               spriteName:find("dresser") ~= nil or
@@ -709,7 +741,7 @@ function LV_ComfortScanner.processSquare(sq, res)
             local cc = res.climate or {}
             local seasonalEnabled = (LV_Config and LV_Config.get and LV_Config.get("EnableSeasonalComfort") ~= false)
 
-            -- 5. Tapetes e Peles no Chão (com Bônus de Isolamento no Inverno)
+            -- 5. Tapetes e Peles no Chao (com Bonus de Isolamento no Inverno)
             local isRug = spriteName:find("rug") ~= nil or
                           spriteName:find("carpet") ~= nil or
                           spriteName:find("floors_rugs_") ~= nil or
@@ -727,7 +759,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             end
 
-            -- 6. Quadros, Pôsteres, Espelhos e Decorações de Parede (com Sombra Térmica no Verão)
+            -- 6. Quadros, Posteres, Espelhos e Decoracoes de Parede (com Sombra Termica no Verao)
             local isWallDecor = spriteName:find("painting") ~= nil or
                                 spriteName:find("poster") ~= nil or
                                 spriteName:find("picture") ~= nil or
@@ -759,7 +791,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             end
 
-            -- 7. Fogões, Fornos, Lareiras, Aquecedores e Churrasqueiras com Sazonalidade Tática
+            -- 7. Fogoes, Fornos, Lareiras, Aquecedores e Churrasqueiras com Sazonalidade Tatica
             local isFireplace = (instanceof and instanceof(obj, "IsoFireplace")) or
                                 spriteName:find("fireplace") ~= nil or
                                 spriteName:find("campfire") ~= nil
@@ -800,9 +832,13 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             elseif isCooking then
                 registerTileScore(res, "stove_oven", "Fogao/Cozinha")
+                if LV_StovetopCooking and LV_StovetopCooking.registerStove then
+                    LV_StovetopCooking.registerStove(obj, sq)
+                end
             end
 
-            -- 8. Fontes de Luz e Ventiladores (Resfriamento de Verão)
+
+            -- 8. Fontes de Luz e Ventiladores (Resfriamento de Verao)
             local isFan = spriteName:find("fan") ~= nil or
                           spriteName:find("ventilador") ~= nil or
                           (spriteName:find("lighting_ceiling") ~= nil and spriteName:find("fan") ~= nil)
@@ -826,7 +862,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "light_source_on", "Iluminacao Ativa")
             end
 
-            -- 9. Eletrônicos (Rádio, TV, Telefone, Geladeira)
+            -- 9. Eletronicos (Radio, TV, Telefone, Geladeira)
             local isFridge = spriteName:find("fridge") ~= nil or spriteName:find("refrigerator") ~= nil or spriteName:find("appliances_refrigeration_") ~= nil
             local isMedia = spriteName:find("radio") ~= nil or
                             spriteName:find("television") ~= nil or
@@ -838,7 +874,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "fridge", "Geladeira")
             elseif isMedia then
                 registerTileScore(res, "radio_tv", "TV/Radio/Telefone")
-                -- Checagem de entretenimento ativo (TV/Rádio ligado emitindo sinal)
+                -- Checagem de entretenimento ativo (TV/Radio ligado emitindo sinal)
                 local isPlaying = false
                 if obj.getDeviceData then
                     local okDd, dd = pcall(obj.getDeviceData, obj)
@@ -868,7 +904,7 @@ function LV_ComfortScanner.processSquare(sq, res)
                 registerTileScore(res, "plant", "Planta Decorativa")
             end
 
-            -- 11. Peças Sanitárias e Higiene (Vaso, Cabines, Pia, Banheira, Chuveiro)
+            -- 11. Pecas Sanitarias e Higiene (Vaso, Cabines, Pia, Banheira, Chuveiro)
             local isToilet = (instanceof and instanceof(obj, "IsoToilet")) or
                              spriteName:find("toilet") ~= nil or
                              spriteName:find("latrine") ~= nil or
@@ -902,12 +938,23 @@ function LV_ComfortScanner.processSquare(sq, res)
             if isToilet or isSink or isBathShower then
                 local fixMd = (obj.getModData and obj:getModData())
                 local fixDirt = (fixMd and fixMd.LV_FixtureDirt) or 0
+                local fixHealth = (fixMd and fixMd.applianceHealth ~= nil) and tonumber(fixMd.applianceHealth) or 100.0
+
                 if fixDirt > 0 then
                     -- Fixture suja penaliza a higiene e alimenta o Squalor
                     res.cleanlinessPenalty = res.cleanlinessPenalty + (fixDirt * 0.25)
                     res.squalorDirt = (res.squalorDirt or 0) + (fixDirt * 0.35)
-                else
-                    -- Fixture limpa e higienizada pontua como conforto sanitário
+                end
+
+                if fixHealth < 30.0 then
+                    -- Aparelho danificado ou quebrado injeta penalidade de manutencao no Squalor
+                    local healthDeficit = (30.0 - fixHealth)
+                    res.cleanlinessPenalty = res.cleanlinessPenalty + (healthDeficit * 0.3)
+                    res.squalorDirt = (res.squalorDirt or 0) + (healthDeficit * 0.4)
+                end
+
+                if fixDirt <= 0 and fixHealth >= 50.0 then
+                    -- Fixture limpa e em bom estado pontua como conforto sanitario
                     local fixType = isToilet and "toilet" or (isSink and "sink" or "bath")
                     if not res.foundTypes["fixture_" .. fixType] then
                         local fixPts = (isToilet and 4) or (isBathShower and 4) or 3
@@ -979,40 +1026,40 @@ function LV_ComfortScanner.processSquare(sq, res)
     end
 end
 
---- Normaliza as pontuações em duas camadas (Cômodo Local + Higiene Global da Base).
+--- Normaliza as pontuacoes em duas camadas (Comodo Local + Higiene Global da Base).
 function LV_ComfortScanner.finalizeScore(player, res)
     if not player or not res then return end
 
-    -- Se não encontrou nenhum móvel relevante, conforto é 0
+    -- Se nao encontrou nenhum movel relevante, conforto e 0
     if res.furnitureScore == 0 and res.decorScore == 0 and res.lightingScore == 0 then
         print("[LarVivo] Nenhum elemento de base encontrado ao redor. Conforto = 0.")
         LV_BuffManager.applyScanResults(player, 0, 0, res.baseName)
         return
     end
 
-    -- 1. Cálculo de Conforto Base do Cômodo (0 a 100)
-    -- Base limpa começa com 10 pontos garantidos (nerfado de 25 para exigir mobília real)
+    -- 1. Calculo de Conforto Base do Comodo (0 a 100)
+    -- Base limpa comeca com 10 pontos garantidos (nerfado de 25 para exigir mobilia real)
     local cleanPoints = math.max(0, 10 - (res.cleanlinessPenalty * 0.5))
 
-    -- Mobílias somam com tetos balanceados (teto reduzido de 50 para 40)
+    -- Mobilias somam com tetos balanceados (teto reduzido de 50 para 40)
     local furniturePoints = math.min(40, res.furnitureScore)
 
-    -- Bônus de "Toque Artesanal" (+5 pontos extras para móveis construídos pelo jogador)
+    -- Bonus de "Toque Artesanal" (+5 pontos extras para moveis construidos pelo jogador)
     local craftBonus = math.min(5, res.craftBonusScore or 0)
 
-    -- Iluminação ativa soma até 10 pontos (nerfado de 15)
+    -- Iluminacao ativa soma ate 10 pontos (nerfado de 15)
     local lightingPoints = math.min(10, res.lightingScore)
 
-    -- Decoração e itens 3D somam até 25 pontos (ampliado de 20 para recompensar clutter organizado)
+    -- Decoracao e itens 3D somam ate 25 pontos (ampliado de 20 para recompensar clutter organizado)
     local decorPoints = math.min(25, res.decorScore)
 
     local roomComfort = cleanPoints + furniturePoints + craftBonus + lightingPoints + decorPoints
     local comfortScore = math.floor(math.max(0, math.min(100, roomComfort)))
 
-    -- 2. Cálculo de Squalor / Insalubridade Global da Base (0 a 100)
+    -- 2. Calculo de Squalor / Insalubridade Global da Base (0 a 100)
     local squalorScore = 0
     if LV_Config.isSqualorEnabled() then
-        -- Incorpora sujeira agregada de piso da Safehouse ou cômodo
+        -- Incorpora sujeira agregada de piso da Safehouse ou comodo
         local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, player:getCurrentSquare())) or "outside"
         local floorDirt = (LV_DirtSystem and LV_DirtSystem.getFloorDirt and LV_DirtSystem.getFloorDirt(locKey)) or 0
         if floorDirt > 0 then
@@ -1031,20 +1078,20 @@ function LV_ComfortScanner.finalizeScore(player, res)
         squalorScore = math.floor(math.max(0, math.min(100, squalorScore)))
     end
 
-    -- 3. Balanceamento de Mansões: Se a base inteira acumular sujeira/cadáveres em outros cômodos,
-    -- a penalidade global reduz o conforto do santuário
+    -- 3. Balanceamento de Mansoes: Se a base inteira acumular sujeira/cadaveres em outros comodos,
+    -- a penalidade global reduz o conforto do santuario
     if squalorScore > 15 then
         local comfortReduction = math.floor(squalorScore * 0.6)
         comfortScore = math.max(0, comfortScore - comfortReduction)
     end
 
-    -- Regra de Precedência Crítica: Insalubridade severa anula Conforto
+    -- Regra de Precedencia Critica: Insalubridade severa anula Conforto
     local overrideThreshold = (LV_Config and LV_Config.get and LV_Config.get("SqualorOverrideThreshold")) or 50
     if squalorScore >= overrideThreshold then
         comfortScore = 0
     end
 
-    -- 4. Cálculo do Tier Independente do Cômodo
+    -- 4. Calculo do Tier Independente do Comodo
     local t1 = (LV_Config and LV_Config.get and LV_Config.get("Tier1Threshold")) or 20
     local t2 = (LV_Config and LV_Config.get and LV_Config.get("Tier2Threshold")) or 40
     local t3 = (LV_Config and LV_Config.get and LV_Config.get("Tier3Threshold")) or 60
@@ -1057,7 +1104,7 @@ function LV_ComfortScanner.finalizeScore(player, res)
     elseif comfortScore >= t1 then roomTier = 1
     end
 
-    -- 5. Avaliação e Feedback de Clima Sazonal
+    -- 5. Avaliacao e Feedback de Clima Sazonal
     local cc = res.climate or {}
     local seasonalEnabled = (LV_Config and LV_Config.get and LV_Config.get("EnableSeasonalComfort") ~= false)
     local seasonalNote = "Clima Estavel"
@@ -1085,11 +1132,11 @@ function LV_ComfortScanner.finalizeScore(player, res)
         end
     end
 
-    -- 6. Cache Estruturado do Detalhamento do Cômodo e Agregação da Safehouse Geral
+    -- 6. Cache Estruturado do Detalhamento do Comodo e Agregacao da Safehouse Geral
     local pSq = player and player.getCurrentSquare and player:getCurrentSquare()
     local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, pSq)) or "room_default"
 
-    -- Identificação de Safehouse para cálculo do Tier Geral da Base de forma separada
+    -- Identificacao de Safehouse para calculo do Tier Geral da Base de forma separada
     local shClass = SafeHouse or Safehouse
     local curSafehouse = nil
     if shClass and shClass.getSafehouse and pSq then
@@ -1126,7 +1173,7 @@ function LV_ComfortScanner.finalizeScore(player, res)
         local avgScore = (roomCount > 0) and (sumScore / roomCount) or comfortScore
         local avgSqualor = (roomCount > 0) and (sumSqualor / roomCount) or squalorScore
 
-        -- Bônus de infraestrutura da Safehouse
+        -- Bonus de infraestrutura da Safehouse
         local infraBonus = 0
         if LV_HouseDashboard and LV_HouseDashboard.getInstance then
             local dash = LV_HouseDashboard.getInstance()
@@ -1192,13 +1239,13 @@ function LV_ComfortScanner.finalizeScore(player, res)
     end)
 
     local itemsSummary = table.concat(res.discoveredItems or {}, ", ")
-    print(string.format("[LarVivo] Varredura Concluída: Cômodo '%s' [Tier %d] = %d pts, Insalubridade = %d%% | Sazonal: '%s' | Itens: [%s]", tostring(res.baseName or "Lar"), roomTier, comfortScore, squalorScore, seasonalNote, itemsSummary))
+    print(string.format("[LarVivo] Varredura Concluida: Comodo '%s' [Tier %d] = %d pts, Insalubridade = %d%% | Sazonal: '%s' | Itens: [%s]", tostring(res.baseName or "Lar"), roomTier, comfortScore, squalorScore, seasonalNote, itemsSummary))
 
     -- 7. Aplica os resultados consolidados no jogador
     LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, res.baseName, false, seasonalNote)
 end
 
---- Retorna o cache de detalhamento do cômodo atual
+--- Retorna o cache de detalhamento do comodo atual
 function LV_ComfortScanner.getRoomBreakdown(locKey)
     if not LV_ComfortScanner.RoomBreakdown then return LV_ComfortScanner.LastRoomBreakdown end
     if locKey and LV_ComfortScanner.RoomBreakdown[locKey] then

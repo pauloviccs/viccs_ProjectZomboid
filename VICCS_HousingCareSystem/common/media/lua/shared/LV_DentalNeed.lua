@@ -2,14 +2,14 @@
 -- Housing Care System (Lar Vivo) - Dental & Oral Care Need (LV_DentalNeed.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Simulação da necessidade de higiene bucal (escovação de dentes) do sobrevivente.
---   - Acumula dinamicamente a cada refeição consumida (onEatFood) proporcionalmente
---     à quantidade e tipo de alimento ingerido (fome, calorias, doces e açúcar).
---   - Acúmulo passivo leve ao longo do dia (+1.0% por hora).
---   - Se negligenciada (> 70%), causa desconforto, mau hálito e estresse leve.
---   - A escovação em pia com escova e pasta zera a necessidade para 0%, remove
---     estresse/tédio e concede o bônus "Hálito Fresco" para o streak diário.
+-- Descricao:
+--   Simulacao da necessidade de higiene bucal (escovacao de dentes) do sobrevivente.
+--   - Acumula dinamicamente a cada refeicao consumida (onEatFood) proporcionalmente
+--     a quantidade e tipo de alimento ingerido (fome, calorias, doces e acucar).
+--   - Acumulo passivo leve ao longo do dia (+1.0% por hora).
+--   - Se negligenciada (> 70%), causa desconforto, mau halito e estresse leve.
+--   - A escovacao em pia com escova e pasta zera a necessidade para 0%, remove
+--     estresse/tedio e concede o bonus "Halito Fresco" para o streak diario.
 -- =============================================================================
 
 require "LV_Config"
@@ -18,7 +18,7 @@ LV_DentalNeed = LV_DentalNeed or {}
 
 local localDentalSession = {}
 
---- Retorna o nível de sujeira/necessidade de escovação do jogador (0 a 100).
+--- Retorna o nivel de sujeira/necessidade de escovacao do jogador (0 a 100).
 function LV_DentalNeed.getNeed(player)
     if not player then return 0 end
     local pNum = (player.getPlayerNum and player:getPlayerNum()) or 0
@@ -31,7 +31,7 @@ function LV_DentalNeed.getNeed(player)
     return val
 end
 
---- Define o nível de necessidade bucal do jogador (0 a 100).
+--- Define o nivel de necessidade bucal do jogador (0 a 100).
 function LV_DentalNeed.setNeed(player, value, forceReset)
     if not player then return end
     local pNum = (player.getPlayerNum and player:getPlayerNum()) or 0
@@ -39,7 +39,7 @@ function LV_DentalNeed.setNeed(player, value, forceReset)
     local target = math.max(0.0, math.min(100.0, tonumber(value) or 0.0))
 
     if not forceReset and target < current then
-        target = current -- Trava: só diminui explicitamente via escovação
+        target = current -- Trava: so diminui explicitamente via escovacao
     end
 
     localDentalSession[pNum] = target
@@ -53,29 +53,29 @@ function LV_DentalNeed.setNeed(player, value, forceReset)
     end
 end
 
---- Incrementa a necessidade bucal após consumo de alimentos ou bebidas.
+--- Incrementa a necessidade bucal apos consumo de alimentos ou bebidas.
 function LV_DentalNeed.onEatFood(player, food)
     if not player or player:isDead() then return end
 
     local current = LV_DentalNeed.getNeed(player)
-    local delta = 15.0 -- Ganho base padrão por refeição
+    local delta = 15.0 -- Ganho base padrao por refeicao
 
     if food then
-        -- 1. Avaliação pelo valor de fome saciado
+        -- 1. Avaliacao pelo valor de fome saciado
         if food.getHungerChange then
             local hunger = math.abs(food:getHungerChange() or 0)
             if hunger > 0.40 then
-                delta = 25.0 -- Refeição pesada / ensopado / prato cheio
+                delta = 25.0 -- Refeicao pesada / ensopado / prato cheio
             elseif hunger > 0.20 then
-                delta = 20.0 -- Refeição média
+                delta = 20.0 -- Refeicao media
             elseif hunger > 0.05 then
-                delta = 14.0 -- Lanche rápido / barra de cereal
+                delta = 14.0 -- Lanche rapido / barra de cereal
             else
                 delta = 10.0 -- Petisco leve
             end
         end
 
-        -- 2. Avaliação por doces, refrigerantes e guloseimas (alta placa bacteriana)
+        -- 2. Avaliacao por doces, refrigerantes e guloseimas (alta placa bacteriana)
         local ft = (food.getFullType and food:getFullType() or ""):lower()
         local name = (food.getName and food:getName() or ""):lower()
         if ft:find("candy") or ft:find("chocolate") or ft:find("sugar") or ft:find("soda") or
@@ -84,7 +84,7 @@ function LV_DentalNeed.onEatFood(player, food)
             delta = delta + 12.0
         end
 
-        -- 3. Avaliação por carnes ou conservas
+        -- 3. Avaliacao por carnes ou conservas
         if ft:find("meat") or ft:find("canned") or ft:find("fish") or name:find("carne") or name:find("lata") then
             delta = delta + 5.0
         end
@@ -103,21 +103,21 @@ function LV_DentalNeed.onEatFood(player, food)
     end
 end
 
---- Atualização passiva horária (acúmulo leve ao longo do dia e impacto no estresse).
+--- Atualizacao passiva horaria (acumulo leve ao longo do dia e impacto no estresse).
 function LV_DentalNeed.onEveryHours(player)
     if not player or player:isDead() then return end
 
     local currentNeed = LV_DentalNeed.getNeed(player)
-    -- Acúmulo passivo suave (+1% por hora)
+    -- Acumulo passivo suave (+1% por hora)
     local newNeed = math.min(100.0, currentNeed + 1.0)
     LV_DentalNeed.setNeed(player, newNeed, true)
 
-    -- Impacto fisiológico se os dentes estiverem sujos por muito tempo
+    -- Impacto fisiologico se os dentes estiverem sujos por muito tempo
     if newNeed >= 70.0 then
         local stats = player.getStats and player:getStats()
         if stats then
             pcall(function()
-                -- Acúmulo leve de estresse pelo gosto ruim e hálito pesado
+                -- Acumulo leve de estresse pelo gosto ruim e halito pesado
                 if stats.getStress and stats.setStress then
                     stats:setStress(math.min(1.0, (stats:getStress() or 0) + 0.02))
                 end
@@ -135,14 +135,14 @@ function LV_DentalNeed.onEveryHours(player)
     end
 end
 
---- Executado ao concluir a ação de escovação de dentes na pia.
+--- Executado ao concluir a acao de escovacao de dentes na pia.
 function LV_DentalNeed.brushTeeth(player)
     if not player then return end
 
     -- Zera a necessidade bucal imediatamente
     LV_DentalNeed.setNeed(player, 0.0, true)
 
-    -- Alívio direto de estresse e melhora no humor
+    -- Alivio direto de estresse e melhora no humor
     local stats = player.getStats and player:getStats()
     if stats then
         pcall(function()
@@ -169,7 +169,7 @@ function LV_DentalNeed.brushTeeth(player)
         LV_RoutineSystem.recordHygieneActivity(player, "BrushedTeeth")
     end
 
-    -- Concede bônus do Homemaking Engine se presente
+    -- Concede bonus do Homemaking Engine se presente
     if LV_HomemakingActions and LV_HomemakingActions.grantActionBonus then
         LV_HomemakingActions.grantActionBonus(player, "Higiene Bucal", 1.5)
     end

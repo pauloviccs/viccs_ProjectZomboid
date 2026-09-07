@@ -2,57 +2,57 @@
 -- Housing Care System (Lar Vivo) - Score Data Layer (LV_ItemScoreData.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Matriz de pontuação ambiental com avaliação granular balanceada para tiles,
---   eletrônicos e objetos 3D no mundo.
---   - Lookup em tempo O(1) via tabelas Hash pré-indexadas em memória (zero GC lag)
+-- Descricao:
+--   Matriz de pontuacao ambiental com avaliacao granular balanceada para tiles,
+--   eletronicos e objetos 3D no mundo.
+--   - Lookup em tempo O(1) via tabelas Hash pre-indexadas em memoria (zero GC lag)
 --   - Curva de Rendimento Decrescente (Diminishing Returns) por categoria
---   - Cap de Saturação por Categoria em Cômodos
---   - Higiene e Degradação 3D (alimento podre = 0 ambiente e +12 squalor)
+--   - Cap de Saturacao por Categoria em Comodos
+--   - Higiene e Degradacao 3D (alimento podre = 0 ambiente e +12 squalor)
 -- =============================================================================
 
 LV_ItemScoreData = LV_ItemScoreData or {}
 
---- Pesos relativos de cada pilar no cálculo do Comfort Score (0 a 100).
+--- Pesos relativos de cada pilar no calculo do Comfort Score (0 a 100).
 LV_ItemScoreData.Weights = {
     Cleanliness = 0.25,  -- 25%: Limpeza geral
-    Furniture   = 0.35,  -- 35%: Mobília funcional e estruturada
-    Lighting    = 0.10,  -- 10%: Iluminação ativa (fontes de luz acesas)
-    DecorWorld  = 0.20,  -- 20%: Itens 3D no mundo como decoração
-    Dedication  = 0.10,  -- 10%: Decoração dedicada (quadros, tapetes, plantas)
+    Furniture   = 0.35,  -- 35%: Mobilia funcional e estruturada
+    Lighting    = 0.10,  -- 10%: Iluminacao ativa (fontes de luz acesas)
+    DecorWorld  = 0.20,  -- 20%: Itens 3D no mundo como decoracao
+    Dedication  = 0.10,  -- 10%: Decoracao dedicada (quadros, tapetes, plantas)
 }
 
---- Pesos relativos de cada pilar no cálculo do Squalor Score (0 a 100).
+--- Pesos relativos de cada pilar no calculo do Squalor Score (0 a 100).
 LV_ItemScoreData.SqualorWeights = {
     DirtAndBlood   = 0.40,  -- 40%: Sangue, sujeira e entulho
-    Corpses        = 0.30,  -- 30%: Cadáveres acumulados dentro do cômodo
+    Corpses        = 0.30,  -- 30%: Cadaveres acumulados dentro do comodo
     RottenAndTrash = 0.20,  -- 20%: Comida podre e lixo largado
-    ChaosDisorder  = 0.10,  -- 10%: Bagunça excessiva no chão
+    ChaosDisorder  = 0.10,  -- 10%: Bagunca excessiva no chao
 }
 
---- Arquétipos de pontuação para Mobílias, Eletrônicos e Decoração de Superfície.
+--- Arquetipos de pontuacao para Mobilias, Eletronicos e Decoracao de Superficie.
 LV_ItemScoreData.FurnitureScore = {
     bed              = 10,  -- Camas (conforto de descanso essencial - era 25)
-    couch            = 7,   -- Sofás acolchoados (era 15)
-    chair            = 3,   -- Poltronas e cadeiras confortáveis (era 12)
+    couch            = 7,   -- Sofas acolchoados (era 15)
+    chair            = 3,   -- Poltronas e cadeiras confortaveis (era 12)
     table            = 4,   -- Mesas de jantar e escrivaninhas (era 15)
-    storage          = 4,   -- Armários, roupeiros, cristaleiras e cômodas (era 15)
+    storage          = 4,   -- Armarios, roupeiros, cristaleiras e comodas (era 15)
     bookshelf        = 5,   -- Estantes de livros (era 12)
-    stove_oven       = 6,   -- Fogão / Forno funcional (era 12)
+    stove_oven       = 6,   -- Fogao / Forno funcional (era 12)
     fridge           = 6,   -- Geladeira residencial (era 12)
-    radio_tv         = 5,   -- Televisão ou Rádio (era 12)
-    light_source_on  = 5,   -- Fontes de luz ativas (lâmpadas, velas acesas, lareira - era 15)
+    radio_tv         = 5,   -- Televisao ou Radio (era 12)
+    light_source_on  = 5,   -- Fontes de luz ativas (lampadas, velas acesas, lareira - era 15)
     light_source_off = 1,   -- Fontes de luz apagadas (era 5)
     rug              = 4,   -- Tapetes e peles no piso (era 12)
-    painting         = 3,   -- Quadros, pôsteres e decorações de parede (era 8)
+    painting         = 3,   -- Quadros, posteres e decoracoes de parede (era 8)
     plant            = 3,   -- Vasos de plantas decorativas (era 10)
     curtain          = 2,   -- Cortinas em janelas (era 6)
-    clock            = 3,   -- Relógios de parede (era 8)
+    clock            = 3,   -- Relogios de parede (era 8)
     mirror           = 3,   -- Espelhos decorativos (era 8)
     fan              = 4,   -- Ventiladores residenciais (era 8)
 }
 
---- Arquétipos de pontuação balanceada para Tiles de Mobílias, Eletrônicos e Decoração
+--- Arquetipos de pontuacao balanceada para Tiles de Mobilias, Eletronicos e Decoracao
 LV_ItemScoreData.TileArchetypes = {
     bed              = { score = 10, category = "HEAVY_FURNITURE", label = "Cama de Descanso", maxPerRoom = 2 },
     couch            = { score = 7,  category = "HEAVY_FURNITURE", label = "Sofa Acolchoado", maxPerRoom = 3 },
@@ -77,7 +77,7 @@ LV_ItemScoreData.TileArchetypes = {
     mirror           = { score = 3,  category = "SURFACE_DECOR", label = "Espelho", maxPerRoom = 2 },
 }
 
---- Retorna os dados do arquétipo de tile
+--- Retorna os dados do arquetipo de tile
 function LV_ItemScoreData.getTileArchetype(key)
     if not key then return nil end
     return LV_ItemScoreData.TileArchetypes[key]
@@ -86,9 +86,9 @@ end
 --- Interface unificada de EnvironmentScore solicitada pela arquitetura
 LV_ItemScoreData.EnvironmentScore = {
     TileArchetypes = LV_ItemScoreData.TileArchetypes,
-    Categories = nil, -- Atribuído abaixo
-    getDiminishedScore = nil, -- Atribuído abaixo
-    evaluateItem = nil, -- Atribuído abaixo
+    Categories = nil, -- Atribuido abaixo
+    getDiminishedScore = nil, -- Atribuido abaixo
+    evaluateItem = nil, -- Atribuido abaixo
 }
 
 --- Categorias de Ambiente para Curva de Rendimento Decrescente
@@ -101,7 +101,7 @@ LV_ItemScoreData.Categories = {
 }
 LV_ItemScoreData.EnvironmentScore.Categories = LV_ItemScoreData.Categories
 
---- Retorna a pontuação ajustada pela Curva de Rendimento Decrescente (Mais rigorosa anti-spam)
+--- Retorna a pontuacao ajustada pela Curva de Rendimento Decrescente (Mais rigorosa anti-spam)
 function LV_ItemScoreData.getDiminishedScore(baseScore, itemCount, isEnabled)
     if not isEnabled or itemCount <= 1 then
         return baseScore
@@ -118,7 +118,7 @@ end
 
 --- Tabela Hash O(1) direta por FullType de Itens 3D Comuns
 LV_ItemScoreData.TypeLookup = {
-    -- Despensa / Alimentos 3D (Micro-pontuação balanceada: 0.1 a 0.25 pts)
+    -- Despensa / Alimentos 3D (Micro-pontuacao balanceada: 0.1 a 0.25 pts)
     ["Base.Cereal"]                 = { score = 0.15, category = "PANTRY_SUPPLIES_3D", label = "Caixa de Cereal" },
     ["Base.Crisps"]                 = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho de Batata" },
     ["Base.Crisps2"]                = { score = 0.10, category = "PANTRY_SUPPLIES_3D", label = "Salgadinho Tortilha" },
@@ -158,7 +158,7 @@ LV_ItemScoreData.TypeLookup = {
     ["Base.Wine2"]                  = { score = 0.35, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Vinho Branco" },
     ["Base.WhiskeyFull"]            = { score = 0.40, category = "PANTRY_SUPPLIES_3D", label = "Garrafa de Whiskey" },
 
-    -- Conforto Orgânico 3D (Livros, Louças, Colecionáveis, Brinquedos: 0.2 a 1.2 pts)
+    -- Conforto Organico 3D (Livros, Loucas, Colecionaveis, Brinquedos: 0.2 a 1.2 pts)
     ["Base.Book"]                   = { score = 0.60, category = "ORGANIC_COMFORT_3D", label = "Livro de Leitura" },
     ["Base.BookCarpentry1"]         = { score = 0.50, category = "ORGANIC_COMFORT_3D", label = "Manual de Carpintaria" },
     ["Base.BookCooking1"]           = { score = 0.50, category = "ORGANIC_COMFORT_3D", label = "Guia de Culinaria" },
@@ -201,7 +201,7 @@ LV_ItemScoreData.TypeLookup = {
     ["Base.Candle"]                 = { score = 0.30, category = "PANTRY_SUPPLIES_3D", label = "Vela Aromatica" },
 }
 
---- Tabela Hash O(1) de Tags e Categorias de Exibição
+--- Tabela Hash O(1) de Tags e Categorias de Exibicao
 LV_ItemScoreData.TagLookup = {
     ["Literature"]  = { score = 0.60, category = "ORGANIC_COMFORT_3D", label = "Material de Leitura" },
     ["Book"]        = { score = 0.50, category = "ORGANIC_COMFORT_3D", label = "Livro" },
@@ -216,11 +216,11 @@ LV_ItemScoreData.TagLookup = {
     ["Firearm"]     = { score = 0.35, category = "PANTRY_SUPPLIES_3D", label = "Arma de Fogo em Exibicao" },
 }
 
---- Avalia um item em tempo O(1) retornando sua pontuação, categoria e se está estragado
+--- Avalia um item em tempo O(1) retornando sua pontuacao, categoria e se esta estragado
 function LV_ItemScoreData.evaluateItem(item)
     if not item then return nil end
 
-    -- 1. Detecção Robusta de Alimento Estragado (Higiene e Degradação 3D)
+    -- 1. Deteccao Robusta de Alimento Estragado (Higiene e Degradacao 3D)
     local isRottenFood = false
     if item.isRotten then
         local okR, r = pcall(item.isRotten, item)
@@ -258,7 +258,7 @@ function LV_ItemScoreData.evaluateItem(item)
         }
     end
 
-    -- 3. Lookup por Categoria de Exibição / Tags O(1)
+    -- 3. Lookup por Categoria de Exibicao / Tags O(1)
     local displayCat = item.getDisplayCategory and item:getDisplayCategory()
     if displayCat and LV_ItemScoreData.TagLookup[displayCat] then
         local entry = LV_ItemScoreData.TagLookup[displayCat]
@@ -274,16 +274,16 @@ function LV_ItemScoreData.evaluateItem(item)
     return nil
 end
 
---- Penalidades aplicadas para o cálculo de Squalor (Insalubridade).
+--- Penalidades aplicadas para o calculo de Squalor (Insalubridade).
 LV_ItemScoreData.Penalties = {
-    BloodSplats  = 4,   -- Pontos de squalor por nível de sangue em cada tile
-    DeadBody     = 25,  -- Pontos de squalor por cada cadáver no cômodo
+    BloodSplats  = 4,   -- Pontos de squalor por nivel de sangue em cada tile
+    DeadBody     = 25,  -- Pontos de squalor por cada cadaver no comodo
     RottenFood   = 12,  -- Pontos de squalor por item podre deixado no local
-    TrashObject  = 8,   -- Pontos de squalor por entulho / sprite de lixo no chão
-    LooseClutter = 1,   -- Pontos de squalor por item solto em excesso no chão
+    TrashObject  = 8,   -- Pontos de squalor por entulho / sprite de lixo no chao
+    LooseClutter = 1,   -- Pontos de squalor por item solto em excesso no chao
 }
 
--- Amarrações de compatibilidade da interface EnvironmentScore
+-- Amarracoes de compatibilidade da interface EnvironmentScore
 LV_ItemScoreData.EnvironmentScore.getDiminishedScore = LV_ItemScoreData.getDiminishedScore
 LV_ItemScoreData.EnvironmentScore.evaluateItem = LV_ItemScoreData.evaluateItem
 LV_ItemScoreData.EnvironmentScore.getTileArchetype = LV_ItemScoreData.getTileArchetype

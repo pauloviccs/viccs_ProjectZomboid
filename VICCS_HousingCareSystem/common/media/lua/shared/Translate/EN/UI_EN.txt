@@ -48,4 +48,14 @@ UI_EN = {
 
     UI_LV_Relieved_Title = "Relieved",
     UI_LV_Relieved_Desc = "Feeling light and comfortable after using a clean bathroom.",
+
+    UI_LV_Stovetop_Cooking = "Stovetop Cooking: %s (%s%%)",
+    UI_LV_Stovetop_Cooked = "Meal Ready: %s",
+    UI_LV_Stovetop_Burnt = "Burning on Stove: %s",
+
+    UI_LV_Appliance_Title = "Appliances & Fixtures",
+    UI_LV_Appliance_Operational = "All Systems Operational (Fixtures Intact)",
+    UI_LV_Appliance_Critical = "CRITICAL: %d Appliance(s) Damaged / Broken!",
+    UI_LV_Appliance_Warning = "WARNING: %d Appliance(s) Require Maintenance / Cleaning",
+    UI_LV_Appliance_Maintain = "Maintain %s",
 }

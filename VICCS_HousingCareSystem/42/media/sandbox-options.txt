@@ -512,4 +512,188 @@ option HousingCareSystem.EnableDiminishingReturns
     translation = EnableDiminishingReturns,
 }
 
+option HousingCareSystem.StovetopCookingEnabled
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = StovetopCookingEnabled,
+}
 
+option HousingCareSystem.StovetopCheckIntervalSeconds
+{
+    type = integer,
+    min = 5,
+    max = 300,
+    default = 30,
+    page = HousingCareSystem,
+    translation = StovetopCheckIntervalSeconds,
+}
+
+option HousingCareSystem.StovetopFireRiskEnabled
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = StovetopFireRiskEnabled,
+}
+
+option HousingCareSystem.ToiletPaperDrainPercent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 15,
+    page = HousingCareSystem,
+    translation = ToiletPaperDrainPercent,
+}
+
+option HousingCareSystem.ToiletFlushWaterDrain
+{
+    type = double,
+    min = 0.0,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = ToiletFlushWaterDrain,
+}
+
+option HousingCareSystem.CleanFloorWaterDrain
+{
+    type = double,
+    min = 0.0,
+    max = 2.0,
+    default = 0.25,
+    page = HousingCareSystem,
+    translation = CleanFloorWaterDrain,
+}
+
+option HousingCareSystem.CleanFloorCleanerDrainPercent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 15,
+    page = HousingCareSystem,
+    translation = CleanFloorCleanerDrainPercent,
+}
+
+option HousingCareSystem.CleanFloorClothDirtGain
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 30,
+    page = HousingCareSystem,
+    translation = CleanFloorClothDirtGain,
+}
+
+option HousingCareSystem.CleanFloorClothBloodGain
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 25,
+    page = HousingCareSystem,
+    translation = CleanFloorClothBloodGain,
+}
+
+option HousingCareSystem.CleanFloorClothWetnessGain
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 60,
+    page = HousingCareSystem,
+    translation = CleanFloorClothWetnessGain,
+}
+
+option HousingCareSystem.CleanFloorToolWearChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 10,
+    page = HousingCareSystem,
+    translation = CleanFloorToolWearChance,
+}
+
+option HousingCareSystem.CleanFixtureCleanerDrainPercent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 5,
+    page = HousingCareSystem,
+    translation = CleanFixtureCleanerDrainPercent,
+}
+
+option HousingCareSystem.CleanFixtureClothDirtGain
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 15,
+    page = HousingCareSystem,
+    translation = CleanFixtureClothDirtGain,
+}
+
+option HousingCareSystem.ToothpasteDrainPercent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 10,
+    page = HousingCareSystem,
+    translation = ToothpasteDrainPercent,
+}
+
+option HousingCareSystem.MaintainDuctTapeDrainPercent
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 15,
+    page = HousingCareSystem,
+    translation = MaintainDuctTapeDrainPercent,
+}
+
+option HousingCareSystem.MaintainScrapAmount
+{
+    type = integer,
+    min = 0,
+    max = 5,
+    default = 1,
+    page = HousingCareSystem,
+    translation = MaintainScrapAmount,
+}
+
+option HousingCareSystem.MaintainToolWearChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 5,
+    page = HousingCareSystem,
+    translation = MaintainToolWearChance,
+}
+
+option HousingCareSystem.ApplianceWearMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = ApplianceWearMultiplier,
+}
+
+option HousingCareSystem.ApplianceDirtGainMultiplier
+{
+    type = double,
+    min = 0.0,
+    max = 5.0,
+    default = 1.0,
+    page = HousingCareSystem,
+    translation = ApplianceDirtGainMultiplier,
+}

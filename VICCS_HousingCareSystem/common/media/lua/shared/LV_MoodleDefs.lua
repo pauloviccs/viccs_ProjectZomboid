@@ -2,10 +2,10 @@
 -- Housing Care System (Lar Vivo) - Moodle Definitions (LV_MoodleDefs.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Dicionário central e catálogo de metadados para todos os Tiers de Conforto
---   e Insalubridade (Squalor), além dos buffs estendidos opcionais.
---   Mapeia títulos, descrições e ícones do vanilla para renderização nativa.
+-- Descricao:
+--   Dicionario central e catalogo de metadados para todos os Tiers de Conforto
+--   e Insalubridade (Squalor), alem dos buffs estendidos opcionais.
+--   Mapeia titulos, descricoes e icones do vanilla para renderizacao nativa.
 -- =============================================================================
 
 LV_MoodleDefs = LV_MoodleDefs or {}
@@ -90,7 +90,7 @@ LV_MoodleDefs.SqualorTiers = {
     },
 }
 
---- Catálogo de Buffs Específicos Adicionais
+--- Catalogo de Buffs Especificos Adicionais
 LV_MoodleDefs.ExtendedCatalog = {
     Energizado = {
         minTier = 2,
@@ -124,7 +124,7 @@ LV_MoodleDefs.ExtendedCatalog = {
     },
 }
 
---- Moodlets de Necessidade Fisiológica (Banheiro / Bexiga)
+--- Moodlets de Necessidade Fisiologica (Banheiro / Bexiga)
 LV_MoodleDefs.NeedToiletTiers = {
     [1] = {
         id = "LV_NeedToilet1",
@@ -166,7 +166,7 @@ LV_MoodleDefs.Relieved = {
     vanillaIcon = "media/ui/Moodles/32/Mood_Happy.png",
 }
 
---- Moodlets da Rotina Tática e Hábitos Humanos (Update 2)
+--- Moodlets da Rotina Tatica e Habitos Humanos (Update 2)
 LV_MoodleDefs.MorningCozy = {
     id = "LV_MorningCozy",
     titleKey = "UI_LV_MorningCozy_Title",

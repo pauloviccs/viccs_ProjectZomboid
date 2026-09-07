@@ -2,11 +2,11 @@
 -- Housing Care System (Lar Vivo) - Sleep & Revitalize Engine (LV_SleepRevitalize.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Mecânica imersiva de sono e descanso.
+-- Descricao:
+--   Mecanica imersiva de sono e descanso.
 --   Ao dormir por 6+ horas in-game em uma cama com travesseiro (equipado, no
---   inventário ou no azulejo da cama), o sobrevivente acorda com sono reparador:
---   zera tristeza, tédio e estresse, e recebe o bônus de Revigorado!
+--   inventario ou no azulejo da cama), o sobrevivente acorda com sono reparador:
+--   zera tristeza, tedio e estresse, e recebe o bonus de Revigorado!
 -- =============================================================================
 
 LV_SleepRevitalize = LV_SleepRevitalize or {}
@@ -25,11 +25,11 @@ local function getPlayerSleepState(player)
     return playerSleepStates[pNum]
 end
 
---- Verifica se há travesseiro no inventário, nas mãos ou no azulejo da cama.
+--- Verifica se ha travesseiro no inventario, nas maos ou no azulejo da cama.
 local function checkPillowPresence(player, square)
     if not player then return false end
 
-    -- 1. No inventário do jogador ou equipado
+    -- 1. No inventario do jogador ou equipado
     local inv = player:getInventory()
     if inv then
         if inv:contains("Pillow", true) or inv:contains("Base.Pillow", true) or (inv.containsTypeRecurse and inv:containsTypeRecurse("Pillow")) then
@@ -52,7 +52,7 @@ local function checkPillowPresence(player, square)
         end
     end
 
-    -- 2. Colocado como objeto 3D sobre a cama ou chão ao lado
+    -- 2. Colocado como objeto 3D sobre a cama ou chao ao lado
     if square and square.getWorldObjects then
         local wObjs = square:getWorldObjects()
         if wObjs and wObjs.size then
@@ -75,7 +75,7 @@ local function checkPillowPresence(player, square)
     return false
 end
 
---- Verifica se o jogador está sobre uma cama ou sofá
+--- Verifica se o jogador esta sobre uma cama ou sofa
 local function checkBedPresence(square)
     if not square or not square.getObjects then return false end
     local objects = square:getObjects()
@@ -112,7 +112,7 @@ local function onSleepUpdate(player)
     local currentHour = getGameTime():getWorldAgeHours()
     local st = getPlayerSleepState(player)
 
-    -- 1. Início do Sono
+    -- 1. Inicio do Sono
     if isAsleep and not st.wasSleeping then
         st.wasSleeping = true
         st.sleepStartWorldHour = currentHour
@@ -123,20 +123,21 @@ local function onSleepUpdate(player)
         print(string.format("[LarVivo] Sobrevivente adormeceu na hora %.2f. Cama: %s | Travesseiro: %s",
             st.sleepStartWorldHour, tostring(st.hadBedAtSleep), tostring(st.hadPillowAtSleep)))
 
-    -- 2. Término do Sono (Acordou)
+    -- 2. Termino do Sono (Acordou)
     elseif not isAsleep and st.wasSleeping then
         st.wasSleeping = false
         local hoursSlept = math.max(0, currentHour - st.sleepStartWorldHour)
         print(string.format("[LarVivo] Sobrevivente acordou! Tempo dormido: %.1f horas in-game.", hoursSlept))
 
-        -- Se dormiu pelo menos 6 horas no relógio do jogo
+        local bodyDirt = (LV_DirtSystem and LV_DirtSystem.getPlayerBodyDirt and LV_DirtSystem.getPlayerBodyDirt(player, true)) or 0
+
+        -- Se dormiu pelo menos 6 horas no relogio do jogo
         if hoursSlept >= 5.5 and st.hadBedAtSleep then
             local bodyDamage = player:getBodyDamage()
             local stats = player:getStats()
 
-            local bodyDirt = (LV_DirtSystem and LV_DirtSystem.getPlayerBodyDirt and LV_DirtSystem.getPlayerBodyDirt(player, true)) or 0
             if bodyDirt >= 70 then
-                -- Dormiu com o corpo imundo: sono ruim, estresse residual e contaminação do quarto
+                -- Dormiu com o corpo imundo: sono ruim, estresse residual e contaminacao do quarto
                 if bodyDamage and bodyDamage.getUnhappinessLevel and bodyDamage.setUnhappinessLevel then
                     pcall(function()
                         bodyDamage:setUnhappinessLevel(math.min(100, bodyDamage:getUnhappinessLevel() + 20))
@@ -152,7 +153,7 @@ local function onSleepUpdate(player)
                     end
                 end)
 
-                -- Suja o piso do cômodo
+                -- Suja o piso do comodo
                 local sq = player:getCurrentSquare()
                 if sq and LV_DirtSystem and LV_DirtSystem.addFloorDirt then
                     local locKey = LV_DirtSystem.getCurrentLocationKey(player, sq)
@@ -176,7 +177,7 @@ local function onSleepUpdate(player)
                     end)
                 end
 
-                -- Renova bônus de energia do Lar Vivo por 8 horas do relógio do jogo
+                -- Renova bonus de energia do Lar Vivo por 8 horas do relogio do jogo
                 LV_BuffManager.applyScanResults(player, 100, 0)
 
                 pcall(function()
@@ -202,7 +203,7 @@ local function onSleepUpdate(player)
             end
         end
 
-        -- Integração com a Rotina Matinal (Manhã Aconchegante)
+        -- Integracao com a Rotina Matinal (Manha Aconchegante)
         if LV_RoutineSystem and LV_RoutineSystem.onWakeUp then
             LV_RoutineSystem.onWakeUp(player, hoursSlept, st.hadBedAtSleep, st.hadPillowAtSleep, bodyDirt < 70)
         end

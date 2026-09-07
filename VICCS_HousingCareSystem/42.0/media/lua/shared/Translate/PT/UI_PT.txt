@@ -48,5 +48,15 @@ UI_PT = {
 
     UI_LV_Relieved_Title = "Aliviado",
     UI_LV_Relieved_Desc = "Sensacao de leveza e tranquilidade apos usar um banheiro higienizado.",
+
+    UI_LV_Stovetop_Cooking = "A cozinhar no Fogao: %s (%s%%)",
+    UI_LV_Stovetop_Cooked = "Refeicao Pronta: %s",
+    UI_LV_Stovetop_Burnt = "A queimar no Fogao: %s",
+
+    UI_LV_Appliance_Title = "Aparelhos & Instalacoes",
+    UI_LV_Appliance_Operational = "Sistemas Operacionais (Instalacoes Integras)",
+    UI_LV_Appliance_Critical = "CRITICO: %d Aparelho(s) Danificado(s) / Quebrado(s)!",
+    UI_LV_Appliance_Warning = "ATENCAO: %d Aparelho(s) Requerem Manutencao / Limpeza",
+    UI_LV_Appliance_Maintain = "Fazer Manutencao em %s",
 }
 

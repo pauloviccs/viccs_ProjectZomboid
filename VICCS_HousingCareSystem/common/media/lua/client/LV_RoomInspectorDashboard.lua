@@ -2,13 +2,13 @@
 -- Housing Care System (Living House) - Room & Ambient Inspector (LV_RoomInspectorDashboard.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Painel de inspeção aprofundada do cômodo e ambiente no padrão Frameless Glass:
---   - Detalhamento granular de pontuação por categoria (Mobílias, Eletrônicos, Decor, 3D)
---   - Inventário visual com pontuação individual e curva decrescente
---   - Comparativo claro de TIER DO CÔMODO vs TIER GERAL DA SAFEHOUSE
---   - Diagnóstico inteligente ELI5 indicando o que falta para subir de Tier
---   - Tecla de atalho dedicada 'K' e botão de alternância rápida para Infraestrutura [J]
+-- Descricao:
+--   Painel de inspecao aprofundada do comodo e ambiente no padrao Frameless Glass:
+--   - Detalhamento granular de pontuacao por categoria (Mobilias, Eletronicos, Decor, 3D)
+--   - Inventario visual com pontuacao individual e curva decrescente
+--   - Comparativo claro de TIER DO COMODO vs TIER GERAL DA SAFEHOUSE
+--   - Diagnostico inteligente ELI5 indicando o que falta para subir de Tier
+--   - Tecla de atalho dedicada 'K' e botao de alternancia rapida para Infraestrutura [J]
 -- =============================================================================
 
 require "ISUI/ISPanel"
@@ -29,7 +29,7 @@ local ACCENT_AMBER = {0.92, 0.71, 0.29}
 local ACCENT_GREEN = {0.30, 0.88, 0.45}
 local ACCENT_RED = {0.95, 0.25, 0.25}
 
---- Cria uma nova instância do painel de inspeção de cômodo
+--- Cria uma nova instancia do painel de inspecao de comodo
 function LV_RoomInspectorDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
@@ -52,7 +52,7 @@ function LV_RoomInspectorDashboard:new(x, y, width, height)
     return o
 end
 
---- Retorna a instância única do Painel de Inspeção (Singleton)
+--- Retorna a instancia unica do Painel de Inspecao (Singleton)
 function LV_RoomInspectorDashboard.getInstance()
     if not instance then
         local screenW = getCore():getScreenWidth()
@@ -92,13 +92,13 @@ end
 
 function LV_RoomInspectorDashboard:onMouseUp(x, y)
     if self.isDragging and math.abs(x - self.downX) <= 4 and math.abs(y - self.downY) <= 4 then
-        -- Botão de Fechar [X] no canto superior direito
+        -- Botao de Fechar [X] no canto superior direito
         if x >= (self.width - 28) and y <= 24 then
             self:setVisible(false)
             return true
         end
 
-        -- Botão rápido para alternar para Dashboard de Infraestrutura [J]
+        -- Botao rapido para alternar para Dashboard de Infraestrutura [J]
         if x >= (self.width - 105) and x <= (self.width - 32) and y <= 24 then
             if LV_HouseDashboard and LV_HouseDashboard.toggle then
                 self:setVisible(false)
@@ -124,6 +124,10 @@ function LV_RoomInspectorDashboard:onMouseMove(dx, dy)
     end
 end
 
+function LV_RoomInspectorDashboard:onMouseMoveOutside(dx, dy)
+    self:onMouseMove(dx, dy)
+end
+
 function LV_RoomInspectorDashboard:onMouseUpOutside(x, y)
     self.isDragging = false
     return true
@@ -134,7 +138,7 @@ function LV_RoomInspectorDashboard:onMouseWheel(del)
     return true
 end
 
---- Desenha texto com quebra de linha automática respeitando a largura máxima
+--- Desenha texto com quebra de linha automatica respeitando a largura maxima
 function LV_RoomInspectorDashboard:drawWrappedText(text, x, y, maxW, r, g, b, a, font)
     font = font or FONT_S
     local tm = getTextManager()
@@ -163,7 +167,7 @@ function LV_RoomInspectorDashboard:drawWrappedText(text, x, y, maxW, r, g, b, a,
     return curY
 end
 
---- Atualiza os dados de telemetria do cômodo
+--- Atualiza os dados de telemetria do comodo
 function LV_RoomInspectorDashboard:refreshData(force)
     local curTime = (getGameTime and getGameTime():getWorldAgeHours()) or 0
     if not force and self.cachedBreakdown and (curTime - self.lastRefreshTime < 0.05) then
@@ -175,7 +179,7 @@ function LV_RoomInspectorDashboard:refreshData(force)
 
     local own = (LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus and LV_ComfortScanner.getBuildingOwnershipStatus(sq, player)) or nil
 
-    -- 1. Verificação instantânea de Área Externa (ao ar livre / fora de casa)
+    -- 1. Verificacao instantanea de Area Externa (ao ar livre / fora de casa)
     if (own and own.status == "OUTSIDE") or (sq and sq.isOutside and sq:isOutside()) then
         local breakdown = {
             locKey = "outside",
@@ -201,7 +205,7 @@ function LV_RoomInspectorDashboard:refreshData(force)
         return breakdown
     end
 
-    -- 2. Verificação instantânea de Imóvel Neutro / Não Reivindicado
+    -- 2. Verificacao instantanea de Imovel Neutro / Nao Reivindicado
     if own and not own.isClaimed then
         local locKey = (LV_DirtSystem and LV_DirtSystem.getCurrentLocationKey and LV_DirtSystem.getCurrentLocationKey(player, sq)) or "unclaimed"
         local breakdown = {
@@ -235,7 +239,7 @@ function LV_RoomInspectorDashboard:refreshData(force)
     return breakdown
 end
 
---- Desenha uma barra fina estilizada no padrão CHStatusHUD
+--- Desenha uma barra fina estilizada no padrao CHStatusHUD
 function LV_RoomInspectorDashboard:drawGauge(x, y, w, h, percent, color, ticks)
     percent = math.max(0, math.min(1.0, percent or 0))
     self:drawRect(x, y, w, h, 0.40, 0.10, 0.12, 0.15)
@@ -261,13 +265,15 @@ function LV_RoomInspectorDashboard:render()
     local data = self:refreshData(false)
     local tm = getTextManager()
     local hgt = self.fontH
+    local player = getPlayer()
+    local sq = player and player:getCurrentSquare()
 
-    -- 1. Fundo Soft Glass Escuro e Borda Translúcida
+    -- 1. Fundo Soft Glass Escuro e Borda Translucida
     self:drawRect(0, 0, self.width, self.height, 0.92, 0.03, 0.035, 0.045)
     self:drawRect(0, 0, 2, self.height, 0.95, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3])
     self:drawRectBorder(0, 0, self.width, self.height, 0.25, 1, 1, 1)
 
-    -- Cabeçalho & Ações Rápidas
+    -- Cabecalho & Acoes Rapidas
     self:drawText("INSPECAO DO AMBIENTE", PAD + 4, PAD, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 1.0, FONT_M)
     self:drawTextRight("[INFRA (J)]", self.width - PAD - 24, PAD + 2, 0.45, 0.85, 0.90, 0.90, FONT_S)
     self:drawTextRight("[X]", self.width - PAD, PAD + 2, 0.70, 0.70, 0.70, 1.0, FONT_S)
@@ -278,13 +284,13 @@ function LV_RoomInspectorDashboard:render()
     end
     self:drawText(roomTitle, PAD + 4, PAD + 22, 0.85, 0.90, 0.95, 1.0, FONT_S)
 
-    -- Linha Divisória 1
+    -- Linha Divisoria 1
     local curY = PAD + 42
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.20, 1, 1, 1)
     curY = curY + 8
 
     -- =========================================================================
-    -- SEÇÃO 1: COMPARATIVO DE TIERS (CÔMODO VS SAFEHOUSE)
+    -- SECAO 1: COMPARATIVO DE TIERS (COMODO VS SAFEHOUSE)
     -- =========================================================================
     local roomScore = data.roomScore or 0
     local roomTier = data.roomTier or 0
@@ -301,12 +307,12 @@ function LV_RoomInspectorDashboard:render()
     self:drawGauge(170, curY + 3, 230, 6, shScore / 100.0, ACCENT_CYAN, {0.2, 0.4, 0.6, 0.8})
     curY = curY + hgt + 8
 
-    -- Linha Divisória 2
+    -- Linha Divisoria 2
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
     curY = curY + 6
 
     -- =========================================================================
-    -- SEÇÃO 2: SUB-PONTUAÇÃO POR CATEGORIA DE AMBIENTE
+    -- SECAO 2: SUB-PONTUACAO POR CATEGORIA DE AMBIENTE
     -- =========================================================================
     local cStats = data.categoryStats or {}
     local furnPts = math.floor((data.furniturePoints or 0) + (cStats.HEAVY_FURNITURE or 0))
@@ -322,12 +328,12 @@ function LV_RoomInspectorDashboard:render()
     self:drawText(string.format("- Objetos 3D: %d pts", items3DPts), 215, curY, 0.80, 0.85, 0.90, 1.0, FONT_S)
     curY = curY + hgt + 6
 
-    -- Linha Divisória 3
+    -- Linha Divisoria 3
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
     curY = curY + 6
 
     -- =========================================================================
-    -- SEÇÃO 3: INVENTÁRIO DO CÔMODO & PONTUAÇÃO INDIVIDUAL
+    -- SECAO 3: INVENTARIO DO COMODO & PONTUACAO INDIVIDUAL
     -- =========================================================================
     self:drawText("ITENS PONTUADOS NESTE COMODO:", PAD + 4, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_S)
     curY = curY + hgt + 2
@@ -362,13 +368,13 @@ function LV_RoomInspectorDashboard:render()
         end
     end
 
-    -- Linha Divisória 4
+    -- Linha Divisoria 4
     curY = curY + 4
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
     curY = curY + 6
 
     -- =========================================================================
-    -- SEÇÃO 3.5: TAREFAS DOMÉSTICAS DO DIA (CHECKLIST ESTILO SIMS)
+    -- SECAO 3.5: TAREFAS DOMESTICAS DO DIA (CHECKLIST ESTILO SIMS)
     -- =========================================================================
     self:drawText("TAREFAS DO DIA (CHECKLIST):", PAD + 4, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 1.0, FONT_S)
     curY = curY + hgt + 2
@@ -402,19 +408,38 @@ function LV_RoomInspectorDashboard:render()
     end
     curY = curY + hgt
 
-    -- 4. Necessidade Fisiológica
+    -- 4. Necessidade Fisiologica
     if bNeed >= 50 then
         self:drawText(string.format(" [!] Usar vaso sanitario (Aperto: %d%%)", math.floor(bNeed)), PAD + 8, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_S)
         curY = curY + hgt
     end
 
-    -- Linha Divisória 5
+    -- 5. Cozimento Ativo sobre o Fogao (Stovetop Cooking)
+    if LV_StovetopCooking and LV_StovetopCooking.getCookingInfoForRoom and sq and sq.getRoom then
+        local cookingFoods = LV_StovetopCooking.getCookingInfoForRoom(sq:getRoom())
+        if cookingFoods and #cookingFoods > 0 then
+            for _, cf in ipairs(cookingFoods) do
+                if cf.isBurnt then
+                    self:drawText(string.format(" [X] Queimando: %s no fogao!", cf.name), PAD + 8, curY, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3], 1.0, FONT_S)
+                elseif cf.isCooked then
+                    self:drawText(string.format(" [OK] Servir refeicao: %s pronta!", cf.name), PAD + 8, curY, ACCENT_GREEN[1], ACCENT_GREEN[2], ACCENT_GREEN[3], 1.0, FONT_S)
+                else
+                    local pct = math.floor(cf.progress * 100)
+                    self:drawText(string.format(" [~] Cozinhando no fogao: %s (%d%%)", cf.name, pct), PAD + 8, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.95, FONT_S)
+                end
+                curY = curY + hgt
+            end
+        end
+    end
+
+
+    -- Linha Divisoria 5
     curY = curY + 4
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
     curY = curY + 6
 
     -- =========================================================================
-    -- SEÇÃO 4: DIAGNÓSTICO DO LAR (ELI5 - O QUE FALTA PARA SUBIR DE TIER)
+    -- SECAO 4: DIAGNOSTICO DO LAR (ELI5 - O QUE FALTA PARA SUBIR DE TIER)
     -- =========================================================================
     local nextTier = math.min(4, roomTier + 1)
     local nextThreshold = 20
@@ -444,7 +469,7 @@ function LV_RoomInspectorDashboard:render()
     local maxW = self.width - (PAD * 2) - 8
     curY = self:drawWrappedText(advice, PAD + 4, curY, maxW, 0.90, 0.85, 0.50, 1.0, FONT_S)
 
-    -- Auto-ajuste dinâmico de altura para eliminar espaços pretos vazios no rodapé
+    -- Auto-ajuste dinamico de altura para eliminar espacos pretos vazios no rodape
     local targetH = math.max(260, curY + PAD)
     if math.abs(self.height - targetH) > 2 then
         self:setHeight(targetH)
@@ -452,7 +477,7 @@ function LV_RoomInspectorDashboard:render()
 end
 
 -- =============================================================================
--- Ganchos de Inicialização e Teclado (Tecla 'K')
+-- Ganchos de Inicializacao e Teclado (Tecla 'K')
 -- =============================================================================
 
 Events.OnGameStart.Add(function()

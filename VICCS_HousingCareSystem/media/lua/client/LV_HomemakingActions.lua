@@ -2,16 +2,16 @@
 -- Housing Care System (Lar Vivo) - Homemaking & Active Habitation Engine (LV_HomemakingActions.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Sistema 100% não-invasivo baseado no Padrão Observador (Observer Pattern).
---   Monitora as ações do jogador em tempo real através de Events.OnPlayerUpdate e
---   Events.OnCraftComplete sem substituir nenhuma função do jogo ou de outros mods.
---   Zero risco de quebra na máquina virtual Kahlua e 100% de compatibilidade multiplayer.
+-- Descricao:
+--   Sistema 100% nao-invasivo baseado no Padrao Observador (Observer Pattern).
+--   Monitora as acoes do jogador em tempo real atraves de Events.OnPlayerUpdate e
+--   Events.OnCraftComplete sem substituir nenhuma funcao do jogo ou de outros mods.
+--   Zero risco de quebra na maquina virtual Kahlua e 100% de compatibilidade multiplayer.
 -- =============================================================================
 
 LV_HomemakingActions = LV_HomemakingActions or {}
 
---- Categorias de Tarefas Domésticas e seus pesos padrão
+--- Categorias de Tarefas Domesticas e seus pesos padrao
 local CATEGORIES = {
     Cleaning = {
         name = "Cleaning",
@@ -57,7 +57,7 @@ local CATEGORIES = {
     }
 }
 
---- Mapeamento de palavras-chave para identificar categorias de ações
+--- Mapeamento de palavras-chave para identificar categorias de acoes
 local KEYWORD_CATEGORY_MAP = {
     -- Limpeza
     clean = "Cleaning",
@@ -67,7 +67,7 @@ local KEYWORD_CATEGORY_MAP = {
     wash = "Cleaning",
     mop = "Cleaning",
 
-    -- Culinária
+    -- Culinaria
     cook = "Cooking",
     bake = "Cooking",
     roast = "Cooking",
@@ -89,7 +89,7 @@ local KEYWORD_CATEGORY_MAP = {
     crop = "Farming",
     shovel = "Farming",
 
-    -- Construção
+    -- Construcao
     build = "Building",
     paint = "Building",
     plaster = "Building",
@@ -99,14 +99,14 @@ local KEYWORD_CATEGORY_MAP = {
     door = "Building",
     buildwindow = "Building",
 
-    -- Decoração & Organização
+    -- Decoracao & Organizacao
     moveable = "Decorating",
     furniture = "Decorating",
     place3d = "Decorating",
     rotate = "Decorating",
     curtain = "Decorating",
 
-    -- Hobbies, Lazer & Música (The Sims no Refúgio)
+    -- Hobbies, Lazer & Musica (The Sims no Refugio)
     guitar = "Hobbies",
     instrument = "Hobbies",
     music = "Hobbies",
@@ -123,11 +123,11 @@ local KEYWORD_CATEGORY_MAP = {
 --- Rastreamento de tempo real para cooldowns anti-spam
 local lastActionTimestamps = {}
 
---- Rastreamento de estado de ação ativa do jogador local
+--- Rastreamento de estado de acao ativa do jogador local
 local lastObservedActionName = nil
 local lastObservedProgress = 0.0
 
---- Obtém o tempo do sistema em segundos de forma segura.
+--- Obtem o tempo do sistema em segundos de forma segura.
 local function getSystemSeconds()
     if getTimeInMillis then
         return getTimeInMillis() / 1000.0
@@ -135,13 +135,13 @@ local function getSystemSeconds()
     return getGameTime():getWorldAgeHours() * 3600.0
 end
 
---- Verifica se o personagem está em uma área de base ou abrigo válida.
+--- Verifica se o personagem esta em uma area de base ou abrigo valida.
 local function isCharacterInValidHomeArea(character)
     if not character then return false end
     local sq = character:getCurrentSquare()
     if not sq then return false end
 
-    -- 1. Se o ComfortScanner estiver disponível, usa a governança oficial do Lar
+    -- 1. Se o ComfortScanner estiver disponivel, usa a governanca oficial do Lar
     if LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus then
         local ok, own = pcall(LV_ComfortScanner.getBuildingOwnershipStatus, sq, character)
         if ok and own then
@@ -154,7 +154,7 @@ local function isCharacterInValidHomeArea(character)
         end
     end
 
-    -- 2. Fallback de abrigo seguro: verifica interior sem chamar métodos inexistentes da JVM
+    -- 2. Fallback de abrigo seguro: verifica interior sem chamar metodos inexistentes da JVM
     local isInside = false
     if sq.isOutside then
         local okOut, out = pcall(sq.isOutside, sq)
@@ -168,12 +168,12 @@ local function isCharacterInValidHomeArea(character)
     return isInside
 end
 
---- Identifica a categoria a partir do nome ou tipo de ação
+--- Identifica a categoria a partir do nome ou tipo de acao
 local function detectCategoryFromActionName(actionStr)
     if not actionStr or actionStr == "" then return nil end
     local lower = tostring(actionStr):lower()
 
-    -- Ignora ações de navegação por janelas/portas ou arrombamento
+    -- Ignora acoes de navegacao por janelas/portas ou arrombamento
     if lower:find("climb") or lower:find("openclose") or lower:find("smash") or lower:find("lock") then
         return nil
     end
@@ -186,7 +186,7 @@ local function detectCategoryFromActionName(actionStr)
     return nil
 end
 
---- Concede o bônus para uma categoria específica após validações completas
+--- Concede o bonus para uma categoria especifica apos validacoes completas
 function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, bonusPercent)
     if not character or not LV_Config or not LV_Config.isHomemakingEnabled() then
         return
@@ -202,7 +202,7 @@ function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, 
         return
     end
 
-    -- Validação de abrigo/base
+    -- Validacao de abrigo/base
     if not isCharacterInValidHomeArea(character) then
         return
     end
@@ -217,16 +217,16 @@ function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, 
     end
     lastActionTimestamps[categoryName] = now
 
-    -- Concede o bônus no BuffManager
+    -- Concede o bonus no BuffManager
     local percent = bonusPercent or catDef.defaultPercent
     local addedHours = LV_BuffManager.addHomemakingBonus(character, categoryName, percent)
 
-    -- Se for culinária, adiciona sujeira orgânica na cozinha/cômodo
+    -- Se for culinaria, adiciona sujeira organica na cozinha/comodo
     if categoryName == "Cooking" and LV_DirtSystem and LV_DirtSystem.onCooking then
         pcall(function() LV_DirtSystem.onCooking(character) end)
     end
 
-    -- Se for Hobbies/Música/Leitura, reduz tédio e tristeza imediatamente
+    -- Se for Hobbies/Musica/Leitura, reduz tedio e tristeza imediatamente
     if categoryName == "Hobbies" then
         pcall(function()
             local bd = character:getBodyDamage()
@@ -254,7 +254,7 @@ function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, 
 end
 
 -- =============================================================================
--- OBSERVADOR NATIVO DE AÇÕES VIA OnPlayerUpdate (100% SEGURO VIA ISTimedActionQueue)
+-- OBSERVADOR NATIVO DE ACOES VIA OnPlayerUpdate (100% SEGURO VIA ISTimedActionQueue)
 -- =============================================================================
 local function onPlayerUpdateObserver(player)
     if not player or not LV_Config or not LV_Config.isHomemakingEnabled() then
@@ -284,7 +284,7 @@ local function onPlayerUpdateObserver(player)
             lastObservedActionName = actName
             lastObservedProgress = progress
         else
-            -- Ação acabou de terminar! Se atingiu pelo menos 80% do progresso antes de sair da fila:
+            -- Acao acabou de terminar! Se atingiu pelo menos 80% do progresso antes de sair da fila:
             if lastObservedActionName and lastObservedProgress >= 0.80 then
                 local cat = detectCategoryFromActionName(lastObservedActionName)
                 if cat then
@@ -301,7 +301,7 @@ local function onPlayerUpdateObserver(player)
 end
 
 -- =============================================================================
--- OBSERVADOR DE RECEITAS CULINÁRIAS / CARPINTARIA VIA OnCraftComplete
+-- OBSERVADOR DE RECEITAS CULINARIAS / CARPINTARIA VIA OnCraftComplete
 -- =============================================================================
 local function onCraftCompleteObserver(recipe, player)
     if not player or not recipe or not LV_Config or not LV_Config.isHomemakingEnabled() then
@@ -323,4 +323,4 @@ if Events.OnCraftComplete then
     Events.OnCraftComplete.Add(onCraftCompleteObserver)
 end
 
-print("[LarVivo] LV_HomemakingActions: Motor Observador de Tarefas Domésticas carregado com sucesso!")
+print("[LarVivo] LV_HomemakingActions: Motor Observador de Tarefas Domesticas carregado com sucesso!")

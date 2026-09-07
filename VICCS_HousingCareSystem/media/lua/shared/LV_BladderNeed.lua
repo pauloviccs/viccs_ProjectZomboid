@@ -2,11 +2,11 @@
 -- Housing Care System (Lar Vivo) - Bladder & Physiological Need (LV_BladderNeed.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Simulação de necessidade fisiológica (banheiro/bexiga) integrada ao
---   consumo de alimentos e rotina diária.
---   Aplica moodlets de desconforto caso ignorada e concede bônus ao usar
---   um vaso sanitário limpo.
+-- Descricao:
+--   Simulacao de necessidade fisiologica (banheiro/bexiga) integrada ao
+--   consumo de alimentos e rotina diaria.
+--   Aplica moodlets de desconforto caso ignorada e concede bonus ao usar
+--   um vaso sanitario limpo.
 -- =============================================================================
 
 require "LV_Config"
@@ -17,7 +17,7 @@ LV_BladderNeed = LV_BladderNeed or {}
 local localBladderSession = {}
 local lastDamageTick = 0
 
---- Retorna o nível de necessidade fisiológica do jogador (0 a 100).
+--- Retorna o nivel de necessidade fisiologica do jogador (0 a 100).
 function LV_BladderNeed.getNeed(player)
     if not player then return 0 end
     local pNum = player.getPlayerNum and player:getPlayerNum() or 0
@@ -30,8 +30,8 @@ function LV_BladderNeed.getNeed(player)
     return val
 end
 
---- Define o nível de necessidade fisiológica do jogador.
---- Trava de mão única: o valor NUNCA decai sozinho. Apenas relieve() pode diminuir.
+--- Define o nivel de necessidade fisiologica do jogador.
+--- Trava de mao unica: o valor NUNCA decai sozinho. Apenas relieve() pode diminuir.
 function LV_BladderNeed.setNeed(player, value, forceReset)
     if not player then return end
     local pNum = player.getPlayerNum and player:getPlayerNum() or 0
@@ -58,16 +58,16 @@ function LV_BladderNeed.getTier(player)
     local need = LV_BladderNeed.getNeed(player)
     local notifyThreshold = LV_Config.get("BladderNotifyThreshold") or 60
     if need >= 95 then
-        return 3 -- Urgente / Crítico
+        return 3 -- Urgente / Critico
     elseif need >= 80 then
         return 2 -- Moderado / Desconforto
     elseif need >= notifyThreshold then
-        return 1 -- Leve / Começo de vontade
+        return 1 -- Leve / Comeco de vontade
     end
     return 0
 end
 
---- Processa impactos físicos no corpo e injeção em stats vanilla
+--- Processa impactos fisicos no corpo e injecao em stats vanilla
 function LV_BladderNeed.updateHealthImpact(player)
     if not player or player:isDead() or not LV_Config.isBladderNeedEnabled() then return end
 
@@ -75,7 +75,7 @@ function LV_BladderNeed.updateHealthImpact(player)
     local stats = player.getStats and player:getStats()
     local bd = player.getBodyDamage and player:getBodyDamage()
 
-    -- 1. Injeção nos status vanilla para acender moodlets oficiais na HUD nativa
+    -- 1. Injecao nos status vanilla para acender moodlets oficiais na HUD nativa
     if stats and CharacterStat then
         if need >= 60 then
             pcall(function()
@@ -87,13 +87,13 @@ function LV_BladderNeed.updateHealthImpact(player)
         end
     end
 
-    -- 2. Punição severa ao atingir 100% de aperto (Dano leve, cólica, febre e infecção)
+    -- 2. Punicao severa ao atingir 100% de aperto (Dano leve, colica, febre e infeccao)
     if need >= 100.0 then
         local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
         if (now - lastDamageTick) >= 1.0 then
             lastDamageTick = now
 
-            -- Aplica dor abdominal contínua
+            -- Aplica dor abdominal continua
             if stats then
                 pcall(function()
                     if stats.setPain and stats.getPain then
@@ -118,7 +118,7 @@ function LV_BladderNeed.updateHealthImpact(player)
                 end)
             end
 
-            -- Dano físico leve contínuo (Retenção extrema / cólica renal)
+            -- Dano fisico leve continuo (Retencao extrema / colica renal)
             if bd and bd.ReduceGeneralHealth then
                 pcall(function()
                     bd:ReduceGeneralHealth(0.04)
@@ -137,7 +137,7 @@ function LV_BladderNeed.updateHealthImpact(player)
     end
 end
 
---- Atualização horária passiva da necessidade.
+--- Atualizacao horaria passiva da necessidade.
 function LV_BladderNeed.onEveryHours(player)
     if not LV_Config.isBladderNeedEnabled() or not player then return end
 
@@ -152,7 +152,7 @@ function LV_BladderNeed.onEveryHours(player)
     local newNeed = math.min(100.0, currentNeed + (delta * gainPerHour))
     LV_BladderNeed.setNeed(player, newNeed)
 
-    -- Efeito de estresse se estiver na urgência máxima (95+)
+    -- Efeito de estresse se estiver na urgencia maxima (95+)
     if newNeed >= 95 then
         local stats = player.getStats and player:getStats()
         if stats and stats.setStress and stats.getStress then
@@ -187,7 +187,7 @@ function LV_BladderNeed.onEatFood(player, food)
 
     print(string.format("[LivingHouse] Alimento consumido: +%.1f de necessidade fisiologica. Total: %.1f%%", added, newNeed))
 
-    -- Notificação / Halo text se cruzar o limiar de alerta
+    -- Notificacao / Halo text se cruzar o limiar de alerta
     local notifyThreshold = LV_Config.get("BladderNotifyThreshold") or 60
     if currentNeed < notifyThreshold and newNeed >= notifyThreshold then
         pcall(function()
@@ -198,7 +198,7 @@ function LV_BladderNeed.onEatFood(player, food)
     end
 end
 
---- Alivia a necessidade fisiológica (ao usar vaso sanitário ou na natureza).
+--- Alivia a necessidade fisiologica (ao usar vaso sanitario ou na natureza).
 --- @param player IsoPlayer
 --- @param isCleanToilet boolean
 --- @param hasToiletPaper boolean|nil
@@ -218,7 +218,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
         stats:setPain(0)
     end
 
-    -- CASO 1: Alívio na Natureza (atrás de árvores/arbustos)
+    -- CASO 1: Alivio na Natureza (atras de arvores/arbustos)
     if isNature then
         -- Suja virilha, pernas e roupas
         pcall(function()
@@ -252,7 +252,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
         return
     end
 
-    -- CASO 2: Vaso Sanitário SEM Papel Higiênico (Edge case grave)
+    -- CASO 2: Vaso Sanitario SEM Papel Higienico (Edge case grave)
     if not hasToiletPaper then
         -- Aumenta estresse e aplica desconforto vanilla
         if stats then
@@ -265,7 +265,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
             end
         end
 
-        -- Suja diretamente as roupas íntimas e calças do personagem
+        -- Suja diretamente as roupas intimas e calcas do personagem
         pcall(function()
             if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
                 player:addDirt(BloodBodyPartType.Groin, 45)
@@ -295,7 +295,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
         return
     end
 
-    -- CASO 3: Vaso Sanitário COM Papel Higiênico (Happy Path)
+    -- CASO 3: Vaso Sanitario COM Papel Higienico (Happy Path)
     if stats and stats.setStress and stats.getStress then
         stats:setStress(math.max(0, stats:getStress() - 0.20))
     end
@@ -328,7 +328,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
     end
 end
 
---- Verifica se o buff 'Aliviado' está ativo.
+--- Verifica se o buff 'Aliviado' esta ativo.
 function LV_BladderNeed.isRelievedActive(player)
     if not player or not player.getModData then return false end
     local md = player:getModData()

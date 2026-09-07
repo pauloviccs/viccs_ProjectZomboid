@@ -2,14 +2,14 @@
 -- Housing Care System (Living House) - Routine & Habits Engine (LV_RoutineSystem.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Módulo responsável pela simulação de hábitos humanos e rotinas táticas:
---   1. "Manhã Aconchegante" (Micro-rotina: Sono reparador -> Lavar rosto -> Café/Chá)
---      Concede resistência a cansaço e recuperação de estamina até o início da tarde.
+-- Descricao:
+--   Modulo responsavel pela simulacao de habitos humanos e rotinas taticas:
+--   1. "Manha Aconchegante" (Micro-rotina: Sono reparador -> Lavar rosto -> Cafe/Cha)
+--      Concede resistencia a cansaco e recuperacao de estamina ate o inicio da tarde.
 --   2. "Rotina Estabelecida" (Streaks de longo prazo):
 --      Manter a base em Tier 3+ por 3+ dias consecutivos concede buff permanente
---      de moral que persiste mesmo durante expedições de saque externas.
---   3. "Casa Impecável" (Focus Boost):
+--      de moral que persiste mesmo durante expedicoes de saque externas.
+--   3. "Casa Impecavel" (Focus Boost):
 --      Ambiente com Squalor < 5% e Tier 3+ acelera aprendizado e leitura de livros.
 -- =============================================================================
 
@@ -46,7 +46,7 @@ function LV_RoutineSystem.onWakeUp(player, hoursSlept, hadBed, hadPillow, isClea
     local currentHour = getGameTime():getWorldAgeHours()
     local data = LV_RoutineSystem.getRoutineData(player)
 
-    -- Qualifica para o ritual matinal se dormiu ao menos 5.5h em cama e não estava imundo
+    -- Qualifica para o ritual matinal se dormiu ao menos 5.5h em cama e nao estava imundo
     if hoursSlept >= 5.5 and hadBed and isClean then
         data.awakeHour = currentHour
         data.washedFace = false
@@ -75,7 +75,7 @@ function LV_RoutineSystem.onWash(player)
     local currentHour = getGameTime():getWorldAgeHours()
     local hoursSinceWake = currentHour - data.awakeHour
 
-    -- Janela de até 3 horas in-game após acordar
+    -- Janela de ate 3 horas in-game apos acordar
     if hoursSinceWake >= 0 and hoursSinceWake <= 3.5 and not data.washedFace then
         data.washedFace = true
         print("[LivingHouse] Rotina Matinal: Higiene facial concluida com sucesso!")
@@ -88,7 +88,7 @@ function LV_RoutineSystem.onWash(player)
     end
 end
 
---- Verifica se um alimento/bebida é café, chá ou bebida quente
+--- Verifica se um alimento/bebida e cafe, cha ou bebida quente
 local function isCaffeineOrHotDrink(food)
     if not food then return false end
 
@@ -118,13 +118,13 @@ local function isCaffeineOrHotDrink(food)
     return false
 end
 
---- Ativa o buff "Manhã Aconchegante"
+--- Ativa o buff "Manha Aconchegante"
 local function activateMorningCozy(player, data)
     local currentHour = getGameTime():getWorldAgeHours()
     local gt = getGameTime()
     local timeOfDay = gt:getTimeOfDay() -- hora do dia de 0 a 24
 
-    -- Duração até as 14:00 ou mínimo de 4 horas in-game
+    -- Duracao ate as 14:00 ou minimo de 4 horas in-game
     local hoursUntilTwoPM = 14.0 - timeOfDay
     if hoursUntilTwoPM < 3.0 then hoursUntilTwoPM = 5.0 end
     local duration = math.max(4.0, math.min(8.0, hoursUntilTwoPM))
@@ -169,13 +169,13 @@ function LV_RoutineSystem.onEatFood(player, food)
     local currentHour = getGameTime():getWorldAgeHours()
     local hoursSinceWake = currentHour - data.awakeHour
 
-    -- Janela de até 4 horas in-game após acordar
+    -- Janela de ate 4 horas in-game apos acordar
     if hoursSinceWake >= 0 and hoursSinceWake <= 4.0 then
         if isCaffeineOrHotDrink(food) then
             if data.washedFace then
                 activateMorningCozy(player, data)
             else
-                -- Bebeu café sem lavar o rosto: ritual incompleto, concede benefício menor
+                -- Bebeu cafe sem lavar o rosto: ritual incompleto, concede beneficio menor
                 pcall(function()
                     if player.setHaloNote then
                         player:setHaloNote("Living House: Cafe Quente! (Ritual incompleto: faltou lavar o rosto)", 220, 200, 100, 250)
@@ -186,7 +186,7 @@ function LV_RoutineSystem.onEatFood(player, food)
     end
 end
 
---- Checagem diária de Streaks ("Rotina Estabelecida")
+--- Checagem diaria de Streaks ("Rotina Estabelecida")
 function LV_RoutineSystem.checkDailyStreak(player)
     if not player or not LV_Config or not LV_Config.isEnabled() then return end
     if not LV_Config.get("EnableRoutineStreaks") then return end
@@ -202,7 +202,7 @@ function LV_RoutineSystem.checkDailyStreak(player)
     local comfortTier = buffData and buffData.comfortTier or 0
     local squalorTier = buffData and buffData.squalorTier or 0
 
-    -- Safehouse mantida com excelência (Tier 3+ e sem squalor crítico)
+    -- Safehouse mantida com excelencia (Tier 3+ e sem squalor critico)
     if comfortTier >= 3 and squalorTier <= 1 then
         data.streakDays = (data.streakDays or 0) + 1
         data.daysDegraded = 0
@@ -254,7 +254,7 @@ function LV_RoutineSystem.checkDailyStreak(player)
     end
 end
 
---- Atualização contínua dos buffs de rotina no jogador (Events.OnPlayerUpdate)
+--- Atualizacao continua dos buffs de rotina no jogador (Events.OnPlayerUpdate)
 function LV_RoutineSystem.updateRoutineEffects(player)
     if not player or not LV_Config or not LV_Config.isEnabled() then return end
 
@@ -263,18 +263,18 @@ function LV_RoutineSystem.updateRoutineEffects(player)
     local stats = player.getStats and player:getStats()
     local bd = player.getBodyDamage and player:getBodyDamage()
 
-    -- 1. Efeitos do buff "Manhã Aconchegante" (até expirar às 14:00 / fim da duração)
+    -- 1. Efeitos do buff "Manha Aconchegante" (ate expirar as 14:00 / fim da duracao)
     if data.morningCozyExpiryHour and currentHour < data.morningCozyExpiryHour then
         if stats then
             pcall(function()
-                -- Atraso suave no acúmulo de cansaço (Fatigue)
+                -- Atraso suave no acumulo de cansaco (Fatigue)
                 if stats.getFatigue and stats.setFatigue then
                     local f = stats:getFatigue()
                     if f > 0.05 then
                         stats:setFatigue(math.max(0.0, f - 0.00008))
                     end
                 end
-                -- Regeneração contínua de Estamina (Endurance)
+                -- Regeneracao continua de Estamina (Endurance)
                 if stats.getEndurance and stats.setEndurance then
                     local e = stats:getEndurance()
                     if e < 0.95 then
@@ -286,21 +286,21 @@ function LV_RoutineSystem.updateRoutineEffects(player)
     end
 
     -- 2. Efeitos da "Rotina Estabelecida" (Streak de 3+ dias ativo)
-    -- PERSISTENTE: Não some ao sair da base em incursões de saque!
+    -- PERSISTENTE: Nao some ao sair da base em incursoes de saque!
     if data.streakActive and data.streakDays and data.streakDays >= 3 then
         if stats and bd then
             pcall(function()
-                -- Redução constante de pânico
+                -- Reducao constante de panico
                 if stats.getPanic and stats.setPanic then
                     local p = stats:getPanic()
                     if p > 0 then stats:setPanic(math.max(0.0, p - 0.10)) end
                 end
-                -- Redução constante de estresse
+                -- Reducao constante de estresse
                 if stats.getStress and stats.setStress then
                     local s = stats:getStress()
                     if s > 0 then stats:setStress(math.max(0.0, s - 0.0001)) end
                 end
-                -- Redução de infelicidade / depressão
+                -- Reducao de infelicidade / depressao
                 if bd.getUnhappinessLevel and bd.setUnhappinessLevel then
                     local u = bd:getUnhappinessLevel()
                     if u > 0 then bd:setUnhappinessLevel(math.max(0.0, u - 0.02)) end
@@ -309,8 +309,8 @@ function LV_RoutineSystem.updateRoutineEffects(player)
         end
     end
 
-    -- 3. Efeito do buff "Casa Impecável" (Spotless Home)
-    -- Concede bônus de foco e aprendizado acelerado ao ler livros dentro de base limpa
+    -- 3. Efeito do buff "Casa Impecavel" (Spotless Home)
+    -- Concede bonus de foco e aprendizado acelerado ao ler livros dentro de base limpa
     local buffData = LV_BuffManager and LV_BuffManager.getPlayerData and LV_BuffManager.getPlayerData(player)
     if buffData and buffData.isInShelter and buffData.comfortTier >= 3 and (buffData.squalorScore or 0) < 5.0 then
         data.spotlessActive = true
@@ -407,7 +407,7 @@ function LV_RoutineSystem.updateRoutineEffects(player)
             data.socialActive = false
         end
 
-        -- B. "Noite ao Redor do Fogo" (Lareira de Inverno - Acessível Solo e em Grupo)
+        -- B. "Noite ao Redor do Fogo" (Lareira de Inverno - Acessivel Solo e em Grupo)
         local pMd = player:getModData()
         local hasWinterFireplace = pMd and pMd.LV_HasActiveHeatInWinter
         if hasWinterFireplace then
@@ -423,7 +423,7 @@ function LV_RoutineSystem.updateRoutineEffects(player)
                 end)
             end
 
-            -- Bônus intensivo contra depressão e frio do inverno (com boost extra se houver companhia)
+            -- Bonus intensivo contra depressao e frio do inverno (com boost extra se houver companhia)
             local extraCompanyBoost = ((data.companionCount or 0) >= 1) and 0.03 or 0.0
             if bd and bd.getUnhappinessLevel and bd.setUnhappinessLevel then
                 pcall(function() bd:setUnhappinessLevel(math.max(0.0, bd:getUnhappinessLevel() - (0.05 + extraCompanyBoost))) end)
@@ -440,7 +440,7 @@ function LV_RoutineSystem.updateRoutineEffects(player)
     end
 end
 
---- Registra qualquer atividade de higiene concluída (escovação de dentes, banho, etc.)
+--- Registra qualquer atividade de higiene concluida (escovacao de dentes, banho, etc.)
 function LV_RoutineSystem.recordHygieneActivity(player, activityName)
     if not player then return end
     print("[LivingHouse] Atividade de higiene registrada: " .. tostring(activityName))
@@ -475,7 +475,7 @@ Events.EveryDays.Add(function()
     end
 end)
 
--- Hook seguro para alimentação/bebidas
+-- Hook seguro para alimentacao/bebidas
 if Events.OnEatFood and Events.OnEatFood.Add then
     Events.OnEatFood.Add(function(player, food, percent)
         LV_RoutineSystem.onEatFood(player, food)

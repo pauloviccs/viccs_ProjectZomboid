@@ -2,12 +2,12 @@
 -- Housing Care System (Living House) - Infrastructure Dashboard (LV_HouseDashboard.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Painel de gerenciamento de infraestrutura da base no padrão Frameless Glass:
---   - Telemetria de Geradores elétricos (Combustível %, Condição %, Status Ativo)
---   - Gestão Hídrica de Barris de Chuva (Volume total em Litros e Capacidade)
---   - Governança da Base (Conforto, Insalubridade, Streaks e Bônus de Companhia)
---   - Tecla de atalho dedicada 'J' e botão rápido '[INFRA]' na HUD flutuante
+-- Descricao:
+--   Painel de gerenciamento de infraestrutura da base no padrao Frameless Glass:
+--   - Telemetria de Geradores eletricos (Combustivel %, Condicao %, Status Ativo)
+--   - Gestao Hidrica de Barris de Chuva (Volume total em Litros e Capacidade)
+--   - Governanca da Base (Conforto, Insalubridade, Streaks e Bonus de Companhia)
+--   - Tecla de atalho dedicada 'J' e botao rapido '[INFRA]' na HUD flutuante
 --   - Varredura sob demanda com cache inteligente para zero impacto no FPS
 -- =============================================================================
 
@@ -17,6 +17,7 @@ require "LV_Config"
 require "LV_ComfortScanner"
 require "LV_BuffManager"
 require "LV_RoutineSystem"
+require "LV_ApplianceDashboard"
 
 LV_HouseDashboard = ISPanel:derive("LV_HouseDashboard")
 
@@ -30,7 +31,7 @@ local ACCENT_AMBER = {0.92, 0.71, 0.29}
 local ACCENT_GREEN = {0.30, 0.85, 0.50}
 local ACCENT_RED = {0.95, 0.25, 0.25}
 
---- Cria uma nova instância da janela de Dashboard de Infraestrutura
+--- Cria uma nova instancia da janela de Dashboard de Infraestrutura
 function LV_HouseDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
@@ -43,7 +44,7 @@ function LV_HouseDashboard:new(x, y, width, height)
 
     o.fontH = hgt
     o.moveWithMouse = true
-    o.userHidden = true -- Inicia fechado até o jogador pressionar 'J' ou clicar na HUD
+    o.userHidden = true -- Inicia fechado ate o jogador pressionar 'J' ou clicar na HUD
     o.downX, o.downY = -1, -1
     o.isDragging = false
 
@@ -54,7 +55,7 @@ function LV_HouseDashboard:new(x, y, width, height)
     return o
 end
 
---- Retorna a instância única do Dashboard (Singleton)
+--- Retorna a instancia unica do Dashboard (Singleton)
 function LV_HouseDashboard.getInstance()
     if not instance then
         local screenW = getCore():getScreenWidth()
@@ -94,14 +95,23 @@ end
 
 function LV_HouseDashboard:onMouseUp(x, y)
     if self.isDragging and math.abs(x - self.downX) <= 4 and math.abs(y - self.downY) <= 4 then
-        -- Clique no botão de fechar [X] no canto superior direito
+        -- Clique no botao de fechar [X] no canto superior direito
         if x >= (self.width - 28) and y <= 24 then
             self:setVisible(false)
             return true
         end
 
-        -- Clique no botão [CÔMODO (K)] abre o painel de inspeção
-        if x >= (self.width - 125) and x <= (self.width - 32) and y <= 24 then
+        -- Clique no botao [APPL] abre o painel de instalacoes/aparelhos
+        if x >= (self.width - 180) and x <= (self.width - 122) and y <= 24 then
+            if LV_ApplianceDashboard and LV_ApplianceDashboard.toggle then
+                self:setVisible(false)
+                LV_ApplianceDashboard.toggle()
+                return true
+            end
+        end
+
+        -- Clique no botao [COMODO (K)] abre o painel de inspecao
+        if x >= (self.width - 120) and x <= (self.width - 32) and y <= 24 then
             if LV_RoomInspectorDashboard and LV_RoomInspectorDashboard.toggle then
                 self:setVisible(false)
                 LV_RoomInspectorDashboard.toggle()
@@ -109,7 +119,7 @@ function LV_HouseDashboard:onMouseUp(x, y)
             end
         end
 
-        -- Clique no botão [RENOMEAR]
+        -- Clique no botao [RENOMEAR]
         if y >= 26 and y <= 46 and x >= (self.width - 105) and x <= (self.width - PAD) then
             if self.cachedData and self.cachedData.isClaimed then
                 self:openRenameModal(self.cachedData.safehouseName)
@@ -139,7 +149,7 @@ function LV_HouseDashboard:openRenameModal(currentName)
     modal:addToUIManager()
 end
 
---- Callback disparado ao clicar no botão OK ou Cancelar do modal de renomear
+--- Callback disparado ao clicar no botao OK ou Cancelar do modal de renomear
 function LV_HouseDashboard:onRenameModalConfirm(button)
     if button and button.internal == "OK" then
         local entry = button.parent and button.parent.entry
@@ -192,12 +202,16 @@ function LV_HouseDashboard:onMouseMove(dx, dy)
     end
 end
 
+function LV_HouseDashboard:onMouseMoveOutside(dx, dy)
+    self:onMouseMove(dx, dy)
+end
+
 function LV_HouseDashboard:onMouseUpOutside(x, y)
     self.isDragging = false
     return true
 end
 
---- Varre o perímetro da base em busca de geradores e coletores de chuva (com cache)
+--- Varre o perimetro da base em busca de geradores e coletores de chuva (com cache)
 function LV_HouseDashboard:refreshData(force)
     local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (os.time())
     if not force and (now - self.lastScanTime) < 5.0 and self.cachedData then
@@ -234,7 +248,7 @@ function LV_HouseDashboard:refreshData(force)
     local pSq = player:getCurrentSquare()
     local cell = getCell()
 
-    -- 1. Dados Básicos da Safehouse / Cômodo
+    -- 1. Dados Basicos da Safehouse / Comodo
     local own = (LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus and LV_ComfortScanner.getBuildingOwnershipStatus(pSq, player)) or nil
     res.ownershipStatus = (own and own.status) or "OUTSIDE"
     res.isClaimed = (own and own.isClaimed == true)
@@ -288,7 +302,7 @@ function LV_HouseDashboard:refreshData(force)
         res.isSpotless = routineData.spotlessActive or false
     end
 
-    -- 2. Limites do Perímetro para Varredura (Raio de 20 tiles ao redor do jogador/Safehouse)
+    -- 2. Limites do Perimetro para Varredura (Raio de 20 tiles ao redor do jogador/Safehouse)
     local minX, maxX, minY, maxY = 0, 0, 0, 0
     if pSq then
         local px, py = pSq:getX(), pSq:getY()
@@ -314,7 +328,7 @@ function LV_HouseDashboard:refreshData(force)
     if cell and pSq then
         local step = 1
         if (maxX - minX) > 40 or (maxY - minY) > 40 then
-            step = 2 -- Amostragem rápida em mansões gigantescas
+            step = 2 -- Amostragem rapida em mansoes gigantescas
         end
 
         for x = minX, maxX, step do
@@ -347,7 +361,7 @@ function LV_HouseDashboard:refreshData(force)
         end
     end
 
-    -- 4. Varredura Instantânea de Barris de Chuva via CGlobalObjects
+    -- 4. Varredura Instantanea de Barris de Chuva via CGlobalObjects
     if CGlobalObjects then
         local ok, sys = pcall(CGlobalObjects.getSystemByName, "rainbarrel")
         if ok and sys and sys.getLuaObjectCount then
@@ -415,7 +429,7 @@ function LV_HouseDashboard:refreshData(force)
     return res
 end
 
---- Desenha uma barra fina estilizada no padrão CHStatusHUD
+--- Desenha uma barra fina estilizada no padrao CHStatusHUD
 function LV_HouseDashboard:drawGauge(x, y, w, h, percent, color)
     percent = math.max(0, math.min(1.0, percent or 0))
     self:drawRect(x, y, w, h, 0.40, 0.10, 0.12, 0.15)
@@ -429,7 +443,7 @@ function LV_HouseDashboard:drawGauge(x, y, w, h, percent, color)
 end
 
 function LV_HouseDashboard:prerender()
-    -- Renderização tratada no render()
+    -- Renderizacao tratada no render()
 end
 
 function LV_HouseDashboard:render()
@@ -439,17 +453,18 @@ function LV_HouseDashboard:render()
     local tm = getTextManager()
     local hgt = self.fontH
 
-    -- 1. Fundo Soft Glass Escuro e Borda Translúcida
+    -- 1. Fundo Soft Glass Escuro e Borda Translucida
     self:drawRect(0, 0, self.width, self.height, 0.90, 0.03, 0.035, 0.045)
     self:drawRect(0, 0, 2, self.height, 0.95, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3])
     self:drawRectBorder(0, 0, self.width, self.height, 0.25, 1, 1, 1)
 
-    -- Cabeçalho & Botões
+    -- Cabecalho & Botoes
     self:drawText("INFRAESTRUTURA DA BASE", PAD + 4, PAD, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 1.0, FONT_M)
+    self:drawTextRight("[APPL]", self.width - PAD - 122, PAD + 2, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.90, FONT_S)
     self:drawTextRight("[COMODO (K)]", self.width - PAD - 26, PAD + 2, 0.45, 0.85, 0.90, 0.90, FONT_S)
     self:drawTextRight("[X]", self.width - PAD, PAD + 2, 0.70, 0.70, 0.70, 1.0, FONT_S)
 
-    -- Linha 1: Nome da Base & Botão [RENOMEAR]
+    -- Linha 1: Nome da Base & Botao [RENOMEAR]
     local subTitle = string.format("Refugio: %s [Tier %d - %d pts]", data.safehouseName or "Base", data.safehouseTier or 0, data.safehouseScore or 0)
     if data.isOutside then
         subTitle = "Refugio: Area Externa [0 pts]"
@@ -477,7 +492,7 @@ function LV_HouseDashboard:render()
     end
     self:drawText(posseLabel, PAD + 4, PAD + 20 + hgt + 2, posseCol[1], posseCol[2], posseCol[3], 1.0, FONT_S)
 
-    -- Linha 3: Tamanho da Base (Blocos e Cômodos)
+    -- Linha 3: Tamanho da Base (Blocos e Comodos)
     local sizeLabel = "Tamanho: N/A (Ao ar livre)"
     local sizeCol = {0.60, 0.60, 0.65}
     if data.totalTiles and data.totalTiles > 0 and not data.isOutside then
@@ -486,13 +501,13 @@ function LV_HouseDashboard:render()
     end
     self:drawText(sizeLabel, PAD + 4, PAD + 20 + (hgt + 2) * 2, sizeCol[1], sizeCol[2], sizeCol[3], 1.0, FONT_S)
 
-    -- Linha Divisória 1
+    -- Linha Divisoria 1
     local curY = PAD + 20 + (hgt + 2) * 3 + 2
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.20, 1, 1, 1)
     curY = curY + 8
 
     -- =========================================================================
-    -- SEÇÃO 1: REDE ELÉTRICA & GERADOR
+    -- SECAO 1: REDE ELETRICA & GERADOR
     -- =========================================================================
     local genTitle = "Rede Eletrica (Gerador)"
     if data.hasGenerator then
@@ -502,14 +517,14 @@ function LV_HouseDashboard:render()
         self:drawTextRight(statusStr, self.width - PAD, curY, statusCol[1], statusCol[2], statusCol[3], 1.0, FONT_S)
         curY = curY + hgt + 3
 
-        -- Barra de Combustível
+        -- Barra de Combustivel
         local fuelPct = (data.fuel or 0) / 100.0
         local fuelText = string.format("Combustivel: %d%%", math.floor(data.fuel or 0))
         self:drawText(fuelText, PAD + 12, curY, 0.80, 0.85, 0.90, 1.0, FONT_S)
         self:drawGauge(140, curY + 4, 200, 6, fuelPct, ACCENT_AMBER)
         curY = curY + hgt + 2
 
-        -- Barra de Condição
+        -- Barra de Condicao
         local condPct = (data.condition or 0) / 100.0
         local condCol = (data.condition < 50) and ACCENT_RED or ACCENT_GREEN
         local condText = string.format("Condicao: %d%%", math.floor(data.condition or 0))
@@ -522,12 +537,12 @@ function LV_HouseDashboard:render()
         curY = curY + hgt + 8
     end
 
-    -- Linha Divisória 2
+    -- Linha Divisoria 2
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
     curY = curY + 8
 
     -- =========================================================================
-    -- SEÇÃO 2: RESERVA HÍDRICA (BARRIS DE CHUVA)
+    -- SECAO 2: RESERVA HIDRICA (BARRIS DE CHUVA)
     -- =========================================================================
     self:drawText("Reserva Hidrica (Barris de Chuva)", PAD + 4, curY, 0.90, 0.90, 0.90, 1.0, FONT_S)
     local barrelStr = string.format("%d barris", data.barrelCount or 0)
@@ -540,12 +555,12 @@ function LV_HouseDashboard:render()
     self:drawGauge(140, curY + 4, 200, 6, waterPct, ACCENT_CYAN)
     curY = curY + hgt + 8
 
-    -- Linha Divisória 3
+    -- Linha Divisoria 3
     self:drawRect(PAD, curY, self.width - (PAD * 2), 1, 0.15, 1, 1, 1)
     curY = curY + 8
 
     -- =========================================================================
-    -- SEÇÃO 3: GOVERNANÇA, ROTINA, CLIMA & VIDA SOCIAL
+    -- SECAO 3: GOVERNANCA, ROTINA, CLIMA & VIDA SOCIAL
     -- =========================================================================
     local streakStr = string.format("Rotina: %d dias seguidos", data.streakDays or 0)
     self:drawText(streakStr, PAD + 4, curY, 0.20, 0.90, 0.75, 1.0, FONT_S)
@@ -559,7 +574,7 @@ function LV_HouseDashboard:render()
     end
     curY = curY + hgt + 6
 
-    -- Sazonalidade Tática do Clima
+    -- Sazonalidade Tatica do Clima
     local seasonStr = string.format("Sazonalidade: %s", data.seasonalNote or "Clima Estavel")
     self:drawText(seasonStr, PAD + 4, curY, 0.88, 0.78, 0.45, 1.0, FONT_S)
     curY = curY + hgt + 6
@@ -575,7 +590,7 @@ function LV_HouseDashboard:render()
     end
 end
 
---- Imprime o relatório de infraestrutura da base no Chat e console do servidor
+--- Imprime o relatorio de infraestrutura da base no Chat e console do servidor
 function LV_HouseDashboard.printStatusReport(player)
     local dash = LV_HouseDashboard.getInstance()
     local data = dash:refreshData(true)
@@ -614,7 +629,7 @@ function LV_HouseDashboard.printStatusReport(player)
 end
 
 -- =============================================================================
--- Ganchos de Inicialização, Teclado e Comando no Chat (/lv_status)
+-- Ganchos de Inicializacao, Teclado e Comando no Chat (/lv_status)
 -- =============================================================================
 
 Events.OnGameStart.Add(function()

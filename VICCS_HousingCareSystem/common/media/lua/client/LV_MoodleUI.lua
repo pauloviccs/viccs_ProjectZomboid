@@ -2,7 +2,7 @@
 -- Housing Care System (Lar Vivo) - Native Right-Side Moodle Display (LV_MoodleUI.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
+-- Descricao:
 --   Renderiza os Moodlets do Lar Vivo (Conforto, Insalubridade, Necessidade
 --   de Banheiro e Aliviado) na coluna lateral direita da tela, perfeitamente
 --   alinhados abaixo dos Moodlets vanilla do jogo.
@@ -194,7 +194,7 @@ function LV_MoodleUI:onMouseDoubleClick(x, y)
 end
 
 function LV_MoodleUI:prerender()
-    -- Renderização tratada no render()
+    -- Renderizacao tratada no render()
 end
 
 function LV_MoodleUI:render()
@@ -237,7 +237,7 @@ function LV_MoodleUI:render()
         })
     end
 
-    -- Novos Moodlets de Rotina, Hábitos e Produtividade (Update 2)
+    -- Novos Moodlets de Rotina, Habitos e Produtividade (Update 2)
     local routineData = LV_RoutineSystem and LV_RoutineSystem.getRoutineData and LV_RoutineSystem.getRoutineData(player)
     local currentHour = getGameTime():getWorldAgeHours()
 
@@ -278,7 +278,7 @@ function LV_MoodleUI:render()
             self:setX(md.LV_Moodle_CustomX)
             self:setY(md.LV_Moodle_CustomY)
         else
-            -- Posição padrão em coluna paralela dedicada à esquerda dos vanillas (evita qualquer sobreposição)
+            -- Posicao padrao em coluna paralela dedicada a esquerda dos vanillas (evita qualquer sobreposicao)
             local targetX = screenW - (MOODLE_SIZE * 2) - MARGIN_RIGHT - 8
             local startY = baseY
             self:setX(targetX)
@@ -294,23 +294,23 @@ function LV_MoodleUI:render()
     local absX = self:getX()
     local absY = self:getY()
 
-    -- 2. Renderiza a Alça Discreta de Arrasto (Handle) no topo
+    -- 2. Renderiza a Alca Discreta de Arrasto (Handle) no topo
     local isMouseOverHandle = (mouseX >= absX and mouseX <= (absX + MOODLE_SIZE) and mouseY >= absY and mouseY <= (absY + HANDLE_HEIGHT))
 
     if isMouseOverHandle or self.isDragging then
         self:drawRect(0, 0, MOODLE_SIZE, HANDLE_HEIGHT - 2, 0.75, 0.08, 0.12, 0.18)
         self:drawRectBorder(0, 0, MOODLE_SIZE, HANDLE_HEIGHT - 2, 0.90, 0.36, 0.76, 0.86)
-        self:drawText("•••", 8, -1, 0.36, 0.76, 0.86, 1.0, UIFont.Small)
+        self:drawText("---", 8, -1, 0.36, 0.76, 0.86, 1.0, UIFont.Small)
 
         if not self.isDragging then
             self:drawTooltipBox("Mover Moodlets", "Segure com o botao esquerdo para arrastar.", "Duplo clique: Restaurar padrao.", {0.36, 0.76, 0.86}, 0)
         end
     else
         self:drawRect(0, 0, MOODLE_SIZE, 3, 0.35, 0.6, 0.6, 0.6)
-        self:drawText("•", 13, -4, 0.8, 0.8, 0.8, 0.5, UIFont.Small)
+        self:drawText("-", 13, -4, 0.8, 0.8, 0.8, 0.5, UIFont.Small)
     end
 
-    -- 3. Renderiza cada moodlet abaixo da alça
+    -- 3. Renderiza cada moodlet abaixo da alca
     for idx, item in ipairs(activeMoodles) do
         local relY = HANDLE_HEIGHT + ((idx - 1) * distY)
 

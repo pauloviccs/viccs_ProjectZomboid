@@ -2,20 +2,21 @@
 -- Housing Care System (Lar Vivo) - Client Events & Scheduler (LV_ClientEvents.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
+-- Descricao:
 --   Orquestrador de eventos do cliente com suporte total a saves em andamento.
---   Dispara varredura imediata ao entrar no jogo, transições de cômodos e tecla 'K'.
+--   Dispara varredura imediata ao entrar no jogo, transicoes de comodos e tecla 'K'.
 require "LV_Config"
 require "LV_RoutineSystem"
 require "LV_HouseDashboard"
 require "LV_DentalNeed"
+require "LV_StovetopCooking"
 
 
 local lastCheckHour = -1
 local lastRoom = nil
 local lastSquareCoord = { x = -1, y = -1, z = -1 }
 
---- Exibe notificação flutuante de forma 100% segura e compatível com todas as builds do PZ.
+--- Exibe notificacao flutuante de forma 100% segura e compativel com todas as builds do PZ.
 local function showNotification(player, text, r, g, b)
     if not player then return end
     r = r or 255
@@ -36,12 +37,12 @@ local function onEveryHoursCheck()
     local player = getPlayer()
     if not player then return end
 
-    -- Atualização de necessidade fisiológica
+    -- Atualizacao de necessidade fisiologica
     if LV_BladderNeed and LV_BladderNeed.onEveryHours then
         pcall(LV_BladderNeed.onEveryHours, player)
     end
 
-    -- Atualização de necessidade de higiene bucal
+    -- Atualizacao de necessidade de higiene bucal
     if LV_DentalNeed and LV_DentalNeed.onEveryHours then
         pcall(LV_DentalNeed.onEveryHours, player)
     end
@@ -60,16 +61,16 @@ local lastOwnershipClaimed = nil
 local lastBaseName = nil
 local lastEntryExitNoticeTime = 0
 
---- Monitora movimentação entre cômodos ou deslocamento na base com throttle inteligente.
+--- Monitora movimentacao entre comodos ou deslocamento na base com throttle inteligente.
 local function onPlayerPositionUpdate(player)
     if not LV_Config or not LV_Config.isEnabled() or not player then return end
 
-    -- Simulação e acúmulo de sujeira nos pés/piso
+    -- Simulacao e acumulo de sujeira nos pes/piso
     if LV_DirtSystem and LV_DirtSystem.onPlayerMove then
         pcall(LV_DirtSystem.onPlayerMove, player)
     end
 
-    -- Processamento de dano/cólicas e moodlets vanilla de bexiga
+    -- Processamento de dano/colicas e moodlets vanilla de bexiga
     if LV_BladderNeed and LV_BladderNeed.updateHealthImpact then
         pcall(LV_BladderNeed.updateHealthImpact, player)
     end
@@ -81,7 +82,7 @@ local function onPlayerPositionUpdate(player)
     local room = sq.getRoom and sq:getRoom()
     local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or (getGameTime():getWorldAgeHours() * 3600.0)
 
-    -- Telemetria e Notificações em Halo de Entrada / Saída da Residência Oficial
+    -- Telemetria e Notificacoes em Halo de Entrada / Saida da Residencia Oficial
     if LV_ComfortScanner and LV_ComfortScanner.getBuildingOwnershipStatus then
         local own = LV_ComfortScanner.getBuildingOwnershipStatus(sq, player)
         local isCurrentlyClaimed = (own and own.isClaimed == true and own.status == "CLAIMED")
@@ -117,7 +118,7 @@ local function onPlayerPositionUpdate(player)
         LV_ComfortScanner.startScan(player)
     else
         local distSq = (px - lastSquareCoord.x)^2 + (py - lastSquareCoord.y)^2
-        -- Só dispara se moveu 6+ tiles (distSq >= 36) e após pelo menos 4 segundos da última varredura
+        -- So dispara se moveu 6+ tiles (distSq >= 36) e apos pelo menos 4 segundos da ultima varredura
         if (pz ~= lastSquareCoord.z or distSq >= 36) and (now - lastMoveScanTime >= 4.0) then
             lastSquareCoord.x = px
             lastSquareCoord.y = py
@@ -128,7 +129,7 @@ local function onPlayerPositionUpdate(player)
     end
 end
 
---- Listener para consumo de comida e aumento de necessidade fisiológica
+--- Listener para consumo de comida e aumento de necessidade fisiologica
 local function onEatFood(player, food)
     if LV_BladderNeed and LV_BladderNeed.onEatFood then
         pcall(LV_BladderNeed.onEatFood, player, food)
@@ -148,7 +149,7 @@ local function onFillContextMenu(playerNum, context, worldObjects, test)
     end
 end
 
---- Inicialização e varredura forçada ao carregar o personagem no mundo.
+--- Inicializacao e varredura forcada ao carregar o personagem no mundo.
 local function onGameReady()
     local player = getPlayer()
     if not player then return end
@@ -157,7 +158,7 @@ local function onGameReady()
     lastCheckHour = getGameTime():getWorldAgeHours()
     LV_ComfortScanner.startScan(player, true)
 
-    -- Inicializa HUD para ficar sempre visível (estilo CHStatusHUD)
+    -- Inicializa HUD para ficar sempre visivel (estilo CHStatusHUD)
     if LV_HUD and LV_HUD.showHUD then
         pcall(LV_HUD.showHUD)
     end
@@ -207,7 +208,7 @@ local function onWorldObjectAdded(object)
     end
 end
 
---- Configuração de hooks seguros em ações de consumo de comida e água
+--- Configuracao de hooks seguros em acoes de consumo de comida e agua
 local function setupActionHooks()
     if ISEatFoodAction and not ISEatFoodAction._LV_hooked then
         ISEatFoodAction._LV_hooked = true

@@ -48,4 +48,14 @@ UI_ES = {
 
     UI_LV_Relieved_Title = "Aliviado",
     UI_LV_Relieved_Desc = "Sensación de bienestar y tranquilidad tras usar un baño limpio.",
+
+    UI_LV_Stovetop_Cooking = "Cocinando en Estufa: %s (%s%%)",
+    UI_LV_Stovetop_Cooked = "Comida Lista: %s",
+    UI_LV_Stovetop_Burnt = "Quemandose en Estufa: %s",
+
+    UI_LV_Appliance_Title = "Electrodomésticos e Instalaciones",
+    UI_LV_Appliance_Operational = "Sistemas Operativos (Instalaciones Íntegras)",
+    UI_LV_Appliance_Critical = "CRÍTICO: ¡%d Electrodoméstico(s) Dañado(s) / Roto(s)!",
+    UI_LV_Appliance_Warning = "ATENCIÓN: %d Electrodoméstico(s) Requieren Mantenimiento / Limpieza",
+    UI_LV_Appliance_Maintain = "Realizar Mantenimiento en %s",
 }

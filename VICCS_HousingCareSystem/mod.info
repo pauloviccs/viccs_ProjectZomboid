@@ -4,5 +4,6 @@ icon=icon.png
 id=VICCS_HousingCareSystem
 description=Avalia a manutencao, decoracao e limpeza da sua base no Project Zomboid Build 42, concedendo buffs temporarios inspirados no sistema de Comfort do Valheim.
 versionMin=42.0
-modversion=1.6.0
+modversion=1.6.3
 author=VICCS
+

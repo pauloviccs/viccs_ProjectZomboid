@@ -2,11 +2,11 @@
 -- Housing Care System (Living House) - Leisure & Active Entertainment (LV_LeisureSystem.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Módulo unificado de entretenimento ativo e lazer:
---   1. TV / Rádio Ativo: Multiplica a perda de tédio e infelicidade ao relaxar
---      num cômodo com Comfort Tier >= 1 e aparelho ligado emitindo sinal.
---   2. Sinergia de Relaxamento: Redução constante de estresse durante a transmissão.
+-- Descricao:
+--   Modulo unificado de entretenimento ativo e lazer:
+--   1. TV / Radio Ativo: Multiplica a perda de tedio e infelicidade ao relaxar
+--      num comodo com Comfort Tier >= 1 e aparelho ligado emitindo sinal.
+--   2. Sinergia de Relaxamento: Reducao constante de estresse durante a transmissao.
 -- =============================================================================
 
 require "LV_Config"
@@ -27,11 +27,11 @@ function LV_LeisureSystem.onEveryOneMinute()
     local bd = player:getBodyDamage()
     local stats = player:getStats()
 
-    -- 1. Efeito de Entretenimento Ativo (TV ou Rádio Ligado em cômodo com conforto)
+    -- 1. Efeito de Entretenimento Ativo (TV ou Radio Ligado em comodo com conforto)
     if hasMedia and roomTier >= 1 then
         if bd then
             pcall(function()
-                -- Drena tédio ativamente (multiplicador sobre o vanilla)
+                -- Drena tedio ativamente (multiplicador sobre o vanilla)
                 if bd.getBoredomLevel and bd.setBoredomLevel then
                     local b = bd:getBoredomLevel()
                     if b > 0 then
@@ -58,7 +58,7 @@ function LV_LeisureSystem.onEveryOneMinute()
             end)
         end
 
-        -- Feedback sutil espaçado
+        -- Feedback sutil espacado
         local now = (getTimeInMillis and getTimeInMillis() / 1000.0) or os.time()
         if (now - lastHaloTime) >= 180.0 then
             lastHaloTime = now

@@ -2,14 +2,14 @@
 -- Housing Care System (Living House) - Frameless Glass HUD (LV_HUD.lua)
 -- =============================================================================
 -- Autor: VICCS
--- Descrição:
---   Painel de status frameless com estética Glassmorphism inspirada no CHStatusHUD.
+-- Descricao:
+--   Painel de status frameless com estetica Glassmorphism inspirada no CHStatusHUD.
 --   - Always-Visible com Auto-Fade LERP (25% em repouso / 100% no hover)
---   - Ícones oficiais vanilla 32x32 escalados no início de cada barra
---   - Fundo soft glass escuro translúcido (0.03, 0.035, 0.045)
---   - Linha de acento vertical de 2px à esquerda
+--   - Icones oficiais vanilla 32x32 escalados no inicio de cada barra
+--   - Fundo soft glass escuro translucido (0.03, 0.035, 0.045)
+--   - Linha de acento vertical de 2px a esquerda
 --   - Entalhes de limiares (ticks) no estilo CHStatusHUD
---   - Alternância de modos no cabeçalho: Auto-Fade, Fixo (100%) e Recolhido
+--   - Alternancia de modos no cabecalho: Auto-Fade, Fixo (100%) e Recolhido
 --   - Drag & Drop livre com salvamento de coordenadas
 -- =============================================================================
 
@@ -19,6 +19,7 @@ require "LV_DirtSystem"
 require "LV_BladderNeed"
 require "LV_DentalNeed"
 require "LV_HouseDashboard"
+require "LV_ApplianceDashboard"
 
 LV_HUD = ISPanel:derive("LV_HUD")
 
@@ -29,7 +30,7 @@ local PAD = 8
 local ACCENT_CYAN = {0.36, 0.76, 0.86}
 local ACCENT_AMBER = {0.92, 0.71, 0.29}
 
--- Texturas oficiais Vanilla B42 para ícones de barra
+-- Texturas oficiais Vanilla B42 para icones de barra
 local ICON_COMFORT    = "media/ui/Moodles/32/Mood_Happy.png"
 local ICON_ACCLIM     = "media/ui/Moodles/32/Mood_Concentrating.png"
 local ICON_SQUALOR    = "media/ui/Moodles/32/Mood_NoxiousSmell.png"
@@ -38,11 +39,11 @@ local ICON_BODY_DIRT  = "media/ui/Moodles/32/Status_Bleeding.png"
 local ICON_BLADDER    = "media/ui/Moodles/32/Mood_Pained.png"
 local ICON_DENTAL     = "media/ui/Moodles/32/Mood_Unhappy.png"
 
---- Cria uma nova instância do painel HUD.
+--- Cria uma nova instancia do painel HUD.
 function LV_HUD:new(x, y, width)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
-    local o = ISPanel:new(x, y, width or 235, 100)
+    local o = ISPanel:new(x, y, width or 265, 100)
     setmetatable(o, self)
     self.__index = self
 
@@ -53,7 +54,7 @@ function LV_HUD:new(x, y, width)
     o.moveWithMouse = true
     o.userHidden = false
     o.collapsed = false
-    o.fadeMode = "auto"   -- "auto" (Fade no hover), "always" (100% nítido), "minimal"
+    o.fadeMode = "auto"   -- "auto" (Fade no hover), "always" (100% nitido), "minimal"
     o.currentAlpha = 0.25 -- Inicia em repouso sutil
     o.targetAlpha = 0.25
     o.onlyProblems = false
@@ -72,10 +73,10 @@ end
 
 function LV_HUD:onMouseUp(x, y)
     if self.isDragging and math.abs(x - self.downX) <= 4 and math.abs(y - self.downY) <= 4 then
-        -- Clique rápido no cabeçalho alterna modos
+        -- Clique rapido no cabecalho alterna modos
         if y <= self.headerH + PAD then
-            -- Clique no botão [BASE] abre/fecha o Dashboard de Infraestrutura
-            if x >= (self.width - PAD - 65) and x <= (self.width - PAD - 20) then
+            -- Clique no botao [BASE] abre/fecha o Dashboard de Infraestrutura
+            if x >= (self.width - PAD - 64) and x <= (self.width - PAD - 20) then
                 if LV_HouseDashboard and LV_HouseDashboard.toggle then
                     LV_HouseDashboard.toggle()
                 end
@@ -83,8 +84,17 @@ function LV_HUD:onMouseUp(x, y)
                 return true
             end
 
-            -- Clique no botão [K] abre/fecha o Painel de Inspeção do Cômodo
-            if x >= (self.width - PAD - 98) and x <= (self.width - PAD - 68) then
+            -- Clique no botao [APPL] abre/fecha a Telemetria de Aparelhos
+            if x >= (self.width - PAD - 114) and x <= (self.width - PAD - 66) then
+                if LV_ApplianceDashboard and LV_ApplianceDashboard.toggle then
+                    LV_ApplianceDashboard.toggle()
+                end
+                self.isDragging = false
+                return true
+            end
+
+            -- Clique no botao [K] abre/fecha o Painel de Inspecao do Comodo
+            if x >= (self.width - PAD - 148) and x <= (self.width - PAD - 116) then
                 if LV_RoomInspectorDashboard and LV_RoomInspectorDashboard.toggle then
                     LV_RoomInspectorDashboard.toggle()
                 end
@@ -127,7 +137,7 @@ function LV_HUD:onMouseUpOutside(x, y)
     return true
 end
 
---- Desenha texto com sombra suave para máxima legibilidade
+--- Desenha texto com sombra suave para maxima legibilidade
 function LV_HUD:shadowText(text, x, y, r, g, b, a)
     self:drawText(text, x + 1, y + 1, 0, 0, 0, (a or 1) * 0.75, FONT_S)
     self:drawText(text, x, y, r or 1, g or 1, b or 1, a or 1, FONT_S)
@@ -139,7 +149,7 @@ function LV_HUD:shadowTextRight(text, x, y, r, g, b, a)
     self:shadowText(text, x - w, y, r, g, b, a)
 end
 
---- Desenha uma barra fina no estilo CHStatusHUD com fundo translúcido e ticks
+--- Desenha uma barra fina no estilo CHStatusHUD com fundo translucido e ticks
 function LV_HUD:drawGauge(x, y, w, h, percent, color, ticks, alpha)
     local a = alpha or 1.0
     percent = math.max(0, math.min(1.0, percent or 0))
@@ -167,7 +177,7 @@ function LV_HUD:drawGauge(x, y, w, h, percent, color, ticks, alpha)
 end
 
 function LV_HUD:prerender()
-    -- Renderização tratada no render()
+    -- Renderizacao tratada no render()
 end
 
 function LV_HUD:render()
@@ -197,14 +207,14 @@ function LV_HUD:render()
 
     local isAcclimatizing = (isClaimed and data.isInShelter and comfortTier == 0 and data.targetComfortScore and data.targetComfortScore > 0)
 
-    -- Controle de Interpolação Linear (LERP) de Transparência (Auto-Fade)
+    -- Controle de Interpolacao Linear (LERP) de Transparencia (Auto-Fade)
     local isOver = self:isMouseOver()
     if self.fadeMode == "always" then
         self.targetAlpha = 1.0
     elseif isOver then
         self.targetAlpha = 1.0
     else
-        self.targetAlpha = 0.25 -- Repouso translúcido sutil
+        self.targetAlpha = 0.25 -- Repouso translucido sutil
     end
 
     self.currentAlpha = self.currentAlpha + (self.targetAlpha - self.currentAlpha) * 0.15
@@ -219,12 +229,12 @@ function LV_HUD:render()
         acc = ACCENT_AMBER
     end
 
-    -- 1. Fundo Soft Glass escuro translúcido
+    -- 1. Fundo Soft Glass escuro translucido
     self:drawRect(0, 0, self.width, self.height, 0.75 * a, 0.03, 0.035, 0.045)
-    -- Linha de acento vertical de 2px à esquerda
+    -- Linha de acento vertical de 2px a esquerda
     self:drawRect(0, 0, 2, self.height, 0.85 * a, acc[1], acc[2], acc[3])
 
-    -- 2. Cabeçalho / Título (Living House)
+    -- 2. Cabecalho / Titulo (Living House)
     local curY = PAD
     local title = "LIVING HOUSE"
     if isOutside then
@@ -244,14 +254,16 @@ function LV_HUD:render()
 
     if self.collapsed then
         self:shadowTextRight("[+]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.8 * a)
-        self:shadowTextRight("[BASE]", self.width - PAD - 22, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.85 * a)
-        self:shadowTextRight("[K]", self.width - PAD - 72, curY, 0.85, 0.75, 0.40, 0.85 * a)
+        self:shadowTextRight("[BASE]", self.width - PAD - 20, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.85 * a)
+        self:shadowTextRight("[APPL]", self.width - PAD - 66, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.85 * a)
+        self:shadowTextRight("[K]", self.width - PAD - 116, curY, 0.85, 0.75, 0.40, 0.85 * a)
         self:setHeight(curY + self.fontH + PAD)
         return
     else
         self:shadowTextRight("[-]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.6 * a)
-        self:shadowTextRight("[BASE]", self.width - PAD - 22, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.90 * a)
-        self:shadowTextRight("[K]", self.width - PAD - 72, curY, 0.85, 0.75, 0.40, 0.90 * a)
+        self:shadowTextRight("[BASE]", self.width - PAD - 20, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.90 * a)
+        self:shadowTextRight("[APPL]", self.width - PAD - 66, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.90 * a)
+        self:shadowTextRight("[K]", self.width - PAD - 116, curY, 0.85, 0.75, 0.40, 0.90 * a)
     end
 
     curY = curY + self.fontH + 3
@@ -261,7 +273,7 @@ function LV_HUD:render()
     local barW = self.width - (PAD * 2)
     local iconSz = math.max(14, self.fontH - 2)
 
-    -- Helper de renderização de linha com ícone
+    -- Helper de renderizacao de linha com icone
     local function drawBarLine(iconPath, label, valStr, pct, color, ticks, lr, lg, lb, vr, vg, vb)
         local iconTex = getTexture(iconPath)
         if iconTex then
@@ -284,7 +296,7 @@ function LV_HUD:render()
         drawBarLine(ICON_ACCLIM, "Aclimatando ao Lar", acclimStr, acclimPct, acclimColor, {0.25, 0.50, 0.75},
             0.55, 0.90, 0.95, 0.30, 0.95, 0.90)
 
-        -- Conforto Estimado que será concedido ao completar o carregamento
+        -- Conforto Estimado que sera concedido ao completar o carregamento
         local estTier = (LV_BuffManager and LV_BuffManager.getComfortTierFromScore and LV_BuffManager.getComfortTierFromScore(data.targetComfortScore or 0)) or 1
         local estLabel = string.format("Conforto Estimado (T%d)", estTier)
         local estValStr = string.format("%d pts", data.targetComfortScore or 0)
@@ -292,7 +304,7 @@ function LV_HUD:render()
         drawBarLine(ICON_COMFORT, estLabel, estValStr, (data.targetComfortScore or 0) / 100.0, estColor, {0.2, 0.4, 0.6, 0.8},
             0.70, 0.80, 0.75, 0.35, 0.85, 0.45)
     elseif comfortTier > 0 or not self.onlyProblems then
-        -- Linha 1: Conforto do Cômodo / Lar
+        -- Linha 1: Conforto do Comodo / Lar
         local breakdown = (LV_ComfortScanner and LV_ComfortScanner.getRoomBreakdown and LV_ComfortScanner.getRoomBreakdown(locKey)) or nil
         local rTier = (breakdown and breakdown.roomTier) or comfortTier
         local rScore = (breakdown and breakdown.roomScore) or comfortScore
@@ -324,7 +336,7 @@ function LV_HUD:render()
             0.95, 0.65, 0.45, 0.95, 0.40, 0.20)
     end
 
-    -- Linha 3: Higiene da Base (Piso e Calçados)
+    -- Linha 3: Higiene da Base (Piso e Calcados)
     if floorDirt >= 10 or footDirt >= 15 or not self.onlyProblems then
         local label = "Sujeira Piso / Calcado"
         local valStr = string.format("%d%% | %d%%", math.floor(floorDirt), math.floor(footDirt))
@@ -373,11 +385,11 @@ function LV_HUD:render()
     self:setHeight(curY + PAD)
 end
 
---- Exibe ou inicializa a HUD para ficar sempre visível
+--- Exibe ou inicializa a HUD para ficar sempre visivel
 function LV_HUD.showHUD()
     if not instance then
         local screenW = getCore():getScreenWidth()
-        local hudW = 235
+        local hudW = 265
         local x = screenW - hudW - 20
         local y = 200
         instance = LV_HUD:new(x, y, hudW)

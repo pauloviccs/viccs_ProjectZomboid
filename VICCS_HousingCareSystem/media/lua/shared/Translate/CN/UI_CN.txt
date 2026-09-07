@@ -48,4 +48,8 @@ UI_CN = {
 
     UI_LV_Relieved_Title = "神清气爽",
     UI_LV_Relieved_Desc = "在干净整洁的卫生间如厕后身心轻松舒畅。",
+
+    UI_LV_Stovetop_Cooking = "炉灶烹饪中: %s (%s%%)",
+    UI_LV_Stovetop_Cooked = "餐食已煮好: %s",
+    UI_LV_Stovetop_Burnt = "炉灶食物已烤焦: %s",
 }
