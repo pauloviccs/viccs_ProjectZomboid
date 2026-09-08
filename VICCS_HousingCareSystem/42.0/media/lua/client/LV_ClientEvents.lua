@@ -236,11 +236,47 @@ local function setupActionHooks()
     end
 end
 
+--- Blindagem contra NPE no Java B42 (ISWorldObjectContextMenuLogic.fetch linha 457)
+-- Quando um objeto no mapa tem sprite sem nome e o jogador segura vassoura/pa,
+-- o motor do jogo tenta String.equals em spriteName null e crasha o menu de contexto.
+local function setupContextMenuSafetyHook()
+    if ISWorldObjectContextMenu and ISWorldObjectContextMenu.createMenu and not ISWorldObjectContextMenu._LV_SanitizeHooked then
+        ISWorldObjectContextMenu._LV_SanitizeHooked = true
+        local orig_createMenu = ISWorldObjectContextMenu.createMenu
+        ISWorldObjectContextMenu.createMenu = function(player, worldobjects, x, y, test)
+            if worldobjects then
+                for i = 1, #worldobjects do
+                    local obj = worldobjects[i]
+                    if obj and obj.getSprite then
+                        local sp = obj:getSprite()
+                        if sp and (not sp:getName() or sp:getName() == "") then
+                            local fallbackName = (obj.getSpriteName and obj:getSpriteName()) or obj.spriteName or ""
+                            if sp.setName then
+                                pcall(function() sp:setName(fallbackName) end)
+                            end
+                            if obj.setSpriteName then
+                                pcall(function() obj:setSpriteName(fallbackName) end)
+                            else
+                                obj.spriteName = fallbackName
+                            end
+                        end
+                    end
+                end
+            end
+            return orig_createMenu(player, worldobjects, x, y, test)
+        end
+    end
+end
+
 setupActionHooks()
+setupContextMenuSafetyHook()
 
 Events.EveryHours.Add(onEveryHoursCheck)
 Events.OnPlayerUpdate.Add(onPlayerPositionUpdate)
-Events.OnGameStart.Add(onGameReady)
+Events.OnGameStart.Add(function()
+    setupContextMenuSafetyHook()
+    onGameReady()
+end)
 Events.OnCreatePlayer.Add(function(pNum, player)
     if not player then player = getPlayer() end
     if player then

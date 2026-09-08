@@ -18,42 +18,42 @@ local CATEGORIES = {
         defaultPercent = 15,
         cooldownSeconds = 40,
         haloKey = "UI_LV_Halo_Cleaning",
-        defaultHalo = "+15% Duracao do Lar (Limpeza)"
+        defaultHalo = "+15%% Duracao do Lar (Limpeza)"
     },
     Cooking = {
         name = "Cooking",
         defaultPercent = 20,
         cooldownSeconds = 90,
         haloKey = "UI_LV_Halo_Cooking",
-        defaultHalo = "+20% Duracao do Lar (Culinaria)"
+        defaultHalo = "+20%% Duracao do Lar (Culinaria)"
     },
     Farming = {
         name = "Farming",
         defaultPercent = 15,
         cooldownSeconds = 30,
         haloKey = "UI_LV_Halo_Farming",
-        defaultHalo = "+15% Duracao do Lar (Jardinagem)"
+        defaultHalo = "+15%% Duracao do Lar (Jardinagem)"
     },
     Building = {
         name = "Building",
         defaultPercent = 25,
         cooldownSeconds = 60,
         haloKey = "UI_LV_Halo_Building",
-        defaultHalo = "+25% Duracao do Lar (Construcao)"
+        defaultHalo = "+25%% Duracao do Lar (Construcao)"
     },
     Decorating = {
         name = "Decorating",
         defaultPercent = 15,
         cooldownSeconds = 120,
         haloKey = "UI_LV_Halo_Decorating",
-        defaultHalo = "+15% Duracao do Lar (Decoracao)"
+        defaultHalo = "+15%% Duracao do Lar (Decoracao)"
     },
     Hobbies = {
         name = "Hobbies",
         defaultPercent = 15,
         cooldownSeconds = 60,
         haloKey = "UI_LV_Halo_Hobbies",
-        defaultHalo = "+15% Duracao do Lar (Lazer & Hobbies)"
+        defaultHalo = "+15%% Duracao do Lar (Lazer & Hobbies)"
     }
 }
 

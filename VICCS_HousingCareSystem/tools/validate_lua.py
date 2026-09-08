@@ -7,13 +7,13 @@ def check_lua_blocks(path):
 
     # Remove block comments --[[ ... ]]
     content = re.sub(r'--\[\[.*?\]\]', '', content, flags=re.DOTALL)
-    # Remove single line comments
-    content = re.sub(r'--.*$', '', content, flags=re.MULTILINE)
-    # Remove strings
+    # Remove strings first so strings like "---" are not treated as comments
     content = re.sub(r'"(\\.|[^"\\])*"', '""', content)
     content = re.sub(r"'(\\.|[^'\\])*'", "''", content)
     # Remove [[ multiline strings ]]
     content = re.sub(r'\[\[.*?\]\]', '""', content, flags=re.DOTALL)
+    # Remove single line comments
+    content = re.sub(r'--.*$', '', content, flags=re.MULTILINE)
 
     # Substitui 'elseif ... then' por nada
     content = re.sub(r'\belseif\b[^\n]*?\bthen\b', ' ', content)

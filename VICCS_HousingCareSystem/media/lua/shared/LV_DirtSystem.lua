@@ -306,7 +306,9 @@ local function trySpawnFloorGrime(sq, locKey, currentFloorDirt)
     if not objs then return end
     for i = 0, objs:size() - 1 do
         local obj = objs:get(i)
-        local sp = obj and obj:getSprite() and obj:getSprite():getName()
+        local sp = (obj and obj.getSprite and obj:getSprite() and obj:getSprite():getName())
+            or (obj and obj.getSpriteName and obj:getSpriteName())
+            or (obj and obj.spriteName)
         if sp and sp:find("overlay_grime_floor") then
             return
         end
@@ -326,7 +328,9 @@ local function trySpawnFloorGrime(sq, locKey, currentFloorDirt)
                 if rObjs then
                     for o = 0, rObjs:size() - 1 do
                         local rObj = rObjs:get(o)
-                        local rSp = rObj and rObj:getSprite() and rObj:getSprite():getName()
+                        local rSp = (rObj and rObj.getSprite and rObj:getSprite() and rObj:getSprite():getName())
+                            or (rObj and rObj.getSpriteName and rObj:getSpriteName())
+                            or (rObj and rObj.spriteName)
                         if rSp and rSp:find("overlay_grime_floor") then
                             currentGrimeCount = currentGrimeCount + 1
                             break
@@ -345,7 +349,21 @@ local function trySpawnFloorGrime(sq, locKey, currentFloorDirt)
     local spriteName = "overlay_grime_floor_01_" .. tostring(grimeIndex)
     pcall(function()
         local grimeObj = IsoObject.new(sq, spriteName)
-        sq:AddTileObject(grimeObj)
+        if grimeObj then
+            local sp = grimeObj:getSprite()
+            if sp and sp.setName then
+                pcall(function() sp:setName(spriteName) end)
+            end
+            if grimeObj.setSpriteName then
+                pcall(function() grimeObj:setSpriteName(spriteName) end)
+            else
+                grimeObj.spriteName = spriteName
+            end
+            sq:AddTileObject(grimeObj)
+            if isClient and isClient() and grimeObj.transmitCompleteItemToClients then
+                pcall(function() grimeObj:transmitCompleteItemToClients() end)
+            end
+        end
     end)
 end
 

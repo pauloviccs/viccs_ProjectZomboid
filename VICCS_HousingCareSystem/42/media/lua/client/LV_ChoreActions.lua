@@ -352,19 +352,27 @@ local function isTwoHandedCleaningTool(item)
     local fullType = (item.getFullType and item:getFullType() or item.getType and item:getType() or ""):lower()
     local name = (item.getName and item:getName() or ""):lower()
 
-    if fullType:find("broom") or fullType:find("mop") or name:find("broom") or name:find("mop") or name:find("vassoura") or name:find("esfregao") then
+    -- Panos, toalhas, esponjas e lencois sao ESTRITAMENTE de uma mao (abaixado)
+    if fullType:find("dishcloth") or fullType:find("sponge") or fullType:find("bathtowel")
+       or fullType:find("towel") or fullType:find("rippedsheets") or fullType:find("cloth")
+       or name:find("pano") or name:find("esponja") or name:find("toalha") or name:find("lencol") then
+        return false
+    end
+
+    -- Vassouras e esfregoes (Broom, Mop, etc.)
+    if fullType:find("broom") or fullType:find("mop")
+       or name:find("broom") or name:find("mop")
+       or name:find("vassoura") or name:find("esfregao") then
         return true
     end
-    if ItemTag and item.hasTag then
-        local ok, res = pcall(function()
-            if ItemTag.CLEAN_STAINS and item:hasTag(ItemTag.CLEAN_STAINS) then return true end
-            return false
-        end)
-        if ok and res then return true end
-    end
+
+    -- Arma de duas maos com tag de limpeza
     if item.isTwoHandWeapon and item:isTwoHandWeapon() then
-        return true
+        if ItemTag and item.hasTag and item:hasTag(ItemTag.CLEAN_STAINS) then
+            return true
+        end
     end
+
     return false
 end
 
@@ -401,9 +409,15 @@ function ISCleanFloorAction:start()
     if isTwoHanded then
         -- Animacao vanilla de varrer/mop em pe!
         self:setActionAnim("ScrubFloor_Mop")
-        if self.setOverrideHandModels and tool then
-            pcall(function() self:setOverrideHandModels(tool, nil) end)
+        local primaryItem = (self.character and self.character:getPrimaryHandItem()) or tool
+        if self.setOverrideHandModels and primaryItem then
+            pcall(function() self:setOverrideHandModels(primaryItem, nil) end)
         end
+        pcall(function()
+            if self.character and self.character.reportEvent then
+                self.character:reportEvent("EventCleanBlood")
+            end
+        end)
         self.sound = nil
         if self.character and self.character.playSound then
             pcall(function() self.sound = self.character:playSound("CleanBloodScrub") end)
@@ -411,8 +425,9 @@ function ISCleanFloorAction:start()
     else
         -- Animacao vanilla de esfregar piso abaixado com pano/esponja
         self:setActionAnim("ScrubFloor")
-        if self.setOverrideHandModels and tool then
-            pcall(function() self:setOverrideHandModels(tool, self.secondaryCleaner) end)
+        local primaryItem = (self.character and self.character:getPrimaryHandItem()) or tool
+        if self.setOverrideHandModels and primaryItem then
+            pcall(function() self:setOverrideHandModels(primaryItem, self.secondaryCleaner) end)
         end
         self.sound = nil
         if self.character and self.character.playSound then
@@ -469,10 +484,15 @@ function ISCleanFloorAction:perform()
                     if objs then
                         for i = objs:size() - 1, 0, -1 do
                             local obj = objs:get(i)
-                            if obj and obj.getSprite and obj:getSprite() then
-                                local sName = obj:getSprite():getName()
-                                if sName and sName:find("overlay_grime_floor_") then
+                            if obj then
+                                local sName = (obj.getSprite and obj:getSprite() and obj:getSprite():getName())
+                                    or (obj.getSpriteName and obj:getSpriteName())
+                                    or obj.spriteName
+                                if sName and sName:find("overlay_grime_floor") then
                                     sq:RemoveTileObject(obj)
+                                    if isClient and isClient() and sq.transmitRemoveItemFromSquare then
+                                        pcall(function() sq:transmitRemoveItemFromSquare(obj) end)
+                                    end
                                 end
                             end
                         end
@@ -1268,20 +1288,16 @@ findCleaningTool = function(player)
     if not player then return nil end
     local inv = player:getInventory()
 
-    -- 1. PRIORIDADE ABSOLUTA: Ferramenta que o jogador ja esta segurando nas maos!
+    -- 1. Se o jogador ja estiver segurando vassoura ou mop nas maos, usa imediatamente!
     local primary = player.getPrimaryHandItem and player:getPrimaryHandItem()
-    if primary and isCleaningToolItem(primary) then
+    if primary and isTwoHandedCleaningTool(primary) and not (primary.isBroken and primary:isBroken()) then
         return primary
-    end
-    local secondary = player.getSecondaryHandItem and player:getSecondaryHandItem()
-    if secondary and isCleaningToolItem(secondary) then
-        return secondary
     end
 
     if not inv then return nil end
 
-    -- 2. SEGUNDA PRIORIDADE: Ferramentas de duas maos em pe (Vassouras e Mops) no inventario/mochila
-    local twoHandTypes = { "Base.Broom", "Base.Mop", "Broom", "Mop" }
+    -- 2. PRIORIDADE MAXIMA PARA VARRER: Procurar Vassouras ou Mops (inventario/costas/mochila)
+    local twoHandTypes = { "Base.Broom", "Base.Mop", "Broom", "Mop", "Base.Broom_Twig", "Broom_Twig" }
     for _, t in ipairs(twoHandTypes) do
         if inv.getFirstTypeRecurse then
             local it = inv:getFirstTypeRecurse(t)
@@ -1297,7 +1313,16 @@ findCleaningTool = function(player)
         if it then return it end
     end
 
-    -- 3. TERCEIRA PRIORIDADE: Panos, toalhas e esponjas
+    -- 3. Se o jogador ja estiver com pano/esponja na mao, usa ele
+    if primary and isCleaningToolItem(primary) and not (primary.isBroken and primary:isBroken()) then
+        return primary
+    end
+    local secondary = player.getSecondaryHandItem and player:getSecondaryHandItem()
+    if secondary and isCleaningToolItem(secondary) and not (secondary.isBroken and secondary:isBroken()) then
+        return secondary
+    end
+
+    -- 4. TERCEIRA PRIORIDADE: Panos, toalhas e esponjas no inventario/mochila
     local clothTypes = { "Base.DishCloth", "Base.BathTowel", "Base.BathTowelWet", "Base.Sponge", "Base.RippedSheets", "DishCloth", "BathTowel", "Sponge" }
     for _, t in ipairs(clothTypes) do
         if inv.getFirstTypeRecurse then
@@ -1629,6 +1654,19 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
                         if secondary and secondary.getContainer and secondary:getContainer() ~= inv then
                             ISInventoryPaneContextMenu.transferIfNeeded(pObj, secondary)
                         end
+
+                        local isTwoHanded = isTwoHandedCleaningTool(tool)
+                        local pNum = (pObj.getPlayerNum and pObj:getPlayerNum()) or 0
+
+                        if isTwoHanded then
+                            ISInventoryPaneContextMenu.equipWeapon(tool, true, true, pNum)
+                        else
+                            ISInventoryPaneContextMenu.equipWeapon(tool, true, false, pNum)
+                            if secondary then
+                                ISInventoryPaneContextMenu.equipWeapon(secondary, false, false, pNum)
+                            end
+                        end
+
                         if luautils and luautils.walkAdj then
                             luautils.walkAdj(pObj, targetSq, true)
                         else
