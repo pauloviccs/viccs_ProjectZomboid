@@ -671,7 +671,7 @@ end
 function ISBrushTeethAction:start()
     self:setActionAnim("WashFace")
     if self.setOverrideHandModels then
-        pcall(function() self:setOverrideHandModels(self.toothbrush, self.toothpaste) end)
+        pcall(function() self:setOverrideHandModels(nil, nil) end)
     end
 
     self.sound = nil

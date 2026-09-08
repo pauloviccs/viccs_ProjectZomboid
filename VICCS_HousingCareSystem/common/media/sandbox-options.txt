@@ -177,7 +177,7 @@ option HousingCareSystem.Enable_CicatrizacaoRapida
 option HousingCareSystem.Enable_Alerta
 {
     type = boolean,
-    default = false,
+    default = true,
     page = HousingCareSystem,
     translation = Enable_Alerta,
 }
@@ -696,4 +696,42 @@ option HousingCareSystem.ApplianceDirtGainMultiplier
     default = 1.0,
     page = HousingCareSystem,
     translation = ApplianceDirtGainMultiplier,
+}
+
+option HousingCareSystem.BladderNeedEnabled
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = BladderNeedEnabled,
+}
+
+option HousingCareSystem.BladderGainPerHour
+{
+    type = double,
+    min = 0.1,
+    max = 10.0,
+    default = 0.8,
+    page = HousingCareSystem,
+    translation = BladderGainPerHour,
+}
+
+option HousingCareSystem.BladderGainAfterEatingMultiplier
+{
+    type = double,
+    min = 0.1,
+    max = 5.0,
+    default = 0.5,
+    page = HousingCareSystem,
+    translation = BladderGainAfterEatingMultiplier,
+}
+
+option HousingCareSystem.BladderNotifyThreshold
+{
+    type = integer,
+    min = 40,
+    max = 95,
+    default = 70,
+    page = HousingCareSystem,
+    translation = BladderNotifyThreshold,
 }

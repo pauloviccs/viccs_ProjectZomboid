@@ -268,13 +268,77 @@ local function setupContextMenuSafetyHook()
     end
 end
 
+--- Hook de Scavenger Focus (Atencao aos Detalhes) em conteineres do mundo
+local function setupLootLuckHook()
+    if ISInventoryPage and not ISInventoryPage._LV_LootLuckHooked then
+        ISInventoryPage._LV_LootLuckHooked = true
+        local orig_selectContainer = ISInventoryPage.selectContainer
+        ISInventoryPage.selectContainer = function(self, backpack)
+            orig_selectContainer(self, backpack)
+            if not backpack or not backpack.inventory then return end
+
+            local player = self.onCharacter
+            if not player or not LV_Config or not LV_Config.isLootLuckEnabled or not LV_Config.isLootLuckEnabled() then return end
+
+            local data = LV_BuffManager and LV_BuffManager.getPlayerData and LV_BuffManager.getPlayerData(player)
+            local cTier = (data and data.comfortTier) or 0
+            if cTier < 2 then return end
+
+            local container = backpack.inventory
+            local parent = container.getParent and container:getParent()
+            -- Ignora inventario do jogador, chao ou mochilas no inventario
+            if not parent or not instanceof(parent, "IsoObject") or container:getType() == "floor" then return end
+
+            local cMd = container.getModData and container:getModData()
+            if not cMd or cMd.LV_ScavengerInspected then return end
+            cMd.LV_ScavengerInspected = true
+
+            -- Chance percentual de encontrar suprimento util esquecido (Tier 2: 8%, Tier 3: 12%, Tier 4: 16%)
+            local chance = (cTier == 2 and 8) or (cTier == 3 and 12) or 16
+            if ZombRand(100) < chance then
+                local lootPool = {
+                    "Base.NailsBox",
+                    "Base.Matches",
+                    "Base.Batteries",
+                    "Base.SewingKit",
+                    "Base.Thread",
+                    "Base.DuctTape",
+                    "Base.Bandage",
+                    "Base.PillsVitamins",
+                    "Base.PillsPainkiller",
+                    "Base.Twine",
+                    "Base.Scotchtape",
+                    "Base.Lighter",
+                }
+                local chosen = lootPool[ZombRand(#lootPool) + 1]
+                if chosen then
+                    local newItem = container:AddItem(chosen)
+                    if newItem then
+                        if container.setDrawDirty then container:setDrawDirty(true) end
+                        pcall(function()
+                            if player.setHaloNote then
+                                player:setHaloNote("Living House: Foco de Sobrevivente — Voce encontrou algo util no fundo!", 80, 220, 160, 250)
+                            end
+                        end)
+                        pcall(function()
+                            if player.playSound then player:playSound("ItemPlacement") end
+                        end)
+                    end
+                end
+            end
+        end
+    end
+end
+
 setupActionHooks()
 setupContextMenuSafetyHook()
+setupLootLuckHook()
 
 Events.EveryHours.Add(onEveryHoursCheck)
 Events.OnPlayerUpdate.Add(onPlayerPositionUpdate)
 Events.OnGameStart.Add(function()
     setupContextMenuSafetyHook()
+    setupLootLuckHook()
     onGameReady()
 end)
 Events.OnCreatePlayer.Add(function(pNum, player)

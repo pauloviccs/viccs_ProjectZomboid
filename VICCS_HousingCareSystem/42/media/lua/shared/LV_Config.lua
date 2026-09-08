@@ -38,7 +38,7 @@ local DEFAULTS = {
     Enable_Aquecido = true,
     Enable_Saciado = true,
     Enable_CicatrizacaoRapida = true,
-    Enable_Alerta = false,
+    Enable_Alerta = true,
     AllowLootLuckBuff = false,
 
     -- Sistema de Squalor (Insalubridade)
@@ -67,9 +67,9 @@ local DEFAULTS = {
 
     -- Necessidades Fisiologicas (Bladder / Toilet Need)
     BladderNeedEnabled = true,
-    BladderGainPerHour = 2.5,
-    BladderGainAfterEatingMultiplier = 1.5,
-    BladderNotifyThreshold = 60,
+    BladderGainPerHour = 0.8,
+    BladderGainAfterEatingMultiplier = 0.5,
+    BladderNotifyThreshold = 70,
     ToiletDirtPerUsePee = 10.0,
     ToiletDirtPerUsePoop = 25.0,
 
@@ -175,6 +175,26 @@ end
 --- Verifica se a necessidade fisiologica esta ativa.
 function LV_Config.isBladderNeedEnabled()
     return LV_Config.isEnabled() and (LV_Config.get("BladderNeedEnabled") == true)
+end
+
+--- Retorna a taxa de ganho passivo de aperto por hora in-game.
+function LV_Config.getBladderGainPerHour()
+    return math.max(0.0, tonumber(LV_Config.get("BladderGainPerHour")) or 0.8)
+end
+
+--- Retorna o multiplicador de ganho de aperto por consumo de comida e agua.
+function LV_Config.getBladderGainAfterEatingMultiplier()
+    return math.max(0.0, tonumber(LV_Config.get("BladderGainAfterEatingMultiplier")) or 0.5)
+end
+
+--- Retorna o limiar percentual de notificacao de aperto.
+function LV_Config.getBladderNotifyThreshold()
+    return math.max(10, math.min(100, tonumber(LV_Config.get("BladderNotifyThreshold")) or 70))
+end
+
+--- Verifica se o bonus de sorte e percepcao de loot (Foco na Exploracao) esta ativo.
+function LV_Config.isLootLuckEnabled()
+    return LV_Config.isEnabled() and (LV_Config.get("AllowLootLuckBuff") == true)
 end
 
 --- Verifica se a geracao visual de manchas no piso (sangue e sujeira) esta ativa.

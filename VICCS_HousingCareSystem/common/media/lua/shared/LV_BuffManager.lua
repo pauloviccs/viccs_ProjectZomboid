@@ -272,10 +272,20 @@ function LV_BuffManager.onUnsafeEnvironment(player)
         localPlayerData.comfortScore = 0
         localPlayerData.comfortTier = 0
         localPlayerData.comfortExpiryWorldHour = 0
+        local traits = player and player.getTraits and player:getTraits()
+        if traits and pMd and pMd.LV_GrantedLuckyTrait then
+            traits:remove("Lucky")
+            pMd.LV_GrantedLuckyTrait = nil
+        end
     elseif currentHour >= localPlayerData.comfortExpiryWorldHour then
         localPlayerData.comfortScore = 0
         localPlayerData.comfortTier = 0
         localPlayerData.comfortExpiryWorldHour = 0
+        local traits = player and player.getTraits and player:getTraits()
+        if traits and pMd and pMd.LV_GrantedLuckyTrait then
+            traits:remove("Lucky")
+            pMd.LV_GrantedLuckyTrait = nil
+        end
     end
     localPlayerData.isInSqualorArea = false
 end
@@ -393,6 +403,86 @@ local function applyHealingBuff(player)
     end
 end
 
+--- Atualiza a concessao da trait nativa Lucky caso o buff Foco na Exploracao esteja ativo.
+local function updateLuckyTrait(player, cTier)
+    if not player or player:isDead() then return end
+    local traits = player.getTraits and player:getTraits()
+    if not traits then return end
+
+    local pMd = player.getModData and player:getModData()
+    if not pMd then return end
+
+    local lootLuckEnabled = (LV_Config and LV_Config.isLootLuckEnabled and LV_Config.isLootLuckEnabled())
+    if lootLuckEnabled and cTier >= 2 then
+        if not player:HasTrait("Lucky") then
+            traits:add("Lucky")
+            pMd.LV_GrantedLuckyTrait = true
+        end
+    else
+        if pMd.LV_GrantedLuckyTrait then
+            traits:remove("Lucky")
+            pMd.LV_GrantedLuckyTrait = nil
+        end
+    end
+end
+
+--- Regula a temperatura corporal e reduz a progressao de resfriados (Tier 2+: Conforto Termico / Aquecido).
+local function applyThermalBuff(player, bodyDamage)
+    if not player or not bodyDamage then return end
+    pcall(function()
+        -- 1. Regula temperatura corporal em direcao a 37.0C apenas se estiver com frio.
+        -- Evita hipertermia: nunca adiciona calor se ja estiver a 37.0C ou mais.
+        if bodyDamage.getTemperature and bodyDamage.setTemperature then
+            local curTemp = bodyDamage:getTemperature()
+            if curTemp and curTemp < 37.0 then
+                bodyDamage:setTemperature(math.min(37.0, curTemp + 0.015))
+            end
+        end
+
+        -- Thermoregulator (Project Zomboid B41 / B42)
+        local thermo = bodyDamage.getThermoregulator and bodyDamage:getThermoregulator()
+        if thermo and thermo.setCoreTemperature and thermo.getCoreTemperature then
+            local coreT = thermo:getCoreTemperature()
+            if coreT and coreT < 37.0 then
+                thermo:setCoreTemperature(math.min(37.0, coreT + 0.015))
+            end
+        end
+
+        -- 2. Mitiga progressao e severidade de resfriados / gripe
+        if bodyDamage.getCatchACold and bodyDamage.setCatchACold then
+            local coldProg = bodyDamage:getCatchACold()
+            if coldProg and coldProg > 0 then
+                bodyDamage:setCatchACold(math.max(0.0, coldProg - 0.05))
+            end
+        end
+
+        if bodyDamage.getColdStrength and bodyDamage.setColdStrength then
+            local coldStr = bodyDamage:getColdStrength()
+            if coldStr and coldStr > 0 then
+                bodyDamage:setColdStrength(math.max(0.0, coldStr - 0.03))
+            end
+        end
+    end)
+end
+
+--- Reduz estresse agudo e panico em situacao de combate/mira (Tier 4: Foco e Calma em Combate / Alerta).
+local function applyCombatAlertnessBuff(player, stats, buffMult)
+    if not player or not stats then return end
+    buffMult = buffMult or 1.0
+    pcall(function()
+        local isAiming = player.isAiming and player:isAiming()
+        local curPanic = (stats.getPanic and stats:getPanic()) or 0
+
+        -- Se estiver em postura de combate (mirando) ou sob ataque com panico ativo
+        if isAiming or curPanic > 0 then
+            -- Drena panico para estabilizar as maos e recuperar precisao/dano critico
+            modifyPanic(stats, -(0.45 * buffMult))
+            -- Reduz estresse agudo de combate
+            modifyStress(stats, -(0.005 * buffMult))
+        end
+    end)
+end
+
 --- Loop de atualizacao continua dos efeitos no jogador (Events.OnPlayerUpdate).
 local function onPlayerUpdateBuffs(player)
     if not LV_Config or not LV_Config.isEnabled() or not player then return end
@@ -439,12 +529,16 @@ local function onPlayerUpdateBuffs(player)
         -- Tier 1+: Reducao de Panico
         modifyPanic(stats, -(0.15 * buffMult))
 
-        -- Tier 2+: Regeneracao de Endurance & Menor Cansaco
+        -- Tier 2+: Regeneracao de Endurance & Menor Cansaco & Conforto Termico
         if cTier >= 2 then
             modifyEndurance(stats, (0.0002 * buffMult))
 
             if LV_Config.get("Enable_Energizado") then
                 modifyFatigue(stats, -(0.00005 * buffMult))
+            end
+
+            if LV_Config.get("Enable_Aquecido") then
+                applyThermalBuff(player, bodyDamage)
             end
         end
 
@@ -461,13 +555,21 @@ local function onPlayerUpdateBuffs(player)
             end
         end
 
-        -- Tier 4: Santuario (Reducao continua de Estresse & Cura Avancada)
+        -- Tier 4: Santuario (Reducao continua de Estresse, Cura Avancada & Foco/Alerta em Combate)
         if cTier >= 4 then
             modifyStress(stats, -(0.02 * buffMult))
             applyHealingBuff(player)
+
+            if LV_Config.get("Enable_Alerta") then
+                applyCombatAlertnessBuff(player, stats, buffMult)
+            end
         end
+
+        -- Buff Opcional: Foco na Exploracao (Loot Luck Nativo)
+        updateLuckyTrait(player, cTier)
     else
         data.comfortTier = 0
+        updateLuckyTrait(player, 0)
     end
 
     -- =========================================================================

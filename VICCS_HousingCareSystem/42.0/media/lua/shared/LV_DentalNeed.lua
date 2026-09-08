@@ -57,6 +57,16 @@ end
 function LV_DentalNeed.onEatFood(player, food)
     if not player or player:isDead() then return end
 
+    -- Debounce anti-duplicacao (evita contagem dupla por Events.OnEatFood + ISEatFoodAction)
+    local nowMs = (getTimeInMillis and getTimeInMillis()) or 0
+    local pMd = player.getModData and player:getModData()
+    if pMd and nowMs > 0 then
+        if pMd.LV_LastDentalEatMs and (nowMs - pMd.LV_LastDentalEatMs) < 600 then
+            return
+        end
+        pMd.LV_LastDentalEatMs = nowMs
+    end
+
     local current = LV_DentalNeed.getNeed(player)
     local delta = 15.0 -- Ganho base padrao por refeicao
 

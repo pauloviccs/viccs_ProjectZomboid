@@ -56,7 +56,7 @@ end
 --- Retorna o Tier atual de aperto do sobrevivente (0 a 3).
 function LV_BladderNeed.getTier(player)
     local need = LV_BladderNeed.getNeed(player)
-    local notifyThreshold = LV_Config.get("BladderNotifyThreshold") or 60
+    local notifyThreshold = (LV_Config and LV_Config.getBladderNotifyThreshold and LV_Config.getBladderNotifyThreshold()) or 70
     if need >= 95 then
         return 3 -- Urgente / Critico
     elseif need >= 80 then
@@ -147,7 +147,7 @@ function LV_BladderNeed.onEveryHours(player)
     local delta = math.max(0, math.min(12, currentHour - lastHour))
     md.LV_BladderLastHour = currentHour
 
-    local gainPerHour = LV_Config.get("BladderGainPerHour") or 2.5
+    local gainPerHour = (LV_Config and LV_Config.getBladderGainPerHour and LV_Config.getBladderGainPerHour()) or 0.8
     local currentNeed = LV_BladderNeed.getNeed(player)
     local newNeed = math.min(100.0, currentNeed + (delta * gainPerHour))
     LV_BladderNeed.setNeed(player, newNeed)
@@ -165,7 +165,17 @@ end
 function LV_BladderNeed.onEatFood(player, food)
     if not LV_Config or not LV_Config.isBladderNeedEnabled() or not player then return end
 
-    local mult = (LV_Config.get and LV_Config.get("BladderGainAfterEatingMultiplier")) or 1.5
+    -- Debounce anti-duplicacao (evita contagem dupla por Events.OnEatFood + ISEatFoodAction)
+    local nowMs = (getTimeInMillis and getTimeInMillis()) or 0
+    local pMd = player.getModData and player:getModData()
+    if pMd and nowMs > 0 then
+        if pMd.LV_LastBladderEatMs and (nowMs - pMd.LV_LastBladderEatMs) < 600 then
+            return
+        end
+        pMd.LV_LastBladderEatMs = nowMs
+    end
+
+    local mult = (LV_Config and LV_Config.getBladderGainAfterEatingMultiplier and LV_Config.getBladderGainAfterEatingMultiplier()) or 0.5
     local hunger = 0.0
     local thirst = 0.0
 
@@ -177,10 +187,10 @@ function LV_BladderNeed.onEatFood(player, food)
             thirst = math.abs(food:getThirstChange())
         end
     else
-        thirst = 0.25
+        thirst = 0.08 -- Gole de agua basico de torneira/recipiente
     end
 
-    local added = math.max(5.0, math.min(30.0, (hunger * 40.0 + thirst * 30.0) * mult))
+    local added = math.max(1.0, math.min(15.0, (hunger * 15.0 + thirst * 12.0) * mult))
     local currentNeed = LV_BladderNeed.getNeed(player)
     local newNeed = math.min(100.0, currentNeed + added)
     LV_BladderNeed.setNeed(player, newNeed)
@@ -188,7 +198,7 @@ function LV_BladderNeed.onEatFood(player, food)
     print(string.format("[LivingHouse] Alimento consumido: +%.1f de necessidade fisiologica. Total: %.1f%%", added, newNeed))
 
     -- Notificacao / Halo text se cruzar o limiar de alerta
-    local notifyThreshold = LV_Config.get("BladderNotifyThreshold") or 60
+    local notifyThreshold = (LV_Config and LV_Config.getBladderNotifyThreshold and LV_Config.getBladderNotifyThreshold()) or 70
     if currentNeed < notifyThreshold and newNeed >= notifyThreshold then
         pcall(function()
             if player.setHaloNote then
