@@ -148,5 +148,29 @@ function TCG_Config.getHoloChance()
     return 33
 end
 
+--- Retorna a chance percentual (0 a 100) de um fichario encontrado vir preenchido com cartas
+function TCG_Config.getPreFilledBinderChance()
+    if SandboxVars and SandboxVars.VICCS_TCG and SandboxVars.VICCS_TCG.PreFilledBinderChance ~= nil then
+        return tonumber(SandboxVars.VICCS_TCG.PreFilledBinderChance) or 50
+    end
+    return 50
+end
+
+--- Retorna a quantidade minima de cartas em um fichario preenchido
+function TCG_Config.getPreFilledCardsMin()
+    if SandboxVars and SandboxVars.VICCS_TCG and SandboxVars.VICCS_TCG.PreFilledCardsMin ~= nil then
+        return tonumber(SandboxVars.VICCS_TCG.PreFilledCardsMin) or 3
+    end
+    return 3
+end
+
+--- Retorna a quantidade maxima de cartas em um fichario preenchido
+function TCG_Config.getPreFilledCardsMax()
+    if SandboxVars and SandboxVars.VICCS_TCG and SandboxVars.VICCS_TCG.PreFilledCardsMax ~= nil then
+        return tonumber(SandboxVars.VICCS_TCG.PreFilledCardsMax) or 12
+    end
+    return 12
+end
+
 Events.OnGameStart.Add(initModOptions)
 

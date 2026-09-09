@@ -28,8 +28,38 @@ TCG_Theme.TEXT_WHITE    = {0.88, 0.92, 0.96}
 TCG_Theme.TEXT_MUTED    = {0.55, 0.60, 0.65}
 TCG_Theme.BORDER_ALPHA  = 0.22
 
---- Desenha o fundo Soft Glass escuro com a linha de destaque lateral ciano
-function TCG_Theme.drawGlassBackdrop(panel, x, y, w, h, showAccent)
+-- Paletas Tematicas de Cores do Fichario
+TCG_Theme.THEMES = {
+    CYAN     = { name = "Ciano",     col = {0.36, 0.76, 0.86} },
+    RUBY     = { name = "Rubi",      col = {0.95, 0.28, 0.25} },
+    SAPPHIRE = { name = "Safira",    col = {0.22, 0.58, 0.98} },
+    EMERALD  = { name = "Esmeralda", col = {0.25, 0.85, 0.45} },
+    GOLD     = { name = "Ouro",      col = {0.98, 0.82, 0.25} },
+    AMETHYST = { name = "Ametista",  col = {0.75, 0.38, 0.95} }
+}
+
+TCG_Theme.THEME_KEYS = { "CYAN", "RUBY", "SAPPHIRE", "EMERALD", "GOLD", "AMETHYST" }
+
+TCG_Theme.BADGES = {
+    "COLLECTOR",
+    "MASTER",
+    "HOLO",
+    "TRADES",
+    "VINTAGE",
+    "COMPLETE"
+}
+
+TCG_Theme.BADGE_LABELS = {
+    COLLECTOR = { pt = "[COLECIONADOR]", en = "[COLLECTOR]" },
+    MASTER    = { pt = "[* MESTRE]",      en = "[* MASTER]" },
+    HOLO      = { pt = "[+ HOLO ONLY]",  en = "[+ HOLO ONLY]" },
+    TRADES    = { pt = "[= TROCAS]",     en = "[= TRADES]" },
+    VINTAGE   = { pt = "[1999 VINTAGE]", en = "[1999 VINTAGE]" },
+    COMPLETE  = { pt = "[# COMPLETO]",   en = "[# COMPLETE]" }
+}
+
+--- Desenha o fundo Soft Glass escuro com a linha de destaque lateral personalizada
+function TCG_Theme.drawGlassBackdrop(panel, x, y, w, h, showAccent, customAccentColor)
     -- Fundo translucido escuro
     panel:drawRect(x, y, w, h, TCG_Theme.BG_ALPHA, TCG_Theme.BG_R, TCG_Theme.BG_G, TCG_Theme.BG_B)
     
@@ -38,7 +68,7 @@ function TCG_Theme.drawGlassBackdrop(panel, x, y, w, h, showAccent)
 
     -- Linha de acento lateral esquerda (2px)
     if showAccent ~= false then
-        local c = TCG_Theme.CYAN
+        local c = customAccentColor or TCG_Theme.CYAN
         panel:drawRect(x, y, 2, h, 0.95, c[1], c[2], c[3])
     end
 end

@@ -1,19 +1,60 @@
 Sandbox_EN = {
     Sandbox_VICCS_TCG = "VICCS - Trading Card Game (1999)",
+    UI_Sandbox_VICCS_TCG = "VICCS - Trading Card Game (1999)",
+
+    -- Spawn Frequency
+    Sandbox_SpawnRate = "Booster Pack Spawn Frequency",
     Sandbox_VICCS_TCG_SpawnRate = "Booster Pack Spawn Frequency",
-    Sandbox_VICCS_TCG_SpawnRate_tooltip = "Adjusts the overall rarity of card boosters and binders in the world.",
+    Sandbox_SpawnRate_tooltip = "Adjusts the overall frequency of booster packs and binders appearing in the world.",
+    Sandbox_VICCS_TCG_SpawnRate_tooltip = "Adjusts the overall frequency of booster packs and binders appearing in the world.",
+    Sandbox_SpawnRate_option1 = "Very Rare (0.25x)",
     Sandbox_VICCS_TCG_SpawnRate_option1 = "Very Rare (0.25x)",
+    Sandbox_SpawnRate_option2 = "Rare (0.5x)",
     Sandbox_VICCS_TCG_SpawnRate_option2 = "Rare (0.5x)",
-    Sandbox_VICCS_TCG_SpawnRate_option3 = "Standard (1.0x)",
+    Sandbox_SpawnRate_option3 = "Standard Normal (1.0x)",
+    Sandbox_VICCS_TCG_SpawnRate_option3 = "Standard Normal (1.0x)",
+    Sandbox_SpawnRate_option4 = "Abundant (2.0x)",
     Sandbox_VICCS_TCG_SpawnRate_option4 = "Abundant (2.0x)",
+    Sandbox_SpawnRate_option5 = "Very Abundant (4.0x)",
     Sandbox_VICCS_TCG_SpawnRate_option5 = "Very Abundant (4.0x)",
+    Sandbox_SpawnRate_option6 = "Disabled (No Spawns)",
     Sandbox_VICCS_TCG_SpawnRate_option6 = "Disabled (No Spawns)",
-    Sandbox_VICCS_TCG_AllowResidential = "Allow Spawns in Residential Homes",
-    Sandbox_VICCS_TCG_AllowResidential_tooltip = "Allows boosters and cards to spawn on living room tables and nightstands in houses.",
-    Sandbox_VICCS_TCG_AllowSchool = "Allow Spawns in Schools and Child Bedrooms",
-    Sandbox_VICCS_TCG_AllowSchool_tooltip = "Allows cards and boosters to spawn in school lockers and children's wardrobes.",
-    Sandbox_VICCS_TCG_AllowCommercial = "Allow Spawns in Stores and Bookstores",
-    Sandbox_VICCS_TCG_AllowCommercial_tooltip = "Allows boosters and binders in comic bookstores and toy shops.",
+
+    -- Spawn Locations
+    Sandbox_AllowResidential = "Spawn in Residential Houses",
+    Sandbox_VICCS_TCG_AllowResidential = "Spawn in Residential Houses",
+    Sandbox_AllowResidential_tooltip = "Allows booster packs and cards to spawn on coffee tables and bedroom nightstands.",
+    Sandbox_VICCS_TCG_AllowResidential_tooltip = "Allows booster packs and cards to spawn on coffee tables and bedroom nightstands.",
+
+    Sandbox_AllowSchool = "Spawn in Schools and Child Rooms",
+    Sandbox_VICCS_TCG_AllowSchool = "Spawn in Schools and Child Rooms",
+    Sandbox_AllowSchool_tooltip = "Allows cards to spawn in school lockers and children's wardrobes.",
+    Sandbox_VICCS_TCG_AllowSchool_tooltip = "Allows cards to spawn in school lockers and children's wardrobes.",
+
+    Sandbox_AllowCommercial = "Spawn in Stores and Bookstores",
+    Sandbox_VICCS_TCG_AllowCommercial = "Spawn in Stores and Bookstores",
+    Sandbox_AllowCommercial_tooltip = "Allows boosters and binders to spawn in comic book shops, toy stores and bookstores.",
+    Sandbox_VICCS_TCG_AllowCommercial_tooltip = "Allows boosters and binders to spawn in comic book shops, toy stores and bookstores.",
+
+    -- Holo Probability
+    Sandbox_HoloChancePercent = "Holographic Foil Card Chance (%)",
     Sandbox_VICCS_TCG_HoloChancePercent = "Holographic Foil Card Chance (%)",
-    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Chance (0% to 100%) for the booster's rare slot to be a Holo Foil card.",
+    Sandbox_HoloChancePercent_tooltip = "Probability (0% to 100%) for the booster's rare slot to be a Holo Foil card.",
+    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probability (0% to 100%) for the booster's rare slot to be a Holo Foil card.",
+
+    -- Pre-Filled Binders
+    Sandbox_PreFilledBinderChance = "Chance of Abandoned Binder with Cards (%)",
+    Sandbox_VICCS_TCG_PreFilledBinderChance = "Chance of Abandoned Binder with Cards (%)",
+    Sandbox_PreFilledBinderChance_tooltip = "Probability that a binder found in the world already contains cards saved by a former collector.",
+    Sandbox_VICCS_TCG_PreFilledBinderChance_tooltip = "Probability that a binder found in the world already contains cards saved by a former collector.",
+
+    Sandbox_PreFilledCardsMin = "Minimum Cards in Abandoned Binder",
+    Sandbox_VICCS_TCG_PreFilledCardsMin = "Minimum Cards in Abandoned Binder",
+    Sandbox_PreFilledCardsMin_tooltip = "Minimum number of cards that can be pre-filled inside a found binder (min 1).",
+    Sandbox_VICCS_TCG_PreFilledCardsMin_tooltip = "Minimum number of cards that can be pre-filled inside a found binder (min 1).",
+
+    Sandbox_PreFilledCardsMax = "Maximum Cards in Abandoned Binder",
+    Sandbox_VICCS_TCG_PreFilledCardsMax = "Maximum Cards in Abandoned Binder",
+    Sandbox_PreFilledCardsMax_tooltip = "Maximum number of cards that can be pre-filled inside a found binder (max 102).",
+    Sandbox_VICCS_TCG_PreFilledCardsMax_tooltip = "Maximum number of cards that can be pre-filled inside a found binder (max 102).",
 }

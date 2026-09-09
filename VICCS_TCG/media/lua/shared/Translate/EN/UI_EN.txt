@@ -4,4 +4,7 @@ UI_EN = {
     UI_TCG_OpenBinder = "Open Binder",
     UI_TCG_AutoStash = "Auto-Store from Backpack",
     UI_TCG_Language = "Language",
+    IGUI_ItemCat_TCG = "TCG Cards",
+    IGUI_ItemCat_TCG_Booster = "Card Booster",
+    IGUI_ItemCat_TCG_Binder = "TCG Binder",
 }

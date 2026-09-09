@@ -1,7 +1,10 @@
 UI_PTBR = {
     UI_TCG_OpenBooster = "Abrir Pacote de Cartas",
     UI_TCG_InspectCard = "Examinar Carta",
-    UI_TCG_OpenBinder = "Abrir Fichário",
+    UI_TCG_OpenBinder = "Abrir Fichario",
     UI_TCG_AutoStash = "Auto-Guardar da Mochila",
     UI_TCG_Language = "Idioma",
+    IGUI_ItemCat_TCG = "Cartas TCG",
+    IGUI_ItemCat_TCG_Booster = "Pacote de Cartas",
+    IGUI_ItemCat_TCG_Binder = "Fichario TCG",
 }

@@ -17,12 +17,13 @@ require "TCG_Theme"
 require "TCG_Config"
 require "TCG_CardRegistry"
 require "TCG_CardInspectModal"
+require "TCG_BinderUI"
 
 TCG_RevealModal = ISPanel:derive("TCG_RevealModal")
 
 local instance = nil
 
-function TCG_RevealModal:new(cards)
+function TCG_RevealModal:new(cards, playerObj, spawnedCards)
     local screenW = getCore():getScreenWidth()
     local screenH = getCore():getScreenHeight()
     local w = 620
@@ -35,6 +36,8 @@ function TCG_RevealModal:new(cards)
     self.__index = self
 
     o.cards = cards or {}
+    o.playerObj = playerObj or getPlayer()
+    o.spawnedCards = spawnedCards or {}
     o.currentIndex = 1
     o.moveWithMouse = false
     o.isDragging = false
@@ -45,14 +48,14 @@ function TCG_RevealModal:new(cards)
     return o
 end
 
-function TCG_RevealModal.show(cards)
+function TCG_RevealModal.show(cards, playerObj, spawnedCards)
     if instance then
         instance:setVisible(false)
         instance:removeFromUIManager()
         instance = nil
     end
 
-    instance = TCG_RevealModal:new(cards)
+    instance = TCG_RevealModal:new(cards, playerObj, spawnedCards)
     instance:initialise()
     instance:instantiate()
     instance:addToUIManager()
@@ -132,20 +135,45 @@ function TCG_RevealModal:onMouseUp(x, y)
             end
         end
 
-        -- Botao [REVELAR PROXIMA] (x: 35, y: 454, w: 260, h: 32)
+        -- Botao [REVELAR PROXIMA] / [CONCLUIR (MANTER NA MOCHILA)] (x: 35, y: 454, w: 260, h: 32)
         if x >= 35 and x <= 295 and y >= 454 and y <= 486 then
-            self:revealNext()
+            if self.currentIndex < #self.cards then
+                self:revealNext()
+            else
+                self:closeModal()
+            end
             return true
         end
 
-        -- Botao [GUARDAR TODAS] (x: 315, y: 454, w: 270, h: 32)
+        -- Botao [GUARDAR TODAS NO FICHARIO] (x: 315, y: 454, w: 270, h: 32)
         if x >= 315 and x <= 585 and y >= 454 and y <= 486 then
-            self:closeModal()
+            self:storeAndClose()
             return true
         end
     end
 
     return true
+end
+
+function TCG_RevealModal:storeAndClose()
+    local player = self.playerObj or getPlayer()
+    local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+    local binders = (TCG_BinderUI and TCG_BinderUI.findPlayerBinders) and TCG_BinderUI.findPlayerBinders(player) or {}
+
+    if #binders > 0 and self.spawnedCards and #self.spawnedCards > 0 then
+        local targetBinder = binders[1]
+        TCG_BinderUI.storeCardsList(targetBinder, self.spawnedCards, player)
+        self.spawnedCards = {}
+    else
+        if player and player.setHaloNote then
+            local msg = isPT and "Nenhum fichario encontrado! Cartas mantidas na mochila."
+                             or "No binder found! Cards kept in backpack."
+            pcall(function() player:setHaloNote(msg, 240, 200, 80, 250) end)
+        end
+        TCG_Theme.playAudio("ItemPlacement", "PutItemInBag")
+    end
+
+    self:closeModal()
 end
 
 function TCG_RevealModal:onMouseMove(dx, dy)
@@ -169,8 +197,6 @@ function TCG_RevealModal:revealNext()
         else
             TCG_Theme.playAudio("PageTurn", "UI_SelectCard")
         end
-    else
-        self:closeModal()
     end
 end
 
@@ -336,9 +362,16 @@ function TCG_RevealModal:render()
     local isNextHover = (mx >= 35 and mx <= 295 and my >= btnY and my <= (btnY + 32))
     local nextLabel = (self.currentIndex < #self.cards)
                         and (isPT and "REVELAR PROXIMA CARTA" or "REVEAL NEXT CARD")
-                        or (isPT and "FINALIZAR E GUARDAR" or "FINISH & STORE")
+                        or (isPT and "CONCLUIR (MANTER NA MOCHILA)" or "DONE (KEEP IN BACKPACK)")
     TCG_Theme.drawTacticalButton(self, nextLabel, 35, btnY, 260, 32, isNextHover, TCG_Theme.CYAN)
 
     local isStoreHover = (mx >= 315 and mx <= 585 and my >= btnY and my <= (btnY + 32))
-    TCG_Theme.drawTacticalButton(self, isPT and "GUARDAR TODAS NA MOCHILA" or "STORE ALL IN BACKPACK", 315, btnY, 270, 32, isStoreHover, TCG_Theme.GREEN)
+    local player = self.playerObj or getPlayer()
+    local binders = (TCG_BinderUI and TCG_BinderUI.findPlayerBinders) and TCG_BinderUI.findPlayerBinders(player) or {}
+    local hasBinder = (#binders > 0)
+    local storeColor = hasBinder and TCG_Theme.GREEN or TCG_Theme.AMBER
+    local storeLabel = hasBinder
+                        and (isPT and "GUARDAR TODAS NO FICHARIO" or "STORE ALL IN BINDER")
+                        or (isPT and "GUARDAR NA MOCHILA" or "STORE IN BACKPACK")
+    TCG_Theme.drawTacticalButton(self, storeLabel, 315, btnY, 270, 32, isStoreHover, storeColor)
 end

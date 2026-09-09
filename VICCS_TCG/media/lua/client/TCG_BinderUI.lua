@@ -69,26 +69,183 @@ function TCG_BinderUI.open(binderItem)
     return instance
 end
 
-function TCG_BinderUI:getBinderData()
-    if not self.binderItem then return { collected = {} } end
-    local md = self.binderItem:getModData()
+--- Inicializa e garante persistencia isolada por item fisico (Anti-Shared State com UUID)
+function TCG_BinderUI.getBinderDataFromItem(binderItem)
+    if not binderItem then return { collected = {} } end
+    local md = binderItem:getModData()
     if not md.TCG_Binder then
+        local uniqueId = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000, 999999))
         md.TCG_Binder = {
+            uuid = uniqueId,
             setId = "base1",
+            customName = "",
+            themeColor = "CYAN",
+            badge = "COLLECTOR",
             collected = {}
         }
     end
+
+    if not md.TCG_Binder.uuid then
+        md.TCG_Binder.uuid = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000, 999999))
+    end
+    if not md.TCG_Binder.themeColor then
+        md.TCG_Binder.themeColor = "CYAN"
+    end
+    if not md.TCG_Binder.badge then
+        md.TCG_Binder.badge = "COLLECTOR"
+    end
+    if not md.TCG_Binder.collected then
+        md.TCG_Binder.collected = {}
+    end
+
     return md.TCG_Binder
 end
 
-function TCG_BinderUI:getCollectionStats()
-    local bData = self:getBinderData()
+function TCG_BinderUI.getCollectionStatsForItem(binderItem)
+    local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
     local count = 0
     for _ in pairs(bData.collected) do
         count = count + 1
     end
     local pct = (count / TOTAL_CARDS) * 100.0
     return count, pct
+end
+
+--- Varre o inventario e mochilas/bolsas equipadas do jogador em busca de ficharios fisicos
+function TCG_BinderUI.findPlayerBinders(playerObj)
+    if not playerObj then return {} end
+    local binders = {}
+    local inv = playerObj:getInventory()
+
+    local function scan(container)
+        if not container then return end
+        local items = container:getItems()
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            if it then
+                local fullType = it:getFullType()
+                if fullType == "Base.TCG_Binder" or fullType == "TCG_Binder" then
+                    table.insert(binders, it)
+                end
+                if it:IsInventoryContainer() and it:getItemContainer() then
+                    scan(it:getItemContainer())
+                end
+            end
+        end
+    end
+
+    scan(inv)
+    return binders
+end
+
+--- Transfere uma carta de forma atomica para o fichario fisico especificado
+function TCG_BinderUI.storeCard(binderItem, cardItem, playerObj)
+    if not binderItem or not cardItem then return false end
+    local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
+    local md = cardItem:getModData()
+    local cid = md.cardId or (md.cardNumber and string.format("base1-%03d", md.cardNumber))
+    if not cid then return false end
+
+    if not bData.collected[cid] then
+        bData.collected[cid] = {
+            number = md.cardNumber or 1,
+            isHolo = md.isHolo or false,
+            count = 1
+        }
+    else
+        bData.collected[cid].count = (bData.collected[cid].count or 1) + 1
+        if md.isHolo then
+            bData.collected[cid].isHolo = true
+        end
+    end
+
+    local container = cardItem:getContainer()
+    if container then
+        container:Remove(cardItem)
+    elseif playerObj then
+        playerObj:getInventory():Remove(cardItem)
+    end
+    return true
+end
+
+--- Transfere uma lista de cartas para o fichario com efeito sonoro e feedback visual
+function TCG_BinderUI.storeCardsList(binderItem, cardItems, playerObj)
+    if not binderItem or not cardItems or #cardItems == 0 then return 0 end
+    local storedCount = 0
+    for _, cardIt in ipairs(cardItems) do
+        if TCG_BinderUI.storeCard(binderItem, cardIt, playerObj) then
+            storedCount = storedCount + 1
+        end
+    end
+
+    if storedCount > 0 then
+        TCG_Theme.playAudio("ItemPlacement", "PutItemInBag")
+        local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+        local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
+        local binderTitle = (bData.customName and bData.customName ~= "") and bData.customName or (isPT and "Fichario" or "Binder")
+        local msg = isPT and string.format("%d carta(s) guardada(s) no %s!", storedCount, binderTitle)
+                          or string.format("%d card(s) stored in %s!", storedCount, binderTitle)
+        if playerObj and playerObj.setHaloNote then
+            pcall(function() playerObj:setHaloNote(msg, 90, 220, 140, 250) end)
+        end
+    end
+    return storedCount
+end
+
+function TCG_BinderUI:getBinderData()
+    return TCG_BinderUI.getBinderDataFromItem(self.binderItem)
+end
+
+function TCG_BinderUI:getCollectionStats()
+    return TCG_BinderUI.getCollectionStatsForItem(self.binderItem)
+end
+
+function TCG_BinderUI:cycleBadge()
+    local bData = self:getBinderData()
+    local current = bData.badge or "COLLECTOR"
+    local nextBadge = "COLLECTOR"
+    for i, k in ipairs(TCG_Theme.BADGES) do
+        if k == current then
+            nextBadge = TCG_Theme.BADGES[(i % #TCG_Theme.BADGES) + 1]
+            break
+        end
+    end
+    bData.badge = nextBadge
+    TCG_Theme.playAudio("UI_ButtonSelect")
+end
+
+function TCG_BinderUI:onRenameClick()
+    local player = getPlayer()
+    local playerNum = player and player:getPlayerNum() or 0
+    local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+    local bData = self:getBinderData()
+    local curName = bData.customName or ""
+    local title = isPT and "Renomear Fichario TCG:" or "Rename TCG Binder:"
+
+    local modal = ISTextBox:new(0, 0, 280, 160, title, curName, self, TCG_BinderUI.onRenameConfirm, playerNum)
+    modal:initialise()
+    modal:addToUIManager()
+end
+
+function TCG_BinderUI:onRenameConfirm(button)
+    if button.internal == "OK" then
+        local entry = (button.parent and button.parent.entry) or (button.target and button.target.entry)
+        local text = entry and entry:getText()
+        if text then
+            local bData = self:getBinderData()
+            bData.customName = tostring(text)
+            if self.binderItem then
+                local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+                local baseLabel = isPT and "Fichario TCG" or "TCG Binder"
+                if text ~= "" then
+                    self.binderItem:setName(string.format("%s: %s", baseLabel, text))
+                else
+                    self.binderItem:setName(baseLabel)
+                end
+            end
+            TCG_Theme.playAudio("UI_ButtonSelect")
+        end
+    end
 end
 
 function TCG_BinderUI:onMouseDown(x, y)
@@ -116,17 +273,40 @@ function TCG_BinderUI:onMouseUp(x, y)
             return true
         end
 
-        -- Botao [IDIOMA: PT / EN]
-        if x >= (self.width - 390) and x <= (self.width - 275) and y >= 8 and y <= 32 then
+        -- Botao [AUTO-GUARDAR DA MOCHILA] (x: width - 230 a width - 70, y: 8 a 32)
+        if x >= (self.width - 230) and x <= (self.width - 70) and y >= 8 and y <= 32 then
+            self:autoStoreCards()
+            return true
+        end
+
+        -- Botao [IDIOMA: PT / EN] (x: width - 325 a width - 235, y: 8 a 32)
+        if x >= (self.width - 325) and x <= (self.width - 235) and y >= 8 and y <= 32 then
             TCG_Config.toggleLanguage()
             TCG_Theme.playAudio("UI_ButtonSelect")
             return true
         end
 
-        -- Botao [AUTO-GUARDAR DA MOCHILA]
-        if x >= (self.width - 265) and x <= (self.width - 70) and y >= 8 and y <= 32 then
-            self:autoStoreCards()
+        -- Botao [RENOMEAR] (x: width - 415 a width - 330, y: 8 a 32)
+        if x >= (self.width - 415) and x <= (self.width - 330) and y >= 8 and y <= 32 then
+            self:onRenameClick()
             return true
+        end
+
+        -- Botao [TAG] (x: width - 530 a width - 420, y: 8 a 32)
+        if x >= (self.width - 530) and x <= (self.width - 420) and y >= 8 and y <= 32 then
+            self:cycleBadge()
+            return true
+        end
+
+        -- Chips de Cor da Capa (Linha 2, x: width - 180 ate width - 20, y: 34 a 52)
+        if x >= (self.width - 180) and x <= (self.width - 20) and y >= 34 and y <= 52 then
+            local chipIdx = math.floor((x - (self.width - 180)) / 26) + 1
+            if chipIdx >= 1 and chipIdx <= #TCG_Theme.THEME_KEYS then
+                local bData = self:getBinderData()
+                bData.themeColor = TCG_Theme.THEME_KEYS[chipIdx]
+                TCG_Theme.playAudio("UI_ButtonSelect")
+                return true
+            end
         end
 
         -- Botao [< ANTERIOR]
@@ -178,50 +358,20 @@ end
 --- Transfere automaticamente todas as cartas Base Set do inventario para o fichario
 function TCG_BinderUI:autoStoreCards()
     local player = getPlayer()
-    if not player then return end
+    if not player or not self.binderItem then return end
     local inv = player:getInventory()
-    local bData = self:getBinderData()
 
     local items = inv:getItems()
-    local storedCount = 0
-    local toRemove = {}
-
+    local cardItems = {}
     for i = 0, items:size() - 1 do
         local it = items:get(i)
-        if it and it:getFullType() == "Base.TCG_Card" then
-            local md = it:getModData()
-            local cid = md.cardId or (md.cardNumber and string.format("base1-%03d", md.cardNumber))
-            if cid then
-                if not bData.collected[cid] then
-                    bData.collected[cid] = {
-                        number = md.cardNumber or 1,
-                        isHolo = md.isHolo or false,
-                        count = 1
-                    }
-                else
-                    bData.collected[cid].count = (bData.collected[cid].count or 1) + 1
-                    if md.isHolo then
-                        bData.collected[cid].isHolo = true
-                    end
-                end
-                table.insert(toRemove, it)
-                storedCount = storedCount + 1
-            end
+        if it and (it:getFullType() == "Base.TCG_Card" or it:getFullType() == "TCG_Card") then
+            table.insert(cardItems, it)
         end
     end
 
-    for _, it in ipairs(toRemove) do
-        inv:Remove(it)
-    end
-
-    if storedCount > 0 then
-        TCG_Theme.playAudio("ItemPlacement", "PutItemInBag")
-        local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
-        local msg = isPT and string.format("%d cartas organizadas no fichario!", storedCount)
-                          or string.format("%d cards stored in binder!", storedCount)
-        if player.setHaloNote then
-            pcall(function() player:setHaloNote(msg, 90, 220, 140, 250) end)
-        end
+    if #cardItems > 0 then
+        TCG_BinderUI.storeCardsList(self.binderItem, cardItems, player)
     else
         TCG_Theme.playAudio("UI_ToggleOff")
     end
@@ -419,12 +569,21 @@ function TCG_BinderUI:render()
     local mx = self.mouseX or -1
     local my = self.mouseY or -1
 
-    -- 1. Fundo Soft Glass
-    TCG_Theme.drawGlassBackdrop(self, 0, 0, self.width, self.height, true)
+    -- 1. Fundo Soft Glass com cor tematica da capa
+    local bData = self:getBinderData()
+    local themeKey = bData.themeColor or "CYAN"
+    local themeDef = TCG_Theme.THEMES[themeKey] or TCG_Theme.THEMES["CYAN"]
+    local accentCol = themeDef.col
 
-    -- Cabecalho
-    local titleText = isPT and "FICHARIO DE COLECIONADOR: BASE SET 1999" or "COLLECTOR BINDER: BASE SET 1999"
-    self:drawText(titleText, 20, 11, TCG_Theme.CYAN[1], TCG_Theme.CYAN[2], TCG_Theme.CYAN[3], 1.0, UIFont.Medium)
+    TCG_Theme.drawGlassBackdrop(self, 0, 0, self.width, self.height, true, accentCol)
+
+    -- Cabecalho & Titulo Customizado com Badge
+    local badgeKey = bData.badge or "COLLECTOR"
+    local badgeDef = TCG_Theme.BADGE_LABELS[badgeKey] or TCG_Theme.BADGE_LABELS["COLLECTOR"]
+    local badgeStr = isPT and badgeDef.pt or badgeDef.en
+    local customName = (bData.customName and bData.customName ~= "") and bData.customName or (isPT and "Fichario Base Set 1999" or "Base Set 1999 Binder")
+    local fullTitle = string.format("%s %s", badgeStr, customName)
+    self:drawText(fullTitle, 20, 11, accentCol[1], accentCol[2], accentCol[3], 1.0, UIFont.Medium)
 
     -- Botoes do Topo: Grip [M] e Fechar [X]
     local isHoverGrip = (mx >= (self.width - 64) and mx <= (self.width - 38) and my >= 8 and my <= 30)
@@ -433,21 +592,52 @@ function TCG_BinderUI:render()
     local isHoverClose = (mx >= (self.width - 34) and mx <= (self.width - 8) and my >= 8 and my <= 30)
     TCG_Theme.drawCloseButton(self, self.width - 34, 8, 26, 22, isHoverClose)
 
-    -- Estatisticas da Colecao
-    local collectedCount, pct = self:getCollectionStats()
-    local statsText = isPT and string.format("Colecao: %d / %d (%.1f%%) - Botao Esq: Inspecionar | Botao Dir: Retirar para Mochila", collectedCount, TOTAL_CARDS, pct)
-                           or string.format("Collection: %d / %d (%.1f%%) - Left Click: Inspect | Right Click: Withdraw to Bag", collectedCount, TOTAL_CARDS, pct)
-    self:drawText(statsText, 20, 36, 0.80, 0.85, 0.90, 1.0, UIFont.Small)
+    -- Botoes de Acao do Topo
+    -- Botao [AUTO-GUARDAR DA MOCHILA]
+    local autoStoreBtn = isPT and "AUTO-GUARDAR" or "AUTO-STORE"
+    local isStoreHover = (mx >= (self.width - 230) and mx <= (self.width - 70) and my >= 8 and my <= 32)
+    TCG_Theme.drawTacticalButton(self, autoStoreBtn, self.width - 230, 8, 160, 24, isStoreHover, TCG_Theme.GREEN)
 
     -- Botao [IDIOMA: PT] / [LANG: EN]
     local langBtn = isPT and "IDIOMA: PT" or "LANG: EN"
-    local isLangHover = (mx >= (self.width - 390) and mx <= (self.width - 275) and my >= 8 and my <= 32)
-    TCG_Theme.drawTacticalButton(self, langBtn, self.width - 390, 8, 115, 24, isLangHover, TCG_Theme.AMBER)
+    local isLangHover = (mx >= (self.width - 325) and mx <= (self.width - 235) and my >= 8 and my <= 32)
+    TCG_Theme.drawTacticalButton(self, langBtn, self.width - 325, 8, 90, 24, isLangHover, TCG_Theme.AMBER)
 
-    -- Botao [AUTO-GUARDAR DA MOCHILA]
-    local autoStoreBtn = isPT and "AUTO-GUARDAR DA MOCHILA" or "AUTO-STORE FROM BAG"
-    local isStoreHover = (mx >= (self.width - 265) and mx <= (self.width - 70) and my >= 8 and my <= 32)
-    TCG_Theme.drawTacticalButton(self, autoStoreBtn, self.width - 265, 8, 195, 24, isStoreHover, TCG_Theme.GREEN)
+    -- Botao [RENOMEAR]
+    local renameBtn = isPT and "RENOMEAR" or "RENAME"
+    local isRenameHover = (mx >= (self.width - 415) and mx <= (self.width - 330) and my >= 8 and my <= 32)
+    TCG_Theme.drawTacticalButton(self, renameBtn, self.width - 415, 8, 85, 24, isRenameHover, accentCol)
+
+    -- Botao [TAG]
+    local tagBtn = isPT and "TAG" or "BADGE"
+    local isTagHover = (mx >= (self.width - 530) and mx <= (self.width - 420) and my >= 8 and my <= 32)
+    TCG_Theme.drawTacticalButton(self, tagBtn, self.width - 530, 8, 110, 24, isTagHover, accentCol)
+
+    -- Estatisticas da Colecao (Linha 2, esquerda)
+    local collectedCount, pct = self:getCollectionStats()
+    local statsText = isPT and string.format("Colecao: %d / %d (%.1f%%) | Esq: Inspecionar | Dir: Retirar", collectedCount, TOTAL_CARDS, pct)
+                           or string.format("Collection: %d / %d (%.1f%%) | Left: Inspect | Right: Withdraw", collectedCount, TOTAL_CARDS, pct)
+    self:drawText(statsText, 20, 36, 0.80, 0.85, 0.90, 1.0, UIFont.Small)
+
+    -- Chips de Cor da Capa (Linha 2, direita)
+    local colorLabel = isPT and "COR:" or "THEME:"
+    self:drawText(colorLabel, self.width - 230, 36, 0.70, 0.75, 0.80, 1.0, UIFont.Small)
+    for cIdx, cKey in ipairs(TCG_Theme.THEME_KEYS) do
+        local cDef = TCG_Theme.THEMES[cKey]
+        local chipX = (self.width - 180) + ((cIdx - 1) * 26)
+        local chipY = 36
+        local isChipSelected = (cKey == themeKey)
+        local isChipHover = (mx >= chipX and mx <= (chipX + 20) and my >= chipY and my <= (chipY + 14))
+
+        self:drawRect(chipX, chipY, 20, 14, 0.90, cDef.col[1], cDef.col[2], cDef.col[3])
+        if isChipSelected then
+            self:drawRectBorder(chipX - 1, chipY - 1, 22, 16, 1.0, 1.0, 1.0, 1.0)
+        elseif isChipHover then
+            self:drawRectBorder(chipX, chipY, 20, 14, 0.60, 1.0, 1.0, 1.0)
+        else
+            self:drawRectBorder(chipX, chipY, 20, 14, 0.25, 0.0, 0.0, 0.0)
+        end
+    end
 
     -- Divisoria do Cabecalho
     self:drawRect(16, 54, self.width - 32, 1, 0.20, 1, 1, 1)
@@ -458,7 +648,6 @@ function TCG_BinderUI:render()
     -- 2. Renderizacao dos 18 Slots
     local startNum = ((self.currentPage - 1) * SLOTS_PER_PAGE) + 1
     local slotW, slotH = 74, 104
-    local bData = self:getBinderData()
 
     for i = 0, 17 do
         local cardNum = startNum + i
@@ -492,7 +681,7 @@ function TCG_BinderUI:render()
 
                 -- Efeito Hover / Selecao
                 if isSlotHover then
-                    self:drawRectBorder(sx - 2, sy - 2, slotW + 4, slotH + 4, 0.95, TCG_Theme.CYAN[1], TCG_Theme.CYAN[2], TCG_Theme.CYAN[3])
+                    self:drawRectBorder(sx - 2, sy - 2, slotW + 4, slotH + 4, 0.95, accentCol[1], accentCol[2], accentCol[3])
                 end
 
                 -- Destaque se for Holografica

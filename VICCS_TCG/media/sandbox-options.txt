@@ -6,7 +6,7 @@ option VICCS_TCG.SpawnRate
     numValues = 6,
     default = 3,
     page = VICCS_TCG,
-    translation = SpawnRate,
+    translation = VICCS_TCG_SpawnRate,
 }
 
 option VICCS_TCG.AllowResidential
@@ -14,7 +14,7 @@ option VICCS_TCG.AllowResidential
     type = boolean,
     default = true,
     page = VICCS_TCG,
-    translation = AllowResidential,
+    translation = VICCS_TCG_AllowResidential,
 }
 
 option VICCS_TCG.AllowSchool
@@ -22,7 +22,7 @@ option VICCS_TCG.AllowSchool
     type = boolean,
     default = true,
     page = VICCS_TCG,
-    translation = AllowSchool,
+    translation = VICCS_TCG_AllowSchool,
 }
 
 option VICCS_TCG.AllowCommercial
@@ -30,7 +30,7 @@ option VICCS_TCG.AllowCommercial
     type = boolean,
     default = true,
     page = VICCS_TCG,
-    translation = AllowCommercial,
+    translation = VICCS_TCG_AllowCommercial,
 }
 
 option VICCS_TCG.HoloChancePercent
@@ -40,5 +40,35 @@ option VICCS_TCG.HoloChancePercent
     max = 100,
     default = 33,
     page = VICCS_TCG,
-    translation = HoloChancePercent,
+    translation = VICCS_TCG_HoloChancePercent,
+}
+
+option VICCS_TCG.PreFilledBinderChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 50,
+    page = VICCS_TCG,
+    translation = VICCS_TCG_PreFilledBinderChance,
+}
+
+option VICCS_TCG.PreFilledCardsMin
+{
+    type = integer,
+    min = 1,
+    max = 102,
+    default = 3,
+    page = VICCS_TCG,
+    translation = VICCS_TCG_PreFilledCardsMin,
+}
+
+option VICCS_TCG.PreFilledCardsMax
+{
+    type = integer,
+    min = 1,
+    max = 102,
+    default = 12,
+    page = VICCS_TCG,
+    translation = VICCS_TCG_PreFilledCardsMax,
 }

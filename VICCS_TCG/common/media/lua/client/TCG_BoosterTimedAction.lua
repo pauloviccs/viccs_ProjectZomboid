@@ -53,6 +53,7 @@ function TCG_BoosterTimedAction:perform()
     local isPT = (TCG_Config.getLanguage() == "PT")
 
     -- 3. Adiciona as cartas com seu respectivo ModData bilingue
+    local spawnedCards = {}
     for _, itemData in ipairs(pulled) do
         local card = itemData.card
         local cardItem = inv:AddItem("Base.TCG_Card")
@@ -80,11 +81,12 @@ function TCG_BoosterTimedAction:perform()
             end
 
             cardItem:setName(string.format("%s%s [#%02d/102]", prefix, displayName, card.number))
+            table.insert(spawnedCards, cardItem)
         end
     end
 
     -- 4. Exibe a interface de revelacao Frameless Soft Glass
-    TCG_RevealModal.show(pulled)
+    TCG_RevealModal.show(pulled, self.character, spawnedCards)
 
     -- 5. Conclui a Timed Action
     ISBaseTimedAction.perform(self)

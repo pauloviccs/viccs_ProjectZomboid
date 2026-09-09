@@ -1,19 +1,60 @@
 Sandbox_PTBR = {
-    Sandbox_VICCS_TCG = "VICCS - Trading Card Game (1999)",
-    Sandbox_VICCS_TCG_SpawnRate = "Frequência de Spawn dos Boosters",
-    Sandbox_VICCS_TCG_SpawnRate_tooltip = "Ajusta a raridade geral com que pacotes de cartas e fichários aparecem no mundo.",
+    Sandbox_VICCS_TCG = "VICCS - Colecao de Cartas TCG (1999)",
+    UI_Sandbox_VICCS_TCG = "VICCS - Colecao de Cartas TCG (1999)",
+
+    -- Frequencia de Spawn
+    Sandbox_SpawnRate = "Frequencia de Spawn dos Pacotes",
+    Sandbox_VICCS_TCG_SpawnRate = "Frequencia de Spawn dos Pacotes",
+    Sandbox_SpawnRate_tooltip = "Ajusta a frequencia com que pacotes de cartas e ficharios aparecem pelo mapa.",
+    Sandbox_VICCS_TCG_SpawnRate_tooltip = "Ajusta a frequencia com que pacotes de cartas e ficharios aparecem pelo mapa.",
+    Sandbox_SpawnRate_option1 = "Muito Raro (0.25x)",
     Sandbox_VICCS_TCG_SpawnRate_option1 = "Muito Raro (0.25x)",
+    Sandbox_SpawnRate_option2 = "Raro (0.5x)",
     Sandbox_VICCS_TCG_SpawnRate_option2 = "Raro (0.5x)",
-    Sandbox_VICCS_TCG_SpawnRate_option3 = "Padrão (1.0x)",
+    Sandbox_SpawnRate_option3 = "Padrao Normal (1.0x)",
+    Sandbox_VICCS_TCG_SpawnRate_option3 = "Padrao Normal (1.0x)",
+    Sandbox_SpawnRate_option4 = "Abundante (2.0x)",
     Sandbox_VICCS_TCG_SpawnRate_option4 = "Abundante (2.0x)",
+    Sandbox_SpawnRate_option5 = "Muito Abundante (4.0x)",
     Sandbox_VICCS_TCG_SpawnRate_option5 = "Muito Abundante (4.0x)",
+    Sandbox_SpawnRate_option6 = "Desativado (Nenhum Spawn)",
     Sandbox_VICCS_TCG_SpawnRate_option6 = "Desativado (Nenhum Spawn)",
-    Sandbox_VICCS_TCG_AllowResidential = "Permitir Spawn em Casas e Residências",
-    Sandbox_VICCS_TCG_AllowResidential_tooltip = "Permite encontrar pacotes e cartas em mesinhas de centro e criados-mudos de casas.",
-    Sandbox_VICCS_TCG_AllowSchool = "Permitir Spawn em Escolas e Quartos Infantis",
-    Sandbox_VICCS_TCG_AllowSchool_tooltip = "Permite encontrar cartas em armários de colégios e guarda-roupas de crianças.",
-    Sandbox_VICCS_TCG_AllowCommercial = "Permitir Spawn em Lojas e Livrarias",
-    Sandbox_VICCS_TCG_AllowCommercial_tooltip = "Permite encontrar boosters e fichários em livrarias de quadrinhos e lojas de brinquedo.",
-    Sandbox_VICCS_TCG_HoloChancePercent = "Chance de Carta Holográfica (%)",
-    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100%) da carta rara do booster vir em versão Holográfica Foil.",
+
+    -- Locais de Spawn
+    Sandbox_AllowResidential = "Aparecer em Casas e Residencias",
+    Sandbox_VICCS_TCG_AllowResidential = "Aparecer em Casas e Residencias",
+    Sandbox_AllowResidential_tooltip = "Permite encontrar pacotes e cartas em mesinhas de sala e quartos de casas residenciais.",
+    Sandbox_VICCS_TCG_AllowResidential_tooltip = "Permite encontrar pacotes e cartas em mesinhas de sala e quartos de casas residenciais.",
+
+    Sandbox_AllowSchool = "Aparecer em Escolas e Quartos Infantis",
+    Sandbox_VICCS_TCG_AllowSchool = "Aparecer em Escolas e Quartos Infantis",
+    Sandbox_AllowSchool_tooltip = "Permite encontrar cartas em armarios de escolas e gavetas de criancas.",
+    Sandbox_VICCS_TCG_AllowSchool_tooltip = "Permite encontrar cartas em armarios de escolas e gavetas de criancas.",
+
+    Sandbox_AllowCommercial = "Aparecer em Lojas e Livrarias",
+    Sandbox_VICCS_TCG_AllowCommercial = "Aparecer em Lojas e Livrarias",
+    Sandbox_AllowCommercial_tooltip = "Permite encontrar pacotes e ficharios em lojas de quadrinhos, brinquedos e livrarias.",
+    Sandbox_VICCS_TCG_AllowCommercial_tooltip = "Permite encontrar pacotes e ficharios em lojas de quadrinhos, brinquedos e livrarias.",
+
+    -- Probabilidade Holografica
+    Sandbox_HoloChancePercent = "Chance de Carta Rara ser Holografica (%)",
+    Sandbox_VICCS_TCG_HoloChancePercent = "Chance de Carta Rara ser Holografica (%)",
+    Sandbox_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100%) da carta rara do pacote vir na versao Holografica brilhante.",
+    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100%) da carta rara do pacote vir na versao Holografica brilhante.",
+
+    -- Ficharios Pre-Preenchidos
+    Sandbox_PreFilledBinderChance = "Chance de Fichario Abandonado vir com Cartas (%)",
+    Sandbox_VICCS_TCG_PreFilledBinderChance = "Chance de Fichario Abandonado vir com Cartas (%)",
+    Sandbox_PreFilledBinderChance_tooltip = "Probabilidade de um fichario encontrado no mapa ja vir com uma colecao de cartas guardadas por um antigo dono.",
+    Sandbox_VICCS_TCG_PreFilledBinderChance_tooltip = "Probabilidade de um fichario encontrado no mapa ja vir com uma colecao de cartas guardadas por um antigo dono.",
+
+    Sandbox_PreFilledCardsMin = "Minimo de Cartas no Fichario Abandonado",
+    Sandbox_VICCS_TCG_PreFilledCardsMin = "Minimo de Cartas no Fichario Abandonado",
+    Sandbox_PreFilledCardsMin_tooltip = "Quantidade minima de cartas que podem vir dentro de um fichario preenchido (minimo 1).",
+    Sandbox_VICCS_TCG_PreFilledCardsMin_tooltip = "Quantidade minima de cartas que podem vir dentro de um fichario preenchido (minimo 1).",
+
+    Sandbox_PreFilledCardsMax = "Maximo de Cartas no Fichario Abandonado",
+    Sandbox_VICCS_TCG_PreFilledCardsMax = "Maximo de Cartas no Fichario Abandonado",
+    Sandbox_PreFilledCardsMax_tooltip = "Quantidade maxima de cartas que podem vir dentro de um fichario preenchido (maximo 102).",
+    Sandbox_VICCS_TCG_PreFilledCardsMax_tooltip = "Quantidade maxima de cartas que podem vir dentro de um fichario preenchido (maximo 102).",
 }
