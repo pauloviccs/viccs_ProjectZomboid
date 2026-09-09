@@ -1,0 +1,5 @@
+ItemName_PTBR = {
+    ItemName_Base.TCG_Booster_Base1 = "Pacote TCG: Coleção Base 1999",
+    ItemName_Base.TCG_Card = "Carta Colecionável TCG",
+    ItemName_Base.TCG_Binder = "Fichário de Colecionador TCG",
+}

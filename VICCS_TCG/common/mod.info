@@ -1,0 +1,9 @@
+name=VICCS - Trading Card Game (1999 Base Set)
+id=VICCS_TCG
+description=Colecione e abra os pacotes de cartas colecionáveis do Base Set de 1999 no Project Zomboid Build 42. Inclui boosters, fichário com visualizador Frameless Soft Glass e sistema de raridade.
+poster=poster.png
+icon=icon.png
+versionMin=42.0
+modversion=1.0.0
+author=VICCS
+url=https://github.com/pauloviccs/viccs_ProjectZomboid

@@ -1,0 +1,7 @@
+UI_EN = {
+    UI_TCG_OpenBooster = "Open Booster Pack",
+    UI_TCG_InspectCard = "Inspect Card",
+    UI_TCG_OpenBinder = "Open Binder",
+    UI_TCG_AutoStash = "Auto-Store from Backpack",
+    UI_TCG_Language = "Language",
+}

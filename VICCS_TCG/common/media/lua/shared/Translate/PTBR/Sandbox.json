@@ -1,0 +1,19 @@
+{
+    "Sandbox_VICCS_TCG": "VICCS - Trading Card Game (1999)",
+    "Sandbox_VICCS_TCG_SpawnRate": "Frequência de Spawn dos Boosters",
+    "Sandbox_VICCS_TCG_SpawnRate_tooltip": "Ajusta a raridade geral com que pacotes de cartas e fichários aparecem no mundo.",
+    "Sandbox_VICCS_TCG_SpawnRate_option1": "Muito Raro (0.25x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option2": "Raro (0.5x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option3": "Padrão (1.0x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option4": "Abundante (2.0x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option5": "Muito Abundante (4.0x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option6": "Desativado (Nenhum Spawn)",
+    "Sandbox_VICCS_TCG_AllowResidential": "Permitir Spawn em Casas e Residências",
+    "Sandbox_VICCS_TCG_AllowResidential_tooltip": "Permite encontrar pacotes e cartas em mesinhas de centro e criados-mudos de casas.",
+    "Sandbox_VICCS_TCG_AllowSchool": "Permitir Spawn em Escolas e Quartos Infantis",
+    "Sandbox_VICCS_TCG_AllowSchool_tooltip": "Permite encontrar cartas em armários de colégios e guarda-roupas de crianças.",
+    "Sandbox_VICCS_TCG_AllowCommercial": "Permitir Spawn em Lojas e Livrarias",
+    "Sandbox_VICCS_TCG_AllowCommercial_tooltip": "Permite encontrar boosters e fichários em livrarias de quadrinhos e lojas de brinquedo.",
+    "Sandbox_VICCS_TCG_HoloChancePercent": "Chance de Carta Holográfica (%)",
+    "Sandbox_VICCS_TCG_HoloChancePercent_tooltip": "Probabilidade (de 0 a 100%) da carta rara do booster vir em versão Holográfica Foil."
+}

@@ -1,0 +1,5 @@
+ItemName_EN = {
+    ItemName_Base.TCG_Booster_Base1 = "TCG Booster Pack: 1999 Base Set",
+    ItemName_Base.TCG_Card = "TCG Collectible Card",
+    ItemName_Base.TCG_Binder = "TCG Collector Binder",
+}

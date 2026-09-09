@@ -1,0 +1,19 @@
+{
+    "Sandbox_VICCS_TCG": "VICCS - Trading Card Game (1999)",
+    "Sandbox_VICCS_TCG_SpawnRate": "Booster Spawn Rate",
+    "Sandbox_VICCS_TCG_SpawnRate_tooltip": "Adjusts overall rarity of booster packs and binders spawning in the world.",
+    "Sandbox_VICCS_TCG_SpawnRate_option1": "Very Rare (0.25x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option2": "Rare (0.5x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option3": "Default (1.0x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option4": "Abundant (2.0x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option5": "Very Abundant (4.0x)",
+    "Sandbox_VICCS_TCG_SpawnRate_option6": "Disabled (No Spawn)",
+    "Sandbox_VICCS_TCG_AllowResidential": "Allow Spawn in Residential Homes",
+    "Sandbox_VICCS_TCG_AllowResidential_tooltip": "Allows booster packs and binders to spawn in living rooms, nightstands, and wardrobes.",
+    "Sandbox_VICCS_TCG_AllowSchool": "Allow Spawn in Schools & Kids Rooms",
+    "Sandbox_VICCS_TCG_AllowSchool_tooltip": "Allows cards to spawn in school lockers, desks, and children bedrooms.",
+    "Sandbox_VICCS_TCG_AllowCommercial": "Allow Spawn in Stores & Bookstores",
+    "Sandbox_VICCS_TCG_AllowCommercial_tooltip": "Allows packs and binders to spawn in comic book shops, toy stores, and magazine racks.",
+    "Sandbox_VICCS_TCG_HoloChancePercent": "Holographic Card Chance (%)",
+    "Sandbox_VICCS_TCG_HoloChancePercent_tooltip": "Chance (0-100%) that the rare slot in a booster pack turns into a holographic foil."
+}

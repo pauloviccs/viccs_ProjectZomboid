@@ -1,0 +1,46 @@
+module Base
+{
+    item TCG_Booster_Base1
+    {
+        DisplayCategory     = TCG,
+        Type                = Drainable,
+        ItemType            = base:drainable,
+        UseDelta            = 1.0,
+        UseWhileEquipped    = false,
+        cantBeConsolided    = true,
+        DisplayName         = Pacote TCG: Coleção Base 1999,
+        Icon                = tcg_booster_base1,
+        Weight              = 0.05,
+        StaticModel         = Book,
+        WorldStaticModel    = BookGround,
+        Tags                = TCG;TCG_Booster,
+    }
+
+    item TCG_Card
+    {
+        DisplayCategory     = TCG,
+        Type                = Normal,
+        ItemType            = base:normal,
+        DisplayName         = Carta Colecionável TCG,
+        Icon                = tcg_card,
+        Weight              = 0.005,
+        StaticModel         = Book,
+        WorldStaticModel    = BookGround,
+        Tags                = TCG;TCG_Card,
+    }
+
+    item TCG_Binder
+    {
+        DisplayCategory     = TCG,
+        Type                = Container,
+        ItemType            = base:container,
+        DisplayName         = Fichário de Colecionador TCG,
+        Icon                = tcg_binder,
+        Weight              = 0.4,
+        Capacity            = 10,
+        WeightReduction     = 100,
+        StaticModel         = Book,
+        WorldStaticModel    = BookGround,
+        Tags                = TCG;TCG_Binder,
+    }
+}
