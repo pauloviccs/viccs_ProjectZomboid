@@ -21,7 +21,7 @@ TCG_CardInspectModal = ISPanel:derive("TCG_CardInspectModal")
 
 local instance = nil
 
-function TCG_CardInspectModal:new(cardDef, isHolo)
+function TCG_CardInspectModal:new(cardDef, isHolo, binderItem, cardCount, binderUI)
     local screenW = getCore():getScreenWidth()
     local screenH = getCore():getScreenHeight()
     local w = 620
@@ -35,6 +35,9 @@ function TCG_CardInspectModal:new(cardDef, isHolo)
 
     o.cardDef = cardDef or TCG_CardRegistry.getCard("base1-001")
     o.isHolo = (isHolo == true) or (o.cardDef and o.cardDef.isHolo == true)
+    o.binderItem = binderItem
+    o.cardCount = cardCount or 0
+    o.binderUI = binderUI
     o.moveWithMouse = false
     o.isDragging = false
     o.downX, o.downY = -1, -1
@@ -45,7 +48,7 @@ function TCG_CardInspectModal:new(cardDef, isHolo)
 end
 
 --- Abre o modal com os dados de um InventoryItem ou CardDef
-function TCG_CardInspectModal.show(target, extraHolo)
+function TCG_CardInspectModal.show(target, extraHolo, binderItem, cardCount, binderUI)
     if instance then
         instance:setVisible(false)
         instance:removeFromUIManager()
@@ -67,7 +70,7 @@ function TCG_CardInspectModal.show(target, extraHolo)
         cardDef = TCG_CardRegistry.getCard("base1-001")
     end
 
-    instance = TCG_CardInspectModal:new(cardDef, isHolo)
+    instance = TCG_CardInspectModal:new(cardDef, isHolo, binderItem, cardCount, binderUI)
     instance:initialise()
     instance:instantiate()
     instance:addToUIManager()
@@ -94,7 +97,7 @@ function TCG_CardInspectModal:onMouseDown(x, y)
     self.downX = x
     self.downY = y
 
-    -- 1. Botao de Grip [[M]] (x: width - 64, y: 8, w: 26, h: 22)
+    -- 1. Botao de Grip [M] (x: width - 64, y: 8, w: 26, h: 22)
     if x >= (self.width - 64) and x <= (self.width - 38) and y >= 8 and y <= 30 then
         self.isDragging = true
         return true
@@ -116,10 +119,39 @@ function TCG_CardInspectModal:onMouseUp(x, y)
             return true
         end
 
-        -- Botao [FECHAR INSPECAO] (x: 300, y: 430, w: 280, h: 30)
-        if x >= 300 and x <= 580 and y >= 430 and y <= 460 then
-            self:closeModal()
-            return true
+        local infoX = 295
+        local btnY = 430
+
+        -- Se a carta esta sendo inspecionada de dentro do fichario
+        if self.binderItem and self.cardCount and self.cardCount >= 1 then
+            -- Botao [SACAR CARTA] (x: infoX, y: btnY, w: 138, h: 30)
+            if x >= infoX and x <= (infoX + 138) and y >= btnY and y <= (btnY + 30) then
+                if self.binderUI and self.binderUI.withdrawCard then
+                    local cid = self.cardDef and self.cardDef.id
+                    if cid then
+                        local removed = self.binderUI:withdrawCard(cid, 1)
+                        if removed > 0 then
+                            self.cardCount = self.cardCount - 1
+                            if self.cardCount <= 0 then
+                                self:closeModal()
+                            end
+                        end
+                    end
+                end
+                return true
+            end
+
+            -- Botao [FECHAR] (x: infoX + 148, y: btnY, w: 142, h: 30)
+            if x >= (infoX + 148) and x <= (infoX + 290) and y >= btnY and y <= (btnY + 30) then
+                self:closeModal()
+                return true
+            end
+        else
+            -- Botao [FECHAR INSPECAO] (x: infoX, y: btnY, w: 290, h: 30)
+            if x >= infoX and x <= (infoX + 290) and y >= btnY and y <= (btnY + 30) then
+                self:closeModal()
+                return true
+            end
         end
     end
 
@@ -206,6 +238,11 @@ function TCG_CardInspectModal:prerender()
     -- Colecao e Numero
     infoY = infoY + 32
     local setStr = string.format("%s - #%02d / 102", isPT and "Colecao Base (1999)" or "Base Set (1999)", num)
+    if self.binderItem and self.cardCount and self.cardCount > 0 then
+        local inBinderStr = isPT and string.format("  [ No Fichario: x%d ]", self.cardCount)
+                                 or string.format("  [ In Binder: x%d ]", self.cardCount)
+        setStr = setStr .. inBinderStr
+    end
     self:drawText(setStr, infoX, infoY, 0.70, 0.75, 0.80, 1.0, UIFont.Small)
 
     -- Selo de Raridade
@@ -255,8 +292,18 @@ function TCG_CardInspectModal:prerender()
     self:drawText(isPT and "Historico da Pokedex:" or "Pokedex Archive:", infoX + 10, infoY + 6, TCG_Theme.TEXT_MUTED[1], TCG_Theme.TEXT_MUTED[2], TCG_Theme.TEXT_MUTED[3], 0.85, UIFont.Small)
     TCG_Theme.drawTextWrapped(self, details.flavor, infoX + 10, infoY + 24, 270, 0.80, 0.85, 0.90, 0.90, UIFont.Small)
 
-    -- Botao de Fechar [FECHAR INSPECAO]
+    -- Botoes de Acao (Saque e Fechar)
     local btnY = 430
-    local isBtnHover = (mx >= infoX and mx <= (infoX + 290) and my >= btnY and my <= (btnY + 30))
-    TCG_Theme.drawTacticalButton(self, isPT and "FECHAR INSPECAO" or "CLOSE INSPECTOR", infoX, btnY, 290, 30, isBtnHover, TCG_Theme.CYAN)
+    if self.binderItem and self.cardCount and self.cardCount >= 1 then
+        local isSacarHover = (mx >= infoX and mx <= (infoX + 138) and my >= btnY and my <= (btnY + 30))
+        local sacarLabel = isPT and "SACAR CARTA" or "WITHDRAW"
+        TCG_Theme.drawTacticalButton(self, sacarLabel, infoX, btnY, 138, 30, isSacarHover, TCG_Theme.GREEN)
+
+        local isCloseHover = (mx >= (infoX + 148) and mx <= (infoX + 290) and my >= btnY and my <= (btnY + 30))
+        local closeLabel = isPT and "FECHAR" or "CLOSE"
+        TCG_Theme.drawTacticalButton(self, closeLabel, infoX + 148, btnY, 142, 30, isCloseHover, TCG_Theme.CYAN)
+    else
+        local isBtnHover = (mx >= infoX and mx <= (infoX + 290) and my >= btnY and my <= (btnY + 30))
+        TCG_Theme.drawTacticalButton(self, isPT and "FECHAR INSPECAO" or "CLOSE INSPECTOR", infoX, btnY, 290, 30, isBtnHover, TCG_Theme.CYAN)
+    end
 end

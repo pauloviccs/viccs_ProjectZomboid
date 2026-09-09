@@ -227,6 +227,151 @@ function TCG_BinderUI:autoStoreCards()
     end
 end
 
+--- Retira uma ou mais cartas do fichario e devolve ao inventario do jogador
+function TCG_BinderUI:withdrawCard(cardId, amount)
+    local player = getPlayer()
+    if not player then return 0 end
+    local inv = player:getInventory()
+    local bData = self:getBinderData()
+    local colInfo = bData.collected[cardId]
+    if not colInfo or not colInfo.count or colInfo.count < 1 then
+        TCG_Theme.playAudio("UI_ToggleOff")
+        return 0
+    end
+
+    amount = math.min(tonumber(amount) or 1, colInfo.count)
+    if amount <= 0 then return 0 end
+
+    local cardDef = TCG_CardRegistry.getCard(cardId)
+    local num = (cardDef and cardDef.number) or colInfo.number or 1
+    local nameEN = (cardDef and type(cardDef.name) == "table") and cardDef.name.en or (cardDef and cardDef.name or "Card")
+    local namePT = (cardDef and type(cardDef.name) == "table") and cardDef.name.pt or (cardDef and cardDef.name or "Carta")
+    local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+    local displayName = isPT and namePT or nameEN
+
+    for _ = 1, amount do
+        local cardItem = inv:AddItem("Base.TCG_Card")
+        if cardItem then
+            local md = cardItem:getModData()
+            md.cardId = cardId
+            md.setId = "base1"
+            md.cardNumber = num
+            md.name_en = nameEN
+            md.name_pt = namePT
+            md.cardName = displayName
+            md.rarity = TCG_CardRegistry.getCardRarity(cardDef)
+            md.isHolo = colInfo.isHolo
+            md.condition = 100
+
+            local prefix = ""
+            if isPT then
+                prefix = colInfo.isHolo and "* Carta TCG (Holo): " or "Carta TCG: "
+            else
+                prefix = colInfo.isHolo and "* TCG Card (Holo): " or "TCG Card: "
+            end
+            cardItem:setName(string.format("%s%s [#%02d/102]", prefix, displayName, num))
+        end
+    end
+
+    colInfo.count = colInfo.count - amount
+    if colInfo.count <= 0 then
+        bData.collected[cardId] = nil
+    end
+
+    TCG_Theme.playAudio("PageTurn", "PutItemInBag")
+    local msg = ""
+    if amount > 1 then
+        msg = isPT and string.format("%dx Carta #%02d %s retiradas do fichario!", amount, num, displayName)
+                   or string.format("%dx Card #%02d %s removed from binder!", amount, num, displayName)
+    else
+        msg = isPT and string.format("Carta #%02d %s retirada do fichario!", num, displayName)
+                   or string.format("Card #%02d %s removed from binder!", num, displayName)
+    end
+
+    if player.setHaloNote then
+        pcall(function() player:setHaloNote(msg, 90, 220, 140, 250) end)
+    end
+
+    return amount
+end
+
+function TCG_BinderUI:onRightMouseDown(x, y)
+    return true
+end
+
+function TCG_BinderUI:onRightMouseUp(x, y)
+    self:checkSlotRightClick(x, y)
+    return true
+end
+
+function TCG_BinderUI:checkSlotRightClick(mx, my)
+    local startNum = ((self.currentPage - 1) * SLOTS_PER_PAGE) + 1
+    local slotW, slotH = 74, 104
+    local bData = self:getBinderData()
+
+    for i = 0, 17 do
+        local cardNum = startNum + i
+        if cardNum <= TOTAL_CARDS then
+            local pageIdx = (i < 9) and 0 or 1
+            local localIdx = (i < 9) and i or (i - 9)
+            local col = localIdx % 3
+            local row = math.floor(localIdx / 3)
+
+            local baseX = (pageIdx == 0) and 40 or 420
+            local sx = baseX + (col * (slotW + 30))
+            local sy = 68 + (row * (slotH + 34))
+
+            if mx >= sx and mx <= (sx + slotW) and my >= sy and my <= (sy + slotH) then
+                local cardId = string.format("base1-%03d", cardNum)
+                local colInfo = bData.collected[cardId]
+                if colInfo and colInfo.count and colInfo.count >= 1 then
+                    local cardDef = TCG_CardRegistry.getCard(cardId)
+                    local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+                    local cardName = TCG_CardRegistry.getCardName(cardDef)
+                    local count = colInfo.count
+
+                    local player = getPlayer()
+                    local playerNum = player and player:getPlayerNum() or 0
+                    local absX = self:getAbsoluteX() + mx
+                    local absY = self:getAbsoluteY() + my
+                    local context = ISContextMenu.get(playerNum, absX, absY)
+
+                    if context then
+                        -- Cabecalho informativo
+                        local headerText = string.format("#%02d %s (x%d)", cardNum, tostring(cardName), count)
+                        local optHeader = context:addOption(headerText, nil, nil)
+                        optHeader.notAvailable = true
+
+                        -- Opcao 1: Inspecionar em 3D
+                        local optInspect = isPT and "[TCG] Inspecionar Carta em 3D" or "[TCG] Inspect Card in 3D"
+                        context:addOption(optInspect, self, function()
+                            TCG_CardInspectModal.show(cardDef, colInfo.isHolo, self.binderItem, count, self)
+                        end)
+
+                        -- Opcao 2: Retirar 1 Carta para a Mochila
+                        local optWithdrawOne = isPT and "[TCG] Retirar 1 para a Mochila" or "[TCG] Withdraw 1 to Bag"
+                        context:addOption(optWithdrawOne, self, function()
+                            self:withdrawCard(cardId, 1)
+                        end)
+
+                        -- Opcao 3: Retirar Todas as Repetidas
+                        if count > 1 then
+                            local optWithdrawDup = isPT and string.format("[TCG] Retirar Repetidas (x%d)", count - 1)
+                                                        or string.format("[TCG] Withdraw Duplicates (x%d)", count - 1)
+                            context:addOption(optWithdrawDup, self, function()
+                                self:withdrawCard(cardId, count - 1)
+                            end)
+                        end
+                    end
+                else
+                    TCG_Theme.playAudio("UI_ToggleOff")
+                end
+                return
+            end
+        end
+    end
+end
+
 function TCG_BinderUI:checkSlotClick(mx, my)
     local startNum = ((self.currentPage - 1) * SLOTS_PER_PAGE) + 1
     local slotW, slotH = 74, 104
@@ -250,8 +395,8 @@ function TCG_BinderUI:checkSlotClick(mx, my)
                 if colInfo then
                     local cardDef = TCG_CardRegistry.getCard(cardId)
                     if cardDef then
-                        -- Abre o modal de inspecao rico com 3D hover
-                        TCG_CardInspectModal.show(cardDef, colInfo.isHolo)
+                        -- Abre o modal de inspecao rico com 3D hover e opcoes de saque
+                        TCG_CardInspectModal.show(cardDef, colInfo.isHolo, self.binderItem, colInfo.count, self)
                     end
                 else
                     TCG_Theme.playAudio("UI_ToggleOff")
@@ -290,8 +435,8 @@ function TCG_BinderUI:render()
 
     -- Estatisticas da Colecao
     local collectedCount, pct = self:getCollectionStats()
-    local statsText = isPT and string.format("Colecao: %d / %d (%.1f%%) - Clique em uma carta obtida para inspecionar em 3D", collectedCount, TOTAL_CARDS, pct)
-                           or string.format("Collection: %d / %d (%.1f%%) - Click on a collected card to inspect in 3D", collectedCount, TOTAL_CARDS, pct)
+    local statsText = isPT and string.format("Colecao: %d / %d (%.1f%%) - Botao Esq: Inspecionar | Botao Dir: Retirar para Mochila", collectedCount, TOTAL_CARDS, pct)
+                           or string.format("Collection: %d / %d (%.1f%%) - Left Click: Inspect | Right Click: Withdraw to Bag", collectedCount, TOTAL_CARDS, pct)
     self:drawText(statsText, 20, 36, 0.80, 0.85, 0.90, 1.0, UIFont.Small)
 
     -- Botao [IDIOMA: PT] / [LANG: EN]
