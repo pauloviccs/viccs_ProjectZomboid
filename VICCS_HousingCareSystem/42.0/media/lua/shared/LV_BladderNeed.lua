@@ -233,9 +233,9 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
         -- Suja virilha, pernas e roupas
         pcall(function()
             if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
-                player:addDirt(BloodBodyPartType.Groin, 30)
-                if BloodBodyPartType.LowerLeg_L then player:addDirt(BloodBodyPartType.LowerLeg_L, 15) end
-                if BloodBodyPartType.LowerLeg_R then player:addDirt(BloodBodyPartType.LowerLeg_R, 15) end
+                pcall(function() player:addDirt(BloodBodyPartType.Groin, 30, false) end)
+                if BloodBodyPartType.LowerLeg_L then pcall(function() player:addDirt(BloodBodyPartType.LowerLeg_L, 15, false) end) end
+                if BloodBodyPartType.LowerLeg_R then pcall(function() player:addDirt(BloodBodyPartType.LowerLeg_R, 15, false) end) end
             end
             local wornItems = player:getWornItems()
             if wornItems then
@@ -278,7 +278,7 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
         -- Suja diretamente as roupas intimas e calcas do personagem
         pcall(function()
             if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
-                player:addDirt(BloodBodyPartType.Groin, 45)
+                pcall(function() player:addDirt(BloodBodyPartType.Groin, 45, false) end)
             end
             local wornItems = player:getWornItems()
             if wornItems then

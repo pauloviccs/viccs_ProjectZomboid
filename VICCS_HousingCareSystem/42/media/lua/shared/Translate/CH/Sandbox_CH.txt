@@ -239,4 +239,12 @@ Sandbox_CH = {
     Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier = "家用設施積垢速度倍率",
     Sandbox_ApplianceDirtGainMultiplier_tooltip = "衛浴設施和爐灶在使用中積累油漬污垢的增長倍率 (0.0 至 5.0x，默認 1.0x)。",
     Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier_tooltip = "衛浴設施和爐灶在使用中積累油漬污垢的增長倍率 (0.0 至 5.0x，默認 1.0x)。",
+    Sandbox_EnableLightBulbBurnout = "啟用室內燈泡燒毀",
+    Sandbox_HousingCareSystem_EnableLightBulbBurnout = "啟用室內燈泡燒毀",
+    Sandbox_EnableLightBulbBurnout_tooltip = "啟用後，開啟的吸頂燈和壁燈每小時有機率燒毀，需要使用新燈泡 (Base.LightBulb) 進行更換。",
+    Sandbox_HousingCareSystem_EnableLightBulbBurnout_tooltip = "啟用後，開啟的吸頂燈和壁燈每小時有機率燒毀，需要使用新燈泡 (Base.LightBulb) 進行更換。",
+    Sandbox_LightBulbBurnoutChance = "燈泡每小時燒毀機率 (%)",
+    Sandbox_HousingCareSystem_LightBulbBurnoutChance = "燈泡每小時燒毀機率 (%)",
+    Sandbox_LightBulbBurnoutChance_tooltip = "開啟的室內燈泡每小時燒毀的百分比機率 (0% 至 10%，默認 1.5%)。設為 0 時燈泡永不燒毀。",
+    Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip = "開啟的室內燈泡每小時燒毀的百分比機率 (0% 至 10%，默認 1.5%)。設為 0 時燈泡永不燒毀。",
 }

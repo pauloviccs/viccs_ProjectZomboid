@@ -491,6 +491,7 @@ function LV_ComfortScanner.startScan(player, isManualTrigger)
         climate = climateContext,
         hasActiveHeatInWinter = false,
         hasSummerCooling = false,
+        hasBurntBulb = false,
         seasonalNote = "",
     }
 
@@ -851,15 +852,26 @@ function LV_ComfortScanner.processSquare(sq, res)
                 end
             end
 
-            local isLightOn = (instanceof and instanceof(obj, "IsoLightSwitch") and obj.isActivated and obj:isActivated()) or
-                              (obj.isLightSource and obj:isLightSource()) or
-                              spriteName:find("lamp") ~= nil or
-                              spriteName:find("candle") ~= nil or
-                              spriteName:find("lantern") ~= nil or
-                              spriteName:find("lighting_") ~= nil
+            local isBurnt = LV_LightingSystem and LV_LightingSystem.isBulbBurnt and LV_LightingSystem.isBulbBurnt(obj)
+            if isBurnt then
+                res.hasBurntBulb = true
+                res.cleanlinessPenalty = res.cleanlinessPenalty + 4
+                res.squalorDirt = (res.squalorDirt or 0) + 5
+                table.insert(res.discoveredItems, "Lampada Queimada")
+                if res.scoredItemsList then
+                    table.insert(res.scoredItemsList, { name = "Lampada de Teto Queimada", score = -4, category = "APPLIANCES_ELECTRONICS" })
+                end
+            else
+                local isLightOn = (instanceof and instanceof(obj, "IsoLightSwitch") and obj.isActivated and obj:isActivated()) or
+                                  (obj.isLightSource and obj:isLightSource()) or
+                                  spriteName:find("lamp") ~= nil or
+                                  spriteName:find("candle") ~= nil or
+                                  spriteName:find("lantern") ~= nil or
+                                  spriteName:find("lighting_") ~= nil
 
-            if isLightOn then
-                registerTileScore(res, "light_source_on", "Iluminacao Ativa")
+                if isLightOn then
+                    registerTileScore(res, "light_source_on", "Iluminacao Ativa")
+                end
             end
 
             -- 9. Eletronicos (Radio, TV, Telefone, Geladeira)
@@ -1218,10 +1230,13 @@ function LV_ComfortScanner.finalizeScore(player, res)
         decorPoints = decorPoints,
         craftBonus = craftBonus,
         squalorScore = squalorScore,
+        squalorDirt = math.floor(res.squalorDirt or 0),
+        squalorBlood = math.floor(res.squalorBlood or 0),
         seasonalNote = seasonalNote,
         hasActiveMedia = res.hasActiveMedia or false,
         hasActiveHeatInWinter = res.hasActiveHeatInWinter or false,
         rottenFoodCount = math.floor((res.squalorRotten or 0) / 12),
+        hasBurntBulb = res.hasBurntBulb or false,
         itemsList = res.scoredItemsList or {},
         categoryStats = res.categoryStats or {},
         timestamp = (getGameTime and getGameTime():getWorldAgeHours()) or 0
@@ -1233,7 +1248,9 @@ function LV_ComfortScanner.finalizeScore(player, res)
         local pMd = player:getModData()
         pMd.LV_HasActiveMedia = res.hasActiveMedia or false
         pMd.LV_HasActiveHeatInWinter = res.hasActiveHeatInWinter or false
+        pMd.LV_HasBurntBulb = res.hasBurntBulb or false
         pMd.LV_RoomRottenCount = math.floor((res.squalorRotten or 0) / 12)
+        pMd.LV_RoomFloorDirt = math.floor(res.squalorDirt or 0)
         pMd.LV_CurrentRoomTier = roomTier
         pMd.LV_CurrentRoomScore = comfortScore
     end)

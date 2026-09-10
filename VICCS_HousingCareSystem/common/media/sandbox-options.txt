@@ -735,3 +735,21 @@ option HousingCareSystem.BladderNotifyThreshold
     page = HousingCareSystem,
     translation = BladderNotifyThreshold,
 }
+
+option HousingCareSystem.EnableLightBulbBurnout
+{
+    type = boolean,
+    default = true,
+    page = HousingCareSystem,
+    translation = EnableLightBulbBurnout,
+}
+
+option HousingCareSystem.LightBulbBurnoutChance
+{
+    type = double,
+    min = 0.0,
+    max = 10.0,
+    default = 1.5,
+    page = HousingCareSystem,
+    translation = LightBulbBurnoutChance,
+}

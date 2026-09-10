@@ -194,11 +194,12 @@ local function activateBuffs(player, comfortScore, squalorScore, duration)
         localPlayerData.comfortExpiryWorldHour = 0
     end
 
+    local lingerHours = (LV_Config and LV_Config.get and LV_Config.get("SqualorLingerHours")) or 1.0
     localPlayerData.squalorScore = squalorScore
     localPlayerData.squalorTier = newSqualorTier
     if newSqualorTier > 0 then
         localPlayerData.isInSqualorArea = true
-        localPlayerData.squalorExpiryWorldHour = currentHour + math.floor(duration * 0.5)
+        localPlayerData.squalorExpiryWorldHour = currentHour + lingerHours
     else
         localPlayerData.isInSqualorArea = false
         localPlayerData.squalorExpiryWorldHour = 0
@@ -230,20 +231,42 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
         localPlayerData.seasonalNote = seasonalNote
     end
 
-    if comfortScore > 0 and baseName ~= "Imovel Neutro" and baseName ~= "Area Externa" and not tostring(baseName):find("Nao Reivindicado") then
+    local isSafeShelter = (baseName ~= "Imovel Neutro" and baseName ~= "Area Externa" and not tostring(baseName):find("Nao Reivindicado"))
+
+    if isSafeShelter then
         localPlayerData.isInShelter = true
         localPlayerData.targetComfortScore = comfortScore
         localPlayerData.targetSqualorScore = squalorScore
 
-        -- Se a aclimatacao for 0 ou se for trigger manual (K) ou se ja estiver aclimatado
-        if reqAcclimatization <= 0 or isManualTrigger or localPlayerData.shelterDwellMinutes >= reqAcclimatization or localPlayerData.comfortTier > 0 then
-            localPlayerData.shelterDwellMinutes = reqAcclimatization
-            activateBuffs(player, comfortScore, squalorScore, duration)
+        -- Sincronizacao Imediata de Squalor (Insalubridade decai e atualiza mesmo com Conforto = 0)
+        local newSqualorTier = LV_BuffManager.getSqualorTierFromScore(squalorScore)
+        localPlayerData.squalorScore = squalorScore
+        localPlayerData.squalorTier = newSqualorTier
+        if newSqualorTier > 0 then
+            localPlayerData.isInSqualorArea = true
+            local lingerHours = (LV_Config and LV_Config.get and LV_Config.get("SqualorLingerHours")) or 1.0
+            localPlayerData.squalorExpiryWorldHour = currentHour + lingerHours
         else
-            -- Inicializa contador de aclimatacao
-            if localPlayerData.lastDwellWorldHour == -1 then
-                localPlayerData.lastDwellWorldHour = currentHour
+            localPlayerData.isInSqualorArea = false
+            localPlayerData.squalorExpiryWorldHour = 0
+        end
+
+        if comfortScore > 0 then
+            -- Se a aclimatacao for 0 ou se for trigger manual (K) ou se ja estiver aclimatado
+            if reqAcclimatization <= 0 or isManualTrigger or localPlayerData.shelterDwellMinutes >= reqAcclimatization or localPlayerData.comfortTier > 0 then
+                localPlayerData.shelterDwellMinutes = reqAcclimatization
+                activateBuffs(player, comfortScore, squalorScore, duration)
+            else
+                -- Inicializa contador de aclimatacao
+                if localPlayerData.lastDwellWorldHour == -1 then
+                    localPlayerData.lastDwellWorldHour = currentHour
+                end
             end
+        else
+            -- Conforto nulo (comodo sem moveis ou anulado por insalubridade severa)
+            localPlayerData.comfortScore = 0
+            localPlayerData.comfortTier = 0
+            localPlayerData.comfortExpiryWorldHour = 0
         end
     else
         localPlayerData.isInShelter = false
@@ -251,6 +274,7 @@ function LV_BuffManager.applyScanResults(player, comfortScore, squalorScore, bas
         localPlayerData.targetSqualorScore = 0
         localPlayerData.shelterDwellMinutes = 0
         localPlayerData.lastDwellWorldHour = -1
+        LV_BuffManager.onUnsafeEnvironment(player)
     end
 
     localPlayerData.lastScanHour = currentHour
@@ -264,6 +288,23 @@ function LV_BuffManager.onUnsafeEnvironment(player)
     localPlayerData.targetSqualorScore = 0
     localPlayerData.shelterDwellMinutes = 0
     localPlayerData.lastDwellWorldHour = -1
+
+    -- Ao sair de abrigo, o debuff de squalor nao zera instantaneamente: persiste por SqualorLingerHours
+    if localPlayerData.isInSqualorArea then
+        localPlayerData.isInSqualorArea = false
+        local lingerHours = (LV_Config and LV_Config.get and LV_Config.get("SqualorLingerHours")) or 1.0
+        if lingerHours > 0 then
+            localPlayerData.squalorExpiryWorldHour = currentHour + lingerHours
+        else
+            localPlayerData.squalorScore = 0
+            localPlayerData.squalorTier = 0
+            localPlayerData.squalorExpiryWorldHour = 0
+        end
+    elseif currentHour >= localPlayerData.squalorExpiryWorldHour then
+        localPlayerData.squalorScore = 0
+        localPlayerData.squalorTier = 0
+        localPlayerData.squalorExpiryWorldHour = 0
+    end
 
     -- Se o jogador nao possui base oficial no SP, anula buffs remanescentes imediatamente
     local pMd = player and player.getModData and player:getModData()
@@ -596,7 +637,9 @@ local function onPlayerUpdateBuffs(player)
         end
     else
         data.squalorTier = 0
+        data.squalorScore = 0
         data.isInSqualorArea = false
+        data.squalorExpiryWorldHour = 0
     end
 end
 

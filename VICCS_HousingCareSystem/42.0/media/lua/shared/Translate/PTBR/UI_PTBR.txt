@@ -58,4 +58,8 @@ UI_PTBR = {
     UI_LV_Appliance_Critical = "CRITICO: %d Aparelho(s) Danificado(s) / Quebrado(s)!",
     UI_LV_Appliance_Warning = "ATENCAO: %d Aparelho(s) Requerem Manutencao / Limpeza",
     UI_LV_Appliance_Maintain = "Fazer Manutencao em %s",
+    UI_LV_ReplaceBurntBulb = "Substituir Lampada Queimada",
+    UI_LV_ReplaceBurntBulb_Tooltip = "Requer uma Lampada nova (LightBulb) no inventario.",
+    UI_LV_Halo_BulbReplaced = "Living House: Lampada substituida com sucesso!",
+    UI_LV_Halo_BulbBurnt = "Living House: Uma lampada de teto queimou!",
 }

@@ -414,6 +414,12 @@ function LV_RoomInspectorDashboard:render()
         curY = curY + hgt
     end
 
+    -- 4.5. Lampada Queimada no Comodo
+    if data.hasBurntBulb or (pMd and pMd.LV_HasBurntBulb) then
+        self:drawText(" [!] Substituir lampada queimada no comodo", PAD + 8, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_S)
+        curY = curY + hgt
+    end
+
     -- 5. Cozimento Ativo sobre o Fogao (Stovetop Cooking)
     if LV_StovetopCooking and LV_StovetopCooking.getCookingInfoForRoom and sq and sq.getRoom then
         local cookingFoods = LV_StovetopCooking.getCookingInfoForRoom(sq:getRoom())

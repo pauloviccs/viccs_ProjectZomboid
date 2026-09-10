@@ -239,4 +239,12 @@ Sandbox_ES = {
     Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier = "Multiplicador de Suciedad en Aparatos",
     Sandbox_ApplianceDirtGainMultiplier_tooltip = "Multiplica la suciedad acumulada en sanitarios y estufas en cada uso (0.0 a 5.0x, predeterminado 1.0x).",
     Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier_tooltip = "Multiplica la suciedad acumulada en sanitarios y estufas en cada uso (0.0 a 5.0x, predeterminado 1.0x).",
+    Sandbox_EnableLightBulbBurnout = "Activar Fundido de Bombillas Residenciales",
+    Sandbox_HousingCareSystem_EnableLightBulbBurnout = "Activar Fundido de Bombillas Residenciales",
+    Sandbox_EnableLightBulbBurnout_tooltip = "Si esta activado, las luces de techo y apliques encendidos tienen probabilidad horaria de fundirse, requiriendo reemplazo con una bombilla nueva (Base.LightBulb).",
+    Sandbox_HousingCareSystem_EnableLightBulbBurnout_tooltip = "Si esta activado, las luces de techo y apliques encendidos tienen probabilidad horaria de fundirse, requiriendo reemplazo con una bombilla nueva (Base.LightBulb).",
+    Sandbox_LightBulbBurnoutChance = "Probabilidad Horaria de Fundido de Bombilla (%)",
+    Sandbox_HousingCareSystem_LightBulbBurnoutChance = "Probabilidad Horaria de Fundido de Bombilla (%)",
+    Sandbox_LightBulbBurnoutChance_tooltip = "Porcentaje horario (0% a 10%) de que una bombilla residencial encendida se funda (predeterminado 1.5%). Si es 0, las bombillas nunca se funden.",
+    Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip = "Porcentaje horario (0% a 10%) de que una bombilla residencial encendida se funda (predeterminado 1.5%). Si es 0, las bombillas nunca se funden.",
 }

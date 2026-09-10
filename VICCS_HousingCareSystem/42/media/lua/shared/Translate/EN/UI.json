@@ -56,5 +56,9 @@
     "UI_LV_Appliance_Operational": "All Systems Operational (Fixtures Intact)",
     "UI_LV_Appliance_Critical": "CRITICAL: %d Appliance(s) Damaged / Broken!",
     "UI_LV_Appliance_Warning": "WARNING: %d Appliance(s) Require Maintenance / Cleaning",
-    "UI_LV_Appliance_Maintain": "Maintain %s"
+    "UI_LV_Appliance_Maintain": "Maintain %s",
+    "UI_LV_ReplaceBurntBulb": "Replace Burnt Light Bulb",
+    "UI_LV_ReplaceBurntBulb_Tooltip": "Requires a new light bulb (Base.LightBulb) in inventory.",
+    "UI_LV_Halo_BulbReplaced": "Living House: Light bulb successfully replaced!",
+    "UI_LV_Halo_BulbBurnt": "Living House: A ceiling light just burned out!"
 }

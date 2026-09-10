@@ -317,7 +317,7 @@ local function setupLootLuckHook()
                         if container.setDrawDirty then container:setDrawDirty(true) end
                         pcall(function()
                             if player.setHaloNote then
-                                player:setHaloNote("Living House: Foco de Sobrevivente — Voce encontrou algo util no fundo!", 80, 220, 160, 250)
+                                player:setHaloNote("Living House: Foco de Sobrevivente - Voce encontrou algo util no fundo!", 80, 220, 160, 250)
                             end
                         end)
                         pcall(function()

@@ -356,8 +356,6 @@ local function trySpawnFloorGrime(sq, locKey, currentFloorDirt)
             end
             if grimeObj.setSpriteName then
                 pcall(function() grimeObj:setSpriteName(spriteName) end)
-            else
-                grimeObj.spriteName = spriteName
             end
             sq:AddTileObject(grimeObj)
             if isClient and isClient() and grimeObj.transmitCompleteItemToClients then

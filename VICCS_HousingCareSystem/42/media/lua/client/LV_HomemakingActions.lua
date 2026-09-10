@@ -207,9 +207,14 @@ function LV_HomemakingActions.triggerCompletedCategory(character, categoryName, 
         return
     end
 
-    -- Cooldown Anti-Spam
+    -- Cooldown Anti-Spam (ChoreCooldownSeconds para limpeza residencial, HomemakingCooldownSeconds para demais categorias)
     local now = getSystemSeconds()
-    local configuredCd = (LV_Config and LV_Config.get and LV_Config.get("HomemakingCooldownSeconds")) or catDef.cooldownSeconds
+    local configuredCd = catDef.cooldownSeconds
+    if categoryName == "Cleaning" and LV_Config and LV_Config.get then
+        configuredCd = LV_Config.get("ChoreCooldownSeconds") or configuredCd
+    elseif LV_Config and LV_Config.get then
+        configuredCd = LV_Config.get("HomemakingCooldownSeconds") or configuredCd
+    end
     local lastTime = lastActionTimestamps[categoryName] or 0
 
     if (now - lastTime) < configuredCd then

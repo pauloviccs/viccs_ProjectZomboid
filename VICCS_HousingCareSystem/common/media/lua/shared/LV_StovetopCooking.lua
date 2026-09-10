@@ -339,8 +339,10 @@ function LV_StovetopCooking.updateCycle()
     end
 
     local deltaMinutes = currentWorldMinutes - lastWorldAgeMinutes
-    if deltaMinutes < 0.2 then
-        -- Menos de 12 segundos in-game decorridos: aguarda para agrupar e economizar CPU
+    local checkSecs = (LV_Config and LV_Config.get and LV_Config.get("StovetopCheckIntervalSeconds")) or 30.0
+    local minDeltaMinutes = math.max(0.05, checkSecs / 60.0)
+    if deltaMinutes < minDeltaMinutes then
+        -- Aguarda o intervalo configurado na Sandbox (StovetopCheckIntervalSeconds) para agrupar e economizar CPU
         return
     end
     lastWorldAgeMinutes = currentWorldMinutes

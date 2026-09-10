@@ -279,5 +279,13 @@
     "Sandbox_ApplianceDirtGainMultiplier": "Appliance Dirt Accumulation Multiplier",
     "Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier": "Appliance Dirt Accumulation Multiplier",
     "Sandbox_ApplianceDirtGainMultiplier_tooltip": "Multiplies how quickly fixtures and stoves accumulate grime and dirt from usage (0.0 to 5.0x, default 1.0x).",
-    "Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier_tooltip": "Multiplies how quickly fixtures and stoves accumulate grime and dirt from usage (0.0 to 5.0x, default 1.0x)."
+    "Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier_tooltip": "Multiplies how quickly fixtures and stoves accumulate grime and dirt from usage (0.0 to 5.0x, default 1.0x).",
+    "Sandbox_EnableLightBulbBurnout": "Enable Residential Light Bulb Burnout",
+    "Sandbox_HousingCareSystem_EnableLightBulbBurnout": "Enable Residential Light Bulb Burnout",
+    "Sandbox_EnableLightBulbBurnout_tooltip": "If enabled, active ceiling and wall lights have an hourly chance to burn out, requiring replacement with a new light bulb (Base.LightBulb).",
+    "Sandbox_HousingCareSystem_EnableLightBulbBurnout_tooltip": "If enabled, active ceiling and wall lights have an hourly chance to burn out, requiring replacement with a new light bulb (Base.LightBulb).",
+    "Sandbox_LightBulbBurnoutChance": "Hourly Light Bulb Burnout Chance (%)",
+    "Sandbox_HousingCareSystem_LightBulbBurnoutChance": "Hourly Light Bulb Burnout Chance (%)",
+    "Sandbox_LightBulbBurnoutChance_tooltip": "Hourly percentage chance (0% to 10%) of an active residential light burning out (default 1.5%). If set to 0, bulbs never burn out.",
+    "Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip": "Hourly percentage chance (0% to 10%) of an active residential light burning out (default 1.5%). If set to 0, bulbs never burn out."
 }

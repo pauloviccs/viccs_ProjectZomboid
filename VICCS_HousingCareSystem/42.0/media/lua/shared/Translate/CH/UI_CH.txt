@@ -52,4 +52,13 @@ UI_CH = {
     UI_LV_Stovetop_Cooking = "爐灶烹飪中: %s (%s%%)",
     UI_LV_Stovetop_Cooked = "餐食已煮好: %s",
     UI_LV_Stovetop_Burnt = "爐灶食物已烤焦: %s",
+    UI_LV_Appliance_Title = "家用設施與電器",
+    UI_LV_Appliance_Operational = "系統運轉正常 (設施完好)",
+    UI_LV_Appliance_Critical = "警告: %d 處設施受損/損壞！",
+    UI_LV_Appliance_Warning = "注意: %d 處設施需要維護/清潔",
+    UI_LV_Appliance_Maintain = "維護 %s",
+    UI_LV_ReplaceBurntBulb = "更換燒毀燈泡",
+    UI_LV_ReplaceBurntBulb_Tooltip = "背包中需要一個新燈泡 (Base.LightBulb)。",
+    UI_LV_Halo_BulbReplaced = "Living House: 燈泡已成功更換！",
+    UI_LV_Halo_BulbBurnt = "Living House: 一盞吸頂燈燒毀了！",
 }

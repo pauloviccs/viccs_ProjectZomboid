@@ -58,4 +58,8 @@ UI_ES = {
     UI_LV_Appliance_Critical = "CRÍTICO: ¡%d Electrodoméstico(s) Dañado(s) / Roto(s)!",
     UI_LV_Appliance_Warning = "ATENCIÓN: %d Electrodoméstico(s) Requieren Mantenimiento / Limpieza",
     UI_LV_Appliance_Maintain = "Realizar Mantenimiento en %s",
+    UI_LV_ReplaceBurntBulb = "Reemplazar Bombilla Fundida",
+    UI_LV_ReplaceBurntBulb_Tooltip = "Requiere una bombilla nueva (Base.LightBulb) en el inventario.",
+    UI_LV_Halo_BulbReplaced = "Living House: ¡Bombilla reemplazada con exito!",
+    UI_LV_Halo_BulbBurnt = "Living House: ¡Se ha fundido una bombilla de techo!",
 }

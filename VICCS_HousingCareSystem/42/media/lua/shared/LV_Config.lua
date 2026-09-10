@@ -100,6 +100,10 @@ local DEFAULTS = {
     StovetopFireRiskEnabled = true,
     StovetopCookingSpeedMultiplier = 1.0,
 
+    -- Iluminacao Residencial & Queima de Lampadas
+    EnableLightBulbBurnout = true,
+    LightBulbBurnoutChance = 1.5,
+
     -- Consumo e Desgaste de Itens e Aparelhos (Sandbox)
     ToiletPaperDrainPercent = 15,
     ToiletFlushWaterDrain = 1.0,
@@ -319,5 +323,15 @@ end
 --- Retorna o multiplicador de sujeira acumulada nos aparelhos por uso.
 function LV_Config.getApplianceDirtGainMultiplier()
     return math.max(0.0, tonumber(LV_Config.get("ApplianceDirtGainMultiplier")) or 1.0)
+end
+
+--- Retorna se a mecanica de queima de lampadas residenciais esta ativa.
+function LV_Config.isLightBulbBurnoutEnabled()
+    return LV_Config.get("EnableLightBulbBurnout") ~= false
+end
+
+--- Retorna a chance percentual horaria de uma lampada acesa queimar.
+function LV_Config.getLightBulbBurnoutChance()
+    return math.max(0.0, math.min(10.0, tonumber(LV_Config.get("LightBulbBurnoutChance")) or 1.5))
 end
 

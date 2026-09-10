@@ -279,5 +279,13 @@
     "Sandbox_ApplianceDirtGainMultiplier": "Multiplicador de Sujeira nos Aparelhos",
     "Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier": "Multiplicador de Sujeira nos Aparelhos",
     "Sandbox_ApplianceDirtGainMultiplier_tooltip": "Multiplica o ganho de sujeira em pecas sanitarias e no fogao a cada uso (0.0 a 5.0x, padrao 1.0x).",
-    "Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier_tooltip": "Multiplica o ganho de sujeira em pecas sanitarias e no fogao a cada uso (0.0 a 5.0x, padrao 1.0x)."
+    "Sandbox_HousingCareSystem_ApplianceDirtGainMultiplier_tooltip": "Multiplica o ganho de sujeira em pecas sanitarias e no fogao a cada uso (0.0 a 5.0x, padrao 1.0x).",
+    "Sandbox_EnableLightBulbBurnout": "Ativar Fundicao de Lampadas Residenciais",
+    "Sandbox_HousingCareSystem_EnableLightBulbBurnout": "Ativar Fundicao de Lampadas Residenciais",
+    "Sandbox_EnableLightBulbBurnout_tooltip": "Se ativado, lampadas de teto e arandelas acesas tem chance horaria de fundir, exigindo substituicao por lampada nova (Base.LightBulb).",
+    "Sandbox_HousingCareSystem_EnableLightBulbBurnout_tooltip": "Se ativado, lampadas de teto e arandelas acesas tem chance horaria de fundir, exigindo substituicao por lampada nova (Base.LightBulb).",
+    "Sandbox_LightBulbBurnoutChance": "Chance Horaria de Fundicao da Lampada (%)",
+    "Sandbox_HousingCareSystem_LightBulbBurnoutChance": "Chance Horaria de Fundicao da Lampada (%)",
+    "Sandbox_LightBulbBurnoutChance_tooltip": "Percentagem horaria (0% a 10%) de uma lampada residencial acesa fundir (padrao 1.5%). Se 0, as lampadas nunca fundem.",
+    "Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip": "Percentagem horaria (0% a 10%) de uma lampada residencial acesa fundir (padrao 1.5%). Se 0, as lampadas nunca fundem."
 }
