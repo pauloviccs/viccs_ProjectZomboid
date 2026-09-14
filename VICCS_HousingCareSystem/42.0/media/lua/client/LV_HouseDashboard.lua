@@ -35,8 +35,8 @@ local ACCENT_RED = {0.95, 0.25, 0.25}
 function LV_HouseDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
-    local w = width or 380
-    local h = height or 380
+    local w = width or 410
+    local h = height or 390
 
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -60,8 +60,8 @@ function LV_HouseDashboard.getInstance()
     if not instance then
         local screenW = getCore():getScreenWidth()
         local screenH = getCore():getScreenHeight()
-        local w = 380
-        local h = 380
+        local w = 410
+        local h = 390
         local x = math.floor((screenW - w) / 2)
         local y = math.floor((screenH - h) / 2)
 

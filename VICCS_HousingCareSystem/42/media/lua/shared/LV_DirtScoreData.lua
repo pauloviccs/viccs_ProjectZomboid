@@ -109,6 +109,7 @@ LV_DirtScoreData.ApplianceHealthOnUse = {
 
 --- Ferramentas e suprimentos vanilla aceitos para manutencao e reparos
 LV_DirtScoreData.MaintenanceTools = {
+    ["Base.Plunger"]          = { label = "Desentupidor", effectiveness = 100, usesDelta = false },
     ["Base.PipeWrench"]       = { label = "Chave de Cano", effectiveness = 100, usesDelta = false },
     ["Base.Wrench"]           = { label = "Chave Inglesa", effectiveness = 85, usesDelta = false },
     ["Base.DuctTape"]         = { label = "Fita Adesiva", effectiveness = 50, usesDelta = true, deltaCost = 0.1 },
@@ -211,7 +212,7 @@ function LV_DirtScoreData.setApplianceHealth(obj, val)
     if obj.transmitModData then obj:transmitModData() end
 end
 
---- Aplica desgaste fisico ao aparelho
+--- Aplica desgaste fisico ao aparelho e calcula risco de entupimento/vazamento
 function LV_DirtScoreData.degradeAppliance(obj, delta)
     if not obj or not obj.getModData then return end
     local wearMult = (LV_Config and LV_Config.getApplianceWearMultiplier and LV_Config.getApplianceWearMultiplier()) or 1.0
@@ -220,5 +221,58 @@ function LV_DirtScoreData.degradeAppliance(obj, delta)
     local actualCost = (tonumber(delta) or 1.0) * wearMult
     local newVal = math.max(0.0, current - actualCost)
     LV_DirtScoreData.setApplianceHealth(obj, newVal)
+
+    -- Sorteio de defeito por desgaste critico
+    local appType = LV_DirtScoreData.identifyApplianceType(obj)
+    if appType == "toilet" then
+        if newVal <= 0 then
+            LV_DirtScoreData.setApplianceClogged(obj, true)
+        elseif newVal < 30 and not LV_DirtScoreData.isApplianceClogged(obj) then
+            -- 20% de chance ao usar com saude muito baixa (<30%)
+            if ZombRand and ZombRand(100) < 20 then
+                LV_DirtScoreData.setApplianceClogged(obj, true)
+            end
+        end
+    elseif appType == "sink" or appType == "bathtub" then
+        if newVal <= 0 then
+            LV_DirtScoreData.setApplianceLeaking(obj, true)
+        elseif newVal < 25 and not LV_DirtScoreData.isApplianceLeaking(obj) then
+            -- 20% de chance ao usar com saude muito baixa (<25%)
+            if ZombRand and ZombRand(100) < 20 then
+                LV_DirtScoreData.setApplianceLeaking(obj, true)
+            end
+        end
+    end
 end
+
+--- Verifica se o aparelho (privada) esta entupido
+function LV_DirtScoreData.isApplianceClogged(obj)
+    if not obj or not obj.getModData then return false end
+    local md = obj:getModData()
+    return (md and md.LV_ApplianceClogged == true) or false
+end
+
+--- Define o estado de entupimento do aparelho
+function LV_DirtScoreData.setApplianceClogged(obj, isClogged)
+    if not obj or not obj.getModData then return end
+    local md = obj:getModData()
+    md.LV_ApplianceClogged = isClogged and true or nil
+    if obj.transmitModData then pcall(function() obj:transmitModData() end) end
+end
+
+--- Verifica se o aparelho (pia/cano/banheira) esta com vazamento de agua
+function LV_DirtScoreData.isApplianceLeaking(obj)
+    if not obj or not obj.getModData then return false end
+    local md = obj:getModData()
+    return (md and md.LV_ApplianceLeaking == true) or false
+end
+
+--- Define o estado de vazamento do aparelho
+function LV_DirtScoreData.setApplianceLeaking(obj, isLeaking)
+    if not obj or not obj.getModData then return end
+    local md = obj:getModData()
+    md.LV_ApplianceLeaking = isLeaking and true or nil
+    if obj.transmitModData then pcall(function() obj:transmitModData() end) end
+end
+
 

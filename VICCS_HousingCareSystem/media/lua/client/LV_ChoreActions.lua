@@ -231,6 +231,14 @@ function ISMaintainApplianceAction:perform()
     -- Restaura a integridade/saude do aparelho
     LV_DirtScoreData.setApplianceHealth(self.targetObject, 100.0)
 
+    -- Cessa qualquer vazamento ou entupimento que estivesse ativo no aparelho
+    if LV_DirtScoreData.setApplianceLeaking then
+        LV_DirtScoreData.setApplianceLeaking(self.targetObject, false)
+    end
+    if LV_DirtScoreData.setApplianceClogged then
+        LV_DirtScoreData.setApplianceClogged(self.targetObject, false)
+    end
+
     -- Consome fita adesiva (subtracao correta), desgasta ferramenta duravel ou consome sucata
     if self.tool then
         if self.toolData and self.toolData.usesDelta then
@@ -1593,8 +1601,13 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
         -- B2. OPCAO DE MANUTENCAO E REPARO DE APARELHOS
         if clickedFixture then
             local currentHealth = LV_DirtScoreData.getApplianceHealth(clickedFixture)
-            if currentHealth < 95.0 then
+            local isLeaking = (LV_DirtScoreData.isApplianceLeaking and LV_DirtScoreData.isApplianceLeaking(clickedFixture)) or false
+            local isClogged = (LV_DirtScoreData.isApplianceClogged and LV_DirtScoreData.isApplianceClogged(clickedFixture)) or false
+
+            if currentHealth < 95.0 or isLeaking or isClogged then
                 local mTool, mToolInfo = findMaintenanceTool(player)
+                local actionLabel = (isLeaking and "Reparar Encanamento / Vazamento em") or (isClogged and "Desobstruir") or "Fazer Manutencao em"
+
                 if mTool then
                     local onMaintain = function(fixture, pObj, tool, toolData, label)
                         local inv = pObj:getInventory()
@@ -1614,9 +1627,9 @@ function LV_ChoreActions.onFillWorldObjectContextMenu(playerNum, context, worldO
                     end
 
                     local toolLabel = (mToolInfo and mToolInfo.label) or (mTool.getName and mTool:getName()) or "Ferramenta"
-                    context:addOption(string.format("Fazer Manutencao em %s (Condicao: %d%% - %s)", fixtureLabel or "Aparelho", math.floor(currentHealth), toolLabel), clickedFixture, onMaintain, player, mTool, mToolInfo, fixtureLabel or "Aparelho")
+                    context:addOption(string.format("%s %s (Condicao: %d%% - %s)", actionLabel, fixtureLabel or "Aparelho", math.floor(currentHealth), toolLabel), clickedFixture, onMaintain, player, mTool, mToolInfo, fixtureLabel or "Aparelho")
                 else
-                    local opt = context:addOption(string.format("Fazer Manutencao em %s (Condicao: %d%% - Requer Chave/Fita)", fixtureLabel or "Aparelho", math.floor(currentHealth)), nil, nil)
+                    local opt = context:addOption(string.format("%s %s (Condicao: %d%% - Requer Chave/Fita)", actionLabel, fixtureLabel or "Aparelho", math.floor(currentHealth)), nil, nil)
                     opt.notAvailable = true
                 end
             end

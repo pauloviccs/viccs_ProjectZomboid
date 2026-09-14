@@ -20,6 +20,8 @@ require "LV_Config"
 require "LV_DirtScoreData"
 require "LV_ComfortScanner"
 require "LV_BuffManager"
+require "LV_LightingSystem"
+require "LV_BulbSwapHUD"
 
 LV_ApplianceDashboard = ISPanel:derive("LV_ApplianceDashboard")
 
@@ -59,8 +61,8 @@ end
 function LV_ApplianceDashboard:new(x, y, width, height)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
-    local w = width or 460
-    local h = height or 450
+    local w = width or 520
+    local h = height or 470
 
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -72,12 +74,14 @@ function LV_ApplianceDashboard:new(x, y, width, height)
     o.downX, o.downY = -1, -1
     o.isDragging = false
 
-    o.selectedFilter = "CURRENT" -- Padrao: detecta por comodo atual ("CURRENT"), "ALL", ou nome do comodo
+    o.selectedFilter = "CURRENT" -- Padrao: detecta por comodo atual ("CURRENT"), "ALL", "LIGHTS" ou nome do comodo
     o.tabBounds = {}
+    o.itemButtonBounds = {}
 
     o.lastScanTime = 0
     o.cachedAppliances = {}
-    o.summary = { total = 0, critical = 0, warning = 0, clean = 0, currentRoom = "Ambiente Geral", rooms = {} }
+    o.cachedLights = {}
+    o.summary = { total = 0, critical = 0, warning = 0, clean = 0, currentRoom = "Ambiente Geral", rooms = {}, totalLights = 0 }
     o.scrollOffset = 0
     o.maxScroll = 0
 
@@ -89,10 +93,10 @@ function LV_ApplianceDashboard.getInstance()
     if not instance then
         local screenW = getCore():getScreenWidth()
         local screenH = getCore():getScreenHeight()
-        local w = 460
-        local h = 450
-        local x = math.floor((screenW - w) / 2) + 30
-        local y = math.floor((screenH - h) / 2) + 30
+        local w = 520
+        local h = 470
+        local x = math.floor((screenW - w) / 2) + 20
+        local y = math.floor((screenH - h) / 2) + 20
 
         instance = LV_ApplianceDashboard:new(x, y, w, h)
         instance:initialise()
@@ -149,6 +153,30 @@ function LV_ApplianceDashboard:onMouseUp(x, y)
                     end
                     self.isDragging = false
                     return true
+                end
+            end
+        end
+
+        -- Cliques em Botoes dos Cards (ex: Trocar Lampada)
+        if self.itemButtonBounds then
+            for _, btn in ipairs(self.itemButtonBounds) do
+                if x >= btn.x and x <= (btn.x + btn.w) and y >= btn.y and y <= (btn.y + btn.h) then
+                    if btn.action == "SWAP_BULB" and btn.object then
+                        self:setVisible(false)
+                        local p = getPlayer()
+                        if p then
+                            if luautils and luautils.walkAdjObject then
+                                luautils.walkAdjObject(p, btn.object, true, true)
+                            elseif luautils and luautils.walkAdj then
+                                luautils.walkAdj(p, btn.object:getSquare(), true)
+                            end
+                            if LV_BulbSwapHUD and LV_BulbSwapHUD.openFor then
+                                LV_BulbSwapHUD.openFor(p, btn.object)
+                            end
+                        end
+                        self.isDragging = false
+                        return true
+                    end
                 end
             end
         end
@@ -369,8 +397,10 @@ function LV_ApplianceDashboard:refreshData(force)
 
     -- 5. Inspecao dos objetos com deduplicacao estrita por tile
     local appliances = {}
+    local lightsList = {}
     local seenObjects = {}
     local seenTileAppliance = {} -- Chave: appType_x_y (evita que o mesmo fogao ou pia apareca 3x)
+    local seenTileLight = {}
     local roomCounts = {}
 
     local summary = {
@@ -379,7 +409,9 @@ function LV_ApplianceDashboard:refreshData(force)
         isClaimed = true,
         baseName = (own and own.baseName) or "Lar",
         currentRoom = currentRoomName,
-        rooms = {}
+        rooms = {},
+        totalLights = 0,
+        burntLights = 0
     }
 
     for _, sq in ipairs(squaresToScan) do
@@ -389,6 +421,43 @@ function LV_ApplianceDashboard:refreshData(force)
                 local obj = objs:get(i)
                 if obj and not seenObjects[obj] then
                     seenObjects[obj] = true
+
+                    -- A) Deteccao de Luminarias e Interruptores Arquiteturais
+                    if LV_LightingSystem and LV_LightingSystem.isLightSwitch and LV_LightingSystem.isLightSwitch(obj) then
+                        local objSq = (obj.getSquare and obj:getSquare()) or sq
+                        local ox = objSq and objSq:getX() or sq:getX()
+                        local oy = objSq and objSq:getY() or sq:getY()
+                        local lTileKey = "light_" .. tostring(ox) .. "_" .. tostring(oy)
+
+                        if not seenTileLight[lTileKey] then
+                            seenTileLight[lTileKey] = true
+                            local isBurnt = LV_LightingSystem.isBulbBurnt(obj)
+                            local isOn = (obj.isActivated and obj:isActivated()) or false
+                            local roomName = getSquareRoomName(objSq)
+
+                            summary.totalLights = summary.totalLights + 1
+                            if isBurnt then
+                                summary.burntLights = summary.burntLights + 1
+                            end
+
+                            table.insert(lightsList, {
+                                object = obj,
+                                type = "light",
+                                label = "Luminaria Residencial",
+                                room = roomName,
+                                health = isBurnt and 0.0 or 100.0,
+                                dirt = 0,
+                                isBurnt = isBurnt,
+                                isOn = isOn,
+                                isCritical = isBurnt,
+                                isWarning = false,
+                                x = ox,
+                                y = oy,
+                            })
+                        end
+                    end
+
+                    -- B) Deteccao de Aparelhos Sanitarios e Eletrodomesticos
                     local appType = LV_DirtScoreData.identifyApplianceType(obj)
                     if appType then
                         local objSq = (obj.getSquare and obj:getSquare()) or sq
@@ -404,6 +473,9 @@ function LV_ApplianceDashboard:refreshData(force)
                             local health = LV_DirtScoreData.getApplianceHealth(obj)
                             local label = (LV_DirtScoreData.FixturePatterns[appType] and LV_DirtScoreData.FixturePatterns[appType].name) or "Aparelho"
 
+                            local isClogged = (LV_DirtScoreData and LV_DirtScoreData.isApplianceClogged and LV_DirtScoreData.isApplianceClogged(obj)) or false
+                            local isLeaking = (LV_DirtScoreData and LV_DirtScoreData.isApplianceLeaking and LV_DirtScoreData.isApplianceLeaking(obj)) or false
+
                             -- Determinacao do Comodo do Aparelho
                             local roomName = getSquareRoomName(objSq)
                             if roomName == "Ambiente Geral" then
@@ -416,7 +488,7 @@ function LV_ApplianceDashboard:refreshData(force)
                             end
 
                             -- Gravidade
-                            local isCritical = (health <= 0 or health < 25 or dirt >= 80)
+                            local isCritical = (health <= 0 or health < 25 or dirt >= 80 or isClogged or isLeaking)
                             local isWarning = not isCritical and (health < 60 or dirt >= 40)
 
                             if isCritical then
@@ -436,6 +508,8 @@ function LV_ApplianceDashboard:refreshData(force)
                                 room = roomName,
                                 health = health,
                                 dirt = dirt,
+                                isClogged = isClogged,
+                                isLeaking = isLeaking,
                                 isCritical = isCritical,
                                 isWarning = isWarning,
                                 x = ox,
@@ -455,8 +529,14 @@ function LV_ApplianceDashboard:refreshData(force)
         return a.health < b.health
     end)
 
+    table.sort(lightsList, function(a, b)
+        if a.isCritical ~= b.isCritical then return a.isCritical end
+        return a.room < b.room
+    end)
+
     summary.rooms = roomCounts
     self.cachedAppliances = appliances
+    self.cachedLights = lightsList
     self.summary = summary
     return appliances, summary
 end
@@ -532,11 +612,12 @@ function LV_ApplianceDashboard:render()
 
     -- 3. ABAS DE FILTRAGEM POR COMODO (Deteccao Inteligente)
     self.tabBounds = {}
+    self.itemButtonBounds = {}
     local tabY = cy
     local tabH = 20
     local tabX = PAD
 
-    -- Lista de abas: 1. COMODO ATUAL, 2. TODA A CASA, 3+ Cada comodo com aparelhos
+    -- Lista de abas: 1. COMODO ATUAL, 2. TODA A CASA, 3+ Cada comodo com aparelhos, N. LAMPADAS
     local tabsList = {
         { key = "CURRENT", label = string.format("Atual: %s", summary.currentRoom) },
         { key = "ALL", label = string.format("Toda a Casa (%d)", summary.total) },
@@ -557,6 +638,13 @@ function LV_ApplianceDashboard:render()
             })
         end
     end
+
+    -- Aba dedicada a Eletrica e Iluminacao
+    local totalLights = (self.cachedLights and #self.cachedLights) or summary.totalLights or 0
+    table.insert(tabsList, {
+        key = "LIGHTS",
+        label = string.format("Lampadas (%d)", totalLights)
+    })
 
     for _, tData in ipairs(tabsList) do
         local tw = tm:MeasureStringX(FONT_S, tData.label) + 12
@@ -582,20 +670,26 @@ function LV_ApplianceDashboard:render()
 
     cy = cy + tabH + 6
 
-    -- 4. Filtragem da Lista de Aparelhos
-    local displayAppliances = {}
-    for _, app in ipairs(appliances) do
-        local match = false
-        if self.selectedFilter == "ALL" then
-            match = true
-        elseif self.selectedFilter == "CURRENT" then
-            match = (app.room == summary.currentRoom)
-        elseif self.selectedFilter == app.room then
-            match = true
-        end
+    -- 4. Filtragem da Lista de Itens (Aparelhos ou Lampadas)
+    local displayItems = {}
+    local isLightsMode = (self.selectedFilter == "LIGHTS")
 
-        if match then
-            table.insert(displayAppliances, app)
+    if isLightsMode then
+        displayItems = self.cachedLights or {}
+    else
+        for _, app in ipairs(appliances) do
+            local match = false
+            if self.selectedFilter == "ALL" then
+                match = true
+            elseif self.selectedFilter == "CURRENT" then
+                match = (app.room == summary.currentRoom)
+            elseif self.selectedFilter == app.room then
+                match = true
+            end
+
+            if match then
+                table.insert(displayItems, app)
+            end
         end
     end
 
@@ -603,41 +697,45 @@ function LV_ApplianceDashboard:render()
     local activeCrit = 0
     local activeWarn = 0
     local activeClean = 0
-    for _, a in ipairs(displayAppliances) do
+    for _, a in ipairs(displayItems) do
         if a.isCritical then activeCrit = activeCrit + 1
         elseif a.isWarning then activeWarn = activeWarn + 1
         else activeClean = activeClean + 1 end
     end
 
     local filterTitle = "Toda a Residencia"
-    if self.selectedFilter == "CURRENT" then
+    if isLightsMode then
+        filterTitle = "Rede Eletrica (Luminarias)"
+    elseif self.selectedFilter == "CURRENT" then
         filterTitle = string.format("Comodo Atual [%s]", summary.currentRoom)
     elseif self.selectedFilter ~= "ALL" then
         filterTitle = string.format("Comodo [%s]", self.selectedFilter)
     end
 
-    local countStr = string.format("%s | Total: %d | Integras: %d | Alerta: %d | Criticas: %d", filterTitle, #displayAppliances, activeClean, activeWarn, activeCrit)
+    local countStr = string.format("%s | Total: %d | Integras: %d | Alerta: %d | Criticas: %d", filterTitle, #displayItems, activeClean, activeWarn, activeCrit)
     self:drawText(countStr, PAD + 2, cy, 0.75, 0.75, 0.75, 0.90, FONT_S)
 
     cy = cy + 16
     self:drawRect(PAD, cy, self.width - (PAD * 2), 1, 0.25, 1, 1, 1)
     cy = cy + 6
 
-    -- 5. Lista de Aparelhos com Scroll e Stencil Clipping
+    -- 5. Lista com Scroll e Stencil Clipping
     local listY = cy
-    local listH = self.height - listY - 28
+    local listH = self.height - listY - 38
     local itemH = 58
-    local totalH = #displayAppliances * itemH
+    local totalH = #displayItems * itemH
 
     self.maxScroll = math.max(0, totalH - listH)
     if self.scrollOffset > self.maxScroll then self.scrollOffset = self.maxScroll end
 
     self:setStencilRect(PAD, listY, self.width - (PAD * 2), listH)
 
-    if #displayAppliances == 0 then
-        local emptyMsg = "Nenhuma instalacao ou aparelho encontrado neste filtro."
-        if summary.isOutside then
-            emptyMsg = "Voce esta ao ar livre. O painel monitora apenas os aparelhos da sua casa/safehouse."
+    if #displayItems == 0 then
+        local emptyMsg = "Nenhuma instalacao encontrada neste filtro."
+        if isLightsMode then
+            emptyMsg = "Nenhuma luminaria ou interruptor detectado no perimetro residencial."
+        elseif summary.isOutside then
+            emptyMsg = "Voce esta ao ar livre. O painel monitora apenas os aparelhos da sua safehouse."
         elseif summary.isUnclaimed then
             emptyMsg = "Imovel nao reivindicado. Reivindique este local para ativar a telemetria."
         elseif self.selectedFilter == "CURRENT" then
@@ -649,15 +747,15 @@ function LV_ApplianceDashboard:render()
         end
     else
         local startY = listY - self.scrollOffset
-        for idx, app in ipairs(displayAppliances) do
+        for idx, item in ipairs(displayItems) do
             local iy = startY + ((idx - 1) * itemH)
             if (iy + itemH) >= listY and iy <= (listY + listH) then
                 -- Fundo do card
                 local bgAlpha = (idx % 2 == 0) and 0.25 or 0.15
-                if app.isCritical then
+                if item.isCritical then
                     self:drawRect(PAD, iy, self.width - (PAD * 2) - 8, itemH - 4, 0.40, 0.30, 0.05, 0.05)
                     self:drawRect(PAD, iy, 2, itemH - 4, 0.90, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3])
-                elseif app.isWarning then
+                elseif item.isWarning then
                     self:drawRect(PAD, iy, self.width - (PAD * 2) - 8, itemH - 4, 0.30, 0.25, 0.18, 0.04)
                     self:drawRect(PAD, iy, 2, itemH - 4, 0.90, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3])
                 else
@@ -666,50 +764,87 @@ function LV_ApplianceDashboard:render()
                 self:drawRectBorder(PAD, iy, self.width - (PAD * 2) - 8, itemH - 4, 0.15, 1, 1, 1)
 
                 -- Titulo e Localizacao
-                local titleStr = string.format("%s (%s)", app.label, app.room)
+                local titleStr = string.format("%s (%s)", item.label, item.room)
                 self:drawText(titleStr, PAD + 8, iy + 4, 0.95, 0.95, 0.95, 1.0, FONT_S)
 
-                -- Barra 1: Durabilidade / Saude
-                local barW = 120
-                local barH = 12
-                local barX = self.width - (PAD * 2) - barW - 14
+                if isLightsMode then
+                    -- RENDERIZACAO DE LAMPADA
+                    local statusStr = "Status: Operacional (Acesa)"
+                    local statusCol = ACCENT_GREEN
+                    if item.isBurnt then
+                        statusStr = "Status: QUEIMADA ⚠️ (Requer Substituicao)"
+                        statusCol = ACCENT_RED
+                    elseif not item.isOn then
+                        statusStr = "Status: Apagada (Interruptor Desligado)"
+                        statusCol = {0.60, 0.65, 0.70}
+                    end
+                    self:drawText(statusStr, PAD + 8, iy + 26, statusCol[1], statusCol[2], statusCol[3], 1.0, FONT_S)
 
-                local hColor = ACCENT_GREEN
-                if app.health < 25 then hColor = ACCENT_RED
-                elseif app.health < 60 then hColor = ACCENT_AMBER end
+                    -- Botao de Substituicao [Trocar]
+                    local btnW = 120
+                    local btnH = 24
+                    local btnX = self.width - (PAD * 2) - btnW - 14
+                    local btnY = iy + 14
 
-                local hLabel = string.format("Vida: %d%%", math.floor(app.health))
-                self:drawMiniBar(barX, iy + 4, barW, barH, app.health / 100.0, hColor[1], hColor[2], hColor[3], hLabel)
+                    self:drawRect(btnX, btnY, btnW, btnH, 0.60, ACCENT_AMBER[1] * 0.35, ACCENT_AMBER[2] * 0.35, ACCENT_AMBER[3] * 0.35)
+                    self:drawRectBorder(btnX, btnY, btnW, btnH, 0.85, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3])
+                    self:drawTextCentre("Trocar Lampada", btnX + (btnW / 2), btnY + 4, 1.0, 1.0, 1.0, 1.0, FONT_S)
 
-                -- Barra 2: Sujeira
-                local dColor = {0.35, 0.70, 0.90}
-                if app.dirt >= 75 then dColor = {0.75, 0.25, 0.20}
-                elseif app.dirt >= 35 then dColor = ACCENT_DIRT end
+                    table.insert(self.itemButtonBounds, {
+                        x = btnX, y = btnY, w = btnW, h = btnH,
+                        action = "SWAP_BULB",
+                        object = item.object
+                    })
+                else
+                    -- RENDERIZACAO DE APARELHO SANITARIO / DOMESTICO
+                    -- Barra 1: Durabilidade / Saude
+                    local barW = 120
+                    local barH = 12
+                    local barX = self.width - (PAD * 2) - barW - 14
 
-                local dLabel = string.format("Sujeira: %d%%", math.floor(app.dirt))
-                self:drawMiniBar(barX, iy + 19, barW, barH, app.dirt / 100.0, dColor[1], dColor[2], dColor[3], dLabel)
+                    local hColor = ACCENT_GREEN
+                    if item.health < 25 or item.isClogged or item.isLeaking then hColor = ACCENT_RED
+                    elseif item.health < 60 then hColor = ACCENT_AMBER end
 
-                -- Diagnostico ELI5
-                local diagText = "Operacional e limpo"
-                local diagCol = {0.55, 0.85, 0.55}
-                if app.health <= 0 then
-                    diagText = "QUEBRADO / ENTUPIDO (Requer Reparo com Chave)"
-                    diagCol = ACCENT_RED
-                elseif app.health < 30 then
-                    diagText = "DESGASTADO: Vazamento iminente (Requer Chave/Fita)"
-                    diagCol = ACCENT_RED
-                elseif app.dirt >= 60 then
-                    diagText = "MUITO SUJO: Higienize com Pano/Esponja"
-                    diagCol = ACCENT_AMBER
-                elseif app.health < 60 then
-                    diagText = "Desgaste moderado (Manutencao recomendada)"
-                    diagCol = ACCENT_AMBER
-                elseif app.dirt > 0 then
-                    diagText = "Sujeira leve presente"
-                    diagCol = {0.70, 0.70, 0.70}
+                    local hLabel = string.format("Vida: %d%%", math.floor(item.health))
+                    self:drawMiniBar(barX, iy + 4, barW, barH, item.health / 100.0, hColor[1], hColor[2], hColor[3], hLabel)
+
+                    -- Barra 2: Sujeira
+                    local dColor = {0.35, 0.70, 0.90}
+                    if item.dirt >= 75 then dColor = {0.75, 0.25, 0.20}
+                    elseif item.dirt >= 35 then dColor = ACCENT_DIRT end
+
+                    local dLabel = string.format("Sujeira: %d%%", math.floor(item.dirt))
+                    self:drawMiniBar(barX, iy + 19, barW, barH, item.dirt / 100.0, dColor[1], dColor[2], dColor[3], dLabel)
+
+                    -- Diagnostico ELI5
+                    local diagText = "Operacional e limpo"
+                    local diagCol = {0.55, 0.85, 0.55}
+                    if item.isClogged then
+                        diagText = "ENTUPIDO: Privada obstruida (Requer Desentupidor)"
+                        diagCol = ACCENT_RED
+                    elseif item.isLeaking then
+                        diagText = "VAZANDO: Encanamento rompido (Requer Chave de Cano)"
+                        diagCol = ACCENT_RED
+                    elseif item.health <= 0 then
+                        diagText = "QUEBRADO: Necessita Reparo com Chave"
+                        diagCol = ACCENT_RED
+                    elseif item.health < 30 then
+                        diagText = "DESGASTADO: Vazamento iminente (Requer Chave/Fita)"
+                        diagCol = ACCENT_RED
+                    elseif item.dirt >= 60 then
+                        diagText = "MUITO SUJO: Higienize com Pano/Esponja"
+                        diagCol = ACCENT_AMBER
+                    elseif item.health < 60 then
+                        diagText = "Desgaste moderado (Manutencao recomendada)"
+                        diagCol = ACCENT_AMBER
+                    elseif item.dirt > 0 then
+                        diagText = "Sujeira leve presente"
+                        diagCol = {0.70, 0.70, 0.70}
+                    end
+
+                    self:drawText(diagText, PAD + 8, iy + 34, diagCol[1], diagCol[2], diagCol[3], 0.90, FONT_S)
                 end
-
-                self:drawText(diagText, PAD + 8, iy + 34, diagCol[1], diagCol[2], diagCol[3], 0.90, FONT_S)
             end
         end
     end
@@ -725,9 +860,12 @@ function LV_ApplianceDashboard:render()
         self:drawRect(sbX, sbY, 4, sbH, 0.70, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3])
     end
 
-    -- Rodape com Dica
-    local footY = self.height - 22
-    self:drawText("Dica: Clique nas abas para filtrar por comodo | Clique com botao direito no aparelho para limpar/reparar.", PAD + 4, footY, 0.55, 0.60, 0.65, 0.85, FONT_S)
+    -- Rodape com Dica formatado em 2 linhas limpas dentro da moldura
+    local footY = self.height - 30
+    self:drawRect(PAD, footY - 3, self.width - (PAD * 2), 26, 0.25, 0.05, 0.07, 0.09)
+    self:drawRectBorder(PAD, footY - 3, self.width - (PAD * 2), 26, 0.35, 0.35, 0.40, 0.45)
+    self:drawText("[Dica] Filtre por comodo nas abas acima ou selecione a aba [Lampadas].", PAD + 6, footY - 1, 0.70, 0.75, 0.80, 0.90, FONT_S)
+    self:drawText("Clique direito sobre um aparelho para acoes ou clique em Trocar nas lampadas.", PAD + 6, footY + 11, 0.55, 0.60, 0.65, 0.85, FONT_S)
 end
 
 Events.OnGameStart.Add(function()

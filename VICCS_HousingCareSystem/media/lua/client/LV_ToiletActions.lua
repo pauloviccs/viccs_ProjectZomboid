@@ -91,6 +91,59 @@ local function consumeToiletPaper(player, toiletObject)
         end
     end
 
+    -- 3. Alternativa de emergencia: Trapos de pano limpos (Base.RippedSheets)
+    -- Ao ser usado, ele e de uso unico e se torna totalmente sujo (Base.RippedSheetsDirty), precisando ser lavado para reuso.
+    local function applyRagConsumption(rag, container, targetInv)
+        if not rag then return false end
+        local parentContainer = rag:getContainer() or container or targetInv
+        if parentContainer and parentContainer.Remove then
+            pcall(parentContainer.Remove, parentContainer, rag)
+            if parentContainer.AddItem then
+                pcall(parentContainer.AddItem, parentContainer, "Base.RippedSheetsDirty")
+            elseif targetInv and targetInv.AddItem then
+                pcall(targetInv.AddItem, targetInv, "Base.RippedSheetsDirty")
+            end
+            return true
+        end
+        return false
+    end
+
+    -- Procura trapo de pano limpo no inventario do jogador
+    if inv then
+        local rag = inv:getFirstTypeRecurse("Base.RippedSheets") or inv:getFirstTypeRecurse("RippedSheets")
+        if rag and applyRagConsumption(rag, inv, inv) then
+            print("[LivingHouse] Trapo de pano limpo (RippedSheets) usado no banheiro e convertido em RippedSheetsDirty.")
+            return true
+        end
+    end
+
+    -- Procura trapo de pano limpo em gavetas/armarios adjacentes (raio de 1 tile)
+    if toiletObject and toiletObject.getSquare then
+        local sq = toiletObject:getSquare()
+        if sq and sq.getCell then
+            local cell = sq:getCell()
+            for dx = -1, 1 do
+                for dy = -1, 1 do
+                    local tSq = cell:getGridSquare(sq:getX() + dx, sq:getY() + dy, sq:getZ())
+                    if tSq then
+                        local objs = tSq:getObjects()
+                        for i = 0, objs:size() - 1 do
+                            local obj = objs:get(i)
+                            local container = obj and obj.getContainer and obj:getContainer()
+                            if container then
+                                local cRag = container:getFirstTypeRecurse("Base.RippedSheets") or container:getFirstTypeRecurse("RippedSheets")
+                                if cRag and applyRagConsumption(cRag, container, inv) then
+                                    print("[LivingHouse] Trapo de pano limpo em armario adjacente usado no banheiro.")
+                                    return true
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     return false
 end
 
@@ -207,7 +260,11 @@ end
 ISUseToiletAction = ISBaseTimedAction:derive("ISUseToiletAction")
 
 function ISUseToiletAction:isValid()
-    return self.character and self.toiletObject and not self.character:isDead()
+    if not self.character or not self.toiletObject or self.character:isDead() then return false end
+    if LV_DirtScoreData and LV_DirtScoreData.isApplianceClogged and LV_DirtScoreData.isApplianceClogged(self.toiletObject) then
+        return false
+    end
+    return true
 end
 
 function ISUseToiletAction:waitToStart()
@@ -378,6 +435,82 @@ function ISUseToiletAction:new(character, toiletObject, mode, time)
 end
 
 --------------------------------------------------------------------------------
+-- 1.1 Acao com Tempo: Desentupir Vaso Sanitario com Desentupidor (Base.Plunger)
+--------------------------------------------------------------------------------
+ISUnclogToiletAction = ISBaseTimedAction:derive("ISUnclogToiletAction")
+
+function ISUnclogToiletAction:isValid()
+    if not self.character or not self.toiletObject or self.character:isDead() then return false end
+    local inv = self.character:getInventory()
+    if not inv then return false end
+    local plunger = inv:getFirstTypeRecurse("Base.Plunger") or inv:getFirstTypeRecurse("Plunger")
+    return plunger ~= nil
+end
+
+function ISUnclogToiletAction:waitToStart()
+    self.character:faceThisObject(self.toiletObject)
+    return self.character:shouldBeTurning()
+end
+
+function ISUnclogToiletAction:update()
+    self.character:faceThisObject(self.toiletObject)
+end
+
+function ISUnclogToiletAction:start()
+    self:setActionAnim("Loot")
+    self.character:SetVariable("LootPosition", "Low")
+    local sq = self.toiletObject:getSquare()
+    if sq and getSoundManager then
+        pcall(function()
+            getSoundManager():PlayWorldSound("WaterDrip", sq, 0.6, 6, 1.0, false)
+        end)
+    end
+end
+
+function ISUnclogToiletAction:stop()
+    ISBaseTimedAction.stop(self)
+end
+
+function ISUnclogToiletAction:perform()
+    -- Desentope a privada
+    if LV_DirtScoreData and LV_DirtScoreData.setApplianceClogged then
+        LV_DirtScoreData.setApplianceClogged(self.toiletObject, false)
+        local curH = LV_DirtScoreData.getApplianceHealth(self.toiletObject)
+        LV_DirtScoreData.setApplianceHealth(self.toiletObject, math.max(45.0, curH + 25.0))
+    end
+
+    local sq = self.toiletObject:getSquare()
+    if sq and getSoundManager then
+        pcall(function()
+            getSoundManager():PlayWorldSound("ToiletFlush", sq, 0.6, 10, 1.0, false)
+        end)
+    end
+
+    if self.character.setHaloNote then
+        pcall(function()
+            self.character:setHaloNote("Privada desentupida com sucesso!", 100, 240, 120, 250)
+        end)
+    end
+
+    if LV_HomemakingActions and LV_HomemakingActions.onChoreCompleted then
+        LV_HomemakingActions.onChoreCompleted(self.character, "Cleaning", 15)
+    end
+
+    ISBaseTimedAction.perform(self)
+end
+
+function ISUnclogToiletAction:new(character, toiletObject, time)
+    local o = ISBaseTimedAction.new(self, character)
+    o.toiletObject = toiletObject
+    o.stopOnWalk = true
+    o.stopOnRun = true
+    o.stopOnAim = true
+    o.maxTime = time or 100
+    o.forceProgressBar = true
+    return o
+end
+
+--------------------------------------------------------------------------------
 -- 2. Acao com Tempo: Aliviar-se na Natureza (Fora de Casa / Arbustos)
 --------------------------------------------------------------------------------
 ISRelieveInNatureAction = ISBaseTimedAction:derive("ISRelieveInNatureAction")
@@ -540,10 +673,10 @@ function LV_ToiletActions.onFillWorldObjectContextMenu(playerNum, context, world
 
     -- Menu do Vaso Sanitario
     if clickedToilet then
-        local toiletSubMenu = context:getNew(context)
-        context:addSubMenu(context:addOption(string.format("Usar Banheiro (Necessidade: %d%%)", math.floor(currentNeed))), toiletSubMenu)
+        local isClogged = (LV_DirtScoreData and LV_DirtScoreData.isApplianceClogged and LV_DirtScoreData.isApplianceClogged(clickedToilet)) or false
+        local tHealth = (LV_DirtScoreData and LV_DirtScoreData.getApplianceHealth and LV_DirtScoreData.getApplianceHealth(clickedToilet)) or 100.0
 
-        local onUseToilet = function(toilet, pObj, mode, time)
+        local onUnclogToilet = function(toilet, pObj)
             if luautils and luautils.walkAdjObject then
                 if not luautils.walkAdjObject(pObj, toilet, true, true) then
                     return
@@ -553,14 +686,42 @@ function LV_ToiletActions.onFillWorldObjectContextMenu(playerNum, context, world
             else
                 ISTimedActionQueue.add(ISWalkToTimedAction:new(pObj, toilet:getSquare()))
             end
-            ISTimedActionQueue.add(ISUseToiletAction:new(pObj, toilet, mode, time))
+            ISTimedActionQueue.add(ISUnclogToiletAction:new(pObj, toilet, 100))
         end
 
-        local tHealth = LV_DirtScoreData.getApplianceHealth(clickedToilet)
-        if tHealth <= 0 then
-            local optClogged = toiletSubMenu:addOption("Vaso Entupido / Danificado (Requer Manutencao)", nil, nil)
+        if isClogged or tHealth <= 0 then
+            -- Vaso entupido: bloqueia uso comum e oferece desentupimento
+            local optClogged = context:addOption("Privada Entupida / Obstruida!", nil, nil)
             optClogged.notAvailable = true
+
+            local inv = player:getInventory()
+            local plunger = inv and (inv:getFirstTypeRecurse("Base.Plunger") or inv:getFirstTypeRecurse("Plunger"))
+            local optUnclog = context:addOption("Desentupir Privada (com Desentupidor)", clickedToilet, onUnclogToilet, player)
+            if not plunger then
+                optUnclog.notAvailable = true
+                local tooltip = ISToolTip:new()
+                tooltip:initialise()
+                tooltip:setVisible(false)
+                tooltip.description = "Requer um Desentupidor (Base.Plunger) no inventario."
+                optUnclog.toolTip = tooltip
+            end
         else
+            local toiletSubMenu = context:getNew(context)
+            context:addSubMenu(context:addOption(string.format("Usar Banheiro (Necessidade: %d%%)", math.floor(currentNeed))), toiletSubMenu)
+
+            local onUseToilet = function(toilet, pObj, mode, time)
+                if luautils and luautils.walkAdjObject then
+                    if not luautils.walkAdjObject(pObj, toilet, true, true) then
+                        return
+                    end
+                elseif luautils and luautils.walkAdj then
+                    luautils.walkAdj(pObj, toilet:getSquare(), true)
+                else
+                    ISTimedActionQueue.add(ISWalkToTimedAction:new(pObj, toilet:getSquare()))
+                end
+                ISTimedActionQueue.add(ISUseToiletAction:new(pObj, toilet, mode, time))
+            end
+
             toiletSubMenu:addOption("Aliviar-se (Rapido)", clickedToilet, onUseToilet, player, "pee", 70)
             toiletSubMenu:addOption("Aliviar-se (Completo)", clickedToilet, onUseToilet, player, "poop", 120)
         end
