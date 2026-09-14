@@ -14,7 +14,7 @@ UI_CH = {
     UI_LV_Notification_Squalor = "惡劣環境",
 
     UI_LV_Tier1_Title = "溫馨庇護 (1級)",
-    UI_LV_Tier1_Desc = "恐慌積累速度減少10%。",
+    UI_LV_Tier1_Desc = "恐慌積累速度減少10%%。",
     UI_LV_Tier2_Title = "整潔居所 (2級)",
     UI_LV_Tier2_Desc = "恐慌減少20%%，耐力恢復速度加快10%%。",
     UI_LV_Tier3_Title = "舒適避難所 (3級)",

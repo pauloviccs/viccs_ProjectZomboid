@@ -14,7 +14,7 @@ UI_EN = {
     UI_LV_Notification_Squalor = "Insalubrious Environment",
 
     UI_LV_Tier1_Title = "Basic Coziness (Tier I)",
-    UI_LV_Tier1_Desc = "Reduces panic buildup by 10%.",
+    UI_LV_Tier1_Desc = "Reduces panic buildup by 10%%.",
     UI_LV_Tier2_Title = "Organized Home (Tier II)",
     UI_LV_Tier2_Desc = "Reduces panic by 20%% and boosts endurance recovery by 10%%.",
     UI_LV_Tier3_Title = "Comfortable Refuge (Tier III)",

@@ -14,7 +14,7 @@ UI_ES = {
     UI_LV_Notification_Squalor = "Ambiente Insalubre",
 
     UI_LV_Tier1_Title = "Acogedor Basico (Nivel I)",
-    UI_LV_Tier1_Desc = "Reduce la acumulacion de panico en un 10%.",
+    UI_LV_Tier1_Desc = "Reduce la acumulacion de panico en un 10%%.",
     UI_LV_Tier2_Title = "Hogar Organizado (Nivel II)",
     UI_LV_Tier2_Desc = "Reduce el panico en un 20%% y acelera la regeneracion de resistencia en un 10%%.",
     UI_LV_Tier3_Title = "Refugio Confortable (Nivel III)",

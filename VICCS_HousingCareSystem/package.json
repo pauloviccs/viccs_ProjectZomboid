@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "node .agent/website_wiki/server.js",
     "start": "node .agent/website_wiki/server.js",
-    "wiki": "node .agent/website_wiki/server.js"
+    "wiki": "node .agent/website_wiki/server.js",
+    "deploy": "python tools/deploy_to_zomboid.py",
+    "check": "python tools/check_md5_parity.py",
+    "validate": "python tools/validate_lua.py"
   },
   "author": "VICCS",
   "license": "MIT"

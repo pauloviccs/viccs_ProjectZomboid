@@ -232,10 +232,18 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
     if isNature then
         -- Suja virilha, pernas e roupas
         pcall(function()
-            if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
-                pcall(function() player:addDirt(BloodBodyPartType.Groin, 30, false) end)
-                if BloodBodyPartType.LowerLeg_L then pcall(function() player:addDirt(BloodBodyPartType.LowerLeg_L, 15, false) end) end
-                if BloodBodyPartType.LowerLeg_R then pcall(function() player:addDirt(BloodBodyPartType.LowerLeg_R, 15, false) end) end
+            if BloodBodyPartType and BloodBodyPartType.Groin then
+                if player.addDirt then
+                    pcall(function() player:addDirt(BloodBodyPartType.Groin, nil, false) end)
+                    if BloodBodyPartType.LowerLeg_L then pcall(function() player:addDirt(BloodBodyPartType.LowerLeg_L, nil, false) end) end
+                    if BloodBodyPartType.LowerLeg_R then pcall(function() player:addDirt(BloodBodyPartType.LowerLeg_R, nil, false) end) end
+                end
+                if player.getVisual and player:getVisual() and player:getVisual().setDirt then
+                    pcall(function()
+                        local visual = player:getVisual()
+                        visual:setDirt(BloodBodyPartType.Groin, math.min(1.0, (visual:getDirt(BloodBodyPartType.Groin) or 0) + 0.3))
+                    end)
+                end
             end
             local wornItems = player:getWornItems()
             if wornItems then
@@ -277,8 +285,16 @@ function LV_BladderNeed.relieve(player, isCleanToilet, hasToiletPaper, isNature)
 
         -- Suja diretamente as roupas intimas e calcas do personagem
         pcall(function()
-            if player.addDirt and BloodBodyPartType and BloodBodyPartType.Groin then
-                pcall(function() player:addDirt(BloodBodyPartType.Groin, 45, false) end)
+            if BloodBodyPartType and BloodBodyPartType.Groin then
+                if player.addDirt then
+                    pcall(function() player:addDirt(BloodBodyPartType.Groin, nil, false) end)
+                end
+                if player.getVisual and player:getVisual() and player:getVisual().setDirt then
+                    pcall(function()
+                        local visual = player:getVisual()
+                        visual:setDirt(BloodBodyPartType.Groin, math.min(1.0, (visual:getDirt(BloodBodyPartType.Groin) or 0) + 0.45))
+                    end)
+                end
             end
             local wornItems = player:getWornItems()
             if wornItems then
