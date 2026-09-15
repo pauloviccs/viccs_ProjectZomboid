@@ -287,5 +287,13 @@
     "Sandbox_LightBulbBurnoutChance": "Chance Horaria de Queima da Lampada (%%)",
     "Sandbox_HousingCareSystem_LightBulbBurnoutChance": "Chance Horaria de Queima da Lampada (%%)",
     "Sandbox_LightBulbBurnoutChance_tooltip": "Porcentagem horaria (0%% a 10%%) de uma lampada residencial acesa queimar (padrao 1.5%%). Se 0, as lampadas nunca queimam.",
-    "Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip": "Porcentagem horaria (0%% a 10%%) de uma lampada residencial acesa queimar (padrao 1.5%%). Se 0, as lampadas nunca queimam."
+    "Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip": "Porcentagem horaria (0%% a 10%%) de uma lampada residencial acesa queimar (padrao 1.5%%). Se 0, as lampadas nunca queimam.",
+    "Sandbox_EnableSkillCheckMinigame": "Ativar Minigame de Habilidade (Skill Check)",
+    "Sandbox_HousingCareSystem_EnableSkillCheckMinigame": "Ativar Minigame de Habilidade (Skill Check)",
+    "Sandbox_EnableSkillCheckMinigame_tooltip": "Se ativado, reparos em pias, privadas, eletrodomesticos e troca de lampadas acionam um minigame circular de precisao no estilo DBD.",
+    "Sandbox_HousingCareSystem_EnableSkillCheckMinigame_tooltip": "Se ativado, reparos em pias, privadas, eletrodomesticos e troca de lampadas acionam um minigame circular de precisao no estilo DBD.",
+    "Sandbox_SkillCheckDifficulty": "Dificuldade do Skill Check",
+    "Sandbox_HousingCareSystem_SkillCheckDifficulty": "Dificuldade do Skill Check",
+    "Sandbox_SkillCheckDifficulty_tooltip": "Dificuldade da roleta: 1 = Facil (zona ampla, agulha lenta), 2 = Normal (padrao), 3 = Dificil (zona estreita, agulha rapida).",
+    "Sandbox_HousingCareSystem_SkillCheckDifficulty_tooltip": "Dificuldade da roleta: 1 = Facil (zona ampla, agulha lenta), 2 = Normal (padrao), 3 = Dificil (zona estreita, agulha rapida)."
 }

@@ -199,8 +199,17 @@ LV_MoodleDefs.SpotlessHome = {
 
 --- Retorna o texto traduzido ou o default seguro
 function LV_MoodleDefs.getText(key, default)
-    if getTextOrNull and getTextOrNull(key) then
-        return getText(key)
+    if getTextOrNull then
+        local val = getTextOrNull(key)
+        if val and val ~= key and val ~= "" and not string.find(val, "^UI_") then
+            return val
+        end
+    end
+    if getText then
+        local val = getText(key)
+        if val and val ~= key and val ~= "" and not string.find(val, "^UI_") then
+            return val
+        end
     end
     return default or key
 end

@@ -432,7 +432,12 @@ function LV_ApplianceDashboard:refreshData(force)
                         if not seenTileLight[lTileKey] then
                             seenTileLight[lTileKey] = true
                             local isBurnt = LV_LightingSystem.isBulbBurnt(obj)
-                            local isOn = (obj.isActivated and obj:isActivated()) or false
+                            if isBurnt then
+                                if (obj.isActivated and obj:isActivated()) or (obj.hasLightBulb and obj:hasLightBulb()) then
+                                    LV_LightingSystem.turnOffSwitch(obj)
+                                end
+                            end
+                            local isOn = (not isBurnt) and ((obj.isActivated and obj:isActivated()) or false)
                             local roomName = getSquareRoomName(objSq)
 
                             summary.totalLights = summary.totalLights + 1

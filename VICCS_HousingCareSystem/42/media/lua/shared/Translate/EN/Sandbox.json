@@ -287,5 +287,13 @@
     "Sandbox_LightBulbBurnoutChance": "Hourly Light Bulb Burnout Chance (%%)",
     "Sandbox_HousingCareSystem_LightBulbBurnoutChance": "Hourly Light Bulb Burnout Chance (%%)",
     "Sandbox_LightBulbBurnoutChance_tooltip": "Hourly percentage chance (0%% to 10%%) of an active residential light burning out (default 1.5%%). If set to 0, bulbs never burn out.",
-    "Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip": "Hourly percentage chance (0%% to 10%%) of an active residential light burning out (default 1.5%%). If set to 0, bulbs never burn out."
+    "Sandbox_HousingCareSystem_LightBulbBurnoutChance_tooltip": "Hourly percentage chance (0%% to 10%%) of an active residential light burning out (default 1.5%%). If set to 0, bulbs never burn out.",
+    "Sandbox_EnableSkillCheckMinigame": "Enable Skill Check Minigame",
+    "Sandbox_HousingCareSystem_EnableSkillCheckMinigame": "Enable Skill Check Minigame",
+    "Sandbox_EnableSkillCheckMinigame_tooltip": "When enabled, repairs on sinks, toilets, appliances, and bulb swaps trigger a DBD-style circular timing minigame.",
+    "Sandbox_HousingCareSystem_EnableSkillCheckMinigame_tooltip": "When enabled, repairs on sinks, toilets, appliances, and bulb swaps trigger a DBD-style circular timing minigame.",
+    "Sandbox_SkillCheckDifficulty": "Skill Check Difficulty",
+    "Sandbox_HousingCareSystem_SkillCheckDifficulty": "Skill Check Difficulty",
+    "Sandbox_SkillCheckDifficulty_tooltip": "Skill Check wheel difficulty: 1 = Easy (wide zone, slower needle), 2 = Normal (standard), 3 = Hard (narrow zone, fast needle).",
+    "Sandbox_HousingCareSystem_SkillCheckDifficulty_tooltip": "Skill Check wheel difficulty: 1 = Easy (wide zone, slower needle), 2 = Normal (standard), 3 = Hard (narrow zone, fast needle)."
 }

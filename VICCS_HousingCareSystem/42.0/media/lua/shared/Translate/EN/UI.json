@@ -60,5 +60,19 @@
     "UI_LV_ReplaceBurntBulb": "Replace Burnt Light Bulb",
     "UI_LV_ReplaceBurntBulb_Tooltip": "Requires a new light bulb (Base.LightBulb) in inventory.",
     "UI_LV_Halo_BulbReplaced": "Living House: Light bulb successfully replaced!",
-    "UI_LV_Halo_BulbBurnt": "Living House: A ceiling light just burned out!"
+    "UI_LV_Halo_BulbBurnt": "Living House: A ceiling light just burned out!",
+    "UI_LV_SkillCheck_Prompt": "[SPACE]",
+    "UI_LV_SkillCheck_Success": "GOOD!",
+    "UI_LV_SkillCheck_Critical": "PERFECT!",
+    "UI_LV_SkillCheck_Fail": "FAILED!",
+    "UI_LV_SkillCheck_Electricity": "ELECTRICAL TEST",
+    "UI_LV_SkillCheck_Maintenance": "MAINTENANCE",
+    "UI_LV_SkillCheck_Mechanics": "MECHANICS TEST",
+    "UI_LV_SkillCheck_FailSpeech1": "Damn! Slipped right out!",
+    "UI_LV_SkillCheck_FailSpeech2": "Ouch! Almost got shocked!",
+    "UI_LV_SkillCheck_FailSpeech3": "Sparks! That was close!",
+    "UI_LV_SkillCheck_FailSpeech4": "Grime splashed everywhere!",
+    "UI_LV_SkillCheck_BuffElectricity": "Wired Mind (+50% Electricity XP)",
+    "UI_LV_SkillCheck_BuffMaintenance": "Handy Hands (+50% Maintenance XP)",
+    "UI_LV_SkillCheck_BuffMechanics": "Home Ingenuity (+50% Mechanics XP)"
 }

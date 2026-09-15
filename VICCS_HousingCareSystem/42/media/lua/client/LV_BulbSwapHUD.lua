@@ -6,7 +6,8 @@
 --   Mini-HUD flutuante e minimalista (Frameless Soft Glass) exibido ao interagir
 --   com uma luminaria residencial para troca de lampada:
 --   - Slot 1 (Esquerda): Lampada atual no bocal (Queimada ou Em Uso)
---   - Slot 2 (Direita): Lampada nova selecionada do inventario do sobrevivente
+--   - Slot 2 (Direita): Seletor de Lampada Nova do inventario (permite escolher
+--     qual das lampadas do inventario sera utilizada com botoes [<] e [>])
 --   - Checagem visual de requisitos: Chave de Fenda e Lampada Reserva
 --   - Botao central [EFETUAR TROCA] que enfileira a Timed Action de substituicao
 -- =============================================================================
@@ -27,8 +28,8 @@ local ACCENT_GREEN = {0.30, 0.85, 0.50}
 local ACCENT_RED   = {0.95, 0.25, 0.25}
 
 function LV_BulbSwapHUD:new(x, y, width, height)
-    local w = width or 320
-    local h = height or 180
+    local w = width or 350
+    local h = height or 195
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
     self.__index = self
@@ -40,6 +41,8 @@ function LV_BulbSwapHUD:new(x, y, width, height)
 
     o.character = nil
     o.targetLight = nil
+    o.availableBulbs = {}
+    o.selectedBulbIndex = 1
     o.selectedBulb = nil
     o.hasScrewdriver = false
     o.hasBulb = false
@@ -51,8 +54,8 @@ function LV_BulbSwapHUD.getInstance()
     if not instance then
         local screenW = getCore():getScreenWidth()
         local screenH = getCore():getScreenHeight()
-        local w = 320
-        local h = 180
+        local w = 350
+        local h = 195
         local x = math.floor((screenW - w) / 2)
         local y = math.floor((screenH - h) / 2) - 60
 
@@ -71,10 +74,17 @@ function LV_BulbSwapHUD.openFor(character, lightObj)
     hud.character = character
     hud.targetLight = lightObj
 
-    -- Varre ferramentas no inventario
+    -- Se a lampada alvo estiver queimada, garante o desligamento fisico imediato
+    if LV_LightingSystem and LV_LightingSystem.isBulbBurnt and LV_LightingSystem.isBulbBurnt(lightObj) then
+        LV_LightingSystem.turnOffSwitch(lightObj)
+    end
+
+    -- Varre ferramentas e todas as lampadas no inventario
     local inv = character:getInventory()
     hud.hasScrewdriver = false
     hud.hasBulb = false
+    hud.availableBulbs = {}
+    hud.selectedBulbIndex = 1
     hud.selectedBulb = nil
 
     if inv then
@@ -86,11 +96,15 @@ function LV_BulbSwapHUD.openFor(character, lightObj)
             for i = 0, items:size() - 1 do
                 local it = items:get(i)
                 if LV_LightingSystem.isLightBulbItem(it) then
-                    hud.hasBulb = true
-                    hud.selectedBulb = it
-                    break
+                    table.insert(hud.availableBulbs, it)
                 end
             end
+        end
+
+        if #hud.availableBulbs > 0 then
+            hud.hasBulb = true
+            hud.selectedBulbIndex = 1
+            hud.selectedBulb = hud.availableBulbs[1]
         end
     end
 
@@ -114,6 +128,65 @@ function LV_BulbSwapHUD:onMouseDown(x, y)
         return true
     end
 
+    local cy = PAD + 24 + 6
+    local boxW = 120
+    local boxH = 52
+    local boxY = cy + 4
+    local box2X = self.width - PAD - boxW - 20
+
+    -- Navegacao de Lampadas: Botao Anterior [<]
+    local prevX = box2X - 22
+    local prevY = boxY + 12
+    local navBtnW = 18
+    local navBtnH = 28
+    if #self.availableBulbs > 1 then
+        if x >= prevX and x <= (prevX + navBtnW) and y >= prevY and y <= (prevY + navBtnH) then
+            self.selectedBulbIndex = self.selectedBulbIndex - 1
+            if self.selectedBulbIndex < 1 then
+                self.selectedBulbIndex = #self.availableBulbs
+            end
+            self.selectedBulb = self.availableBulbs[self.selectedBulbIndex]
+            pcall(function()
+                if getSoundManager and self.character then
+                    getSoundManager():PlayWorldSound("LightSwitch", self.character:getSquare(), 0.3, 3, 1.0, false)
+                end
+            end)
+            return true
+        end
+
+        -- Navegacao de Lampadas: Botao Proximo [>]
+        local nextX = box2X + boxW + 4
+        local nextY = boxY + 12
+        if x >= nextX and x <= (nextX + navBtnW) and y >= nextY and y <= (nextY + navBtnH) then
+            self.selectedBulbIndex = self.selectedBulbIndex + 1
+            if self.selectedBulbIndex > #self.availableBulbs then
+                self.selectedBulbIndex = 1
+            end
+            self.selectedBulb = self.availableBulbs[self.selectedBulbIndex]
+            pcall(function()
+                if getSoundManager and self.character then
+                    getSoundManager():PlayWorldSound("LightSwitch", self.character:getSquare(), 0.3, 3, 1.0, false)
+                end
+            end)
+            return true
+        end
+
+        -- Clique dentro do proprio Slot 2 alterna para a proxima lampada
+        if x >= box2X and x <= (box2X + boxW) and y >= boxY and y <= (boxY + boxH) then
+            self.selectedBulbIndex = self.selectedBulbIndex + 1
+            if self.selectedBulbIndex > #self.availableBulbs then
+                self.selectedBulbIndex = 1
+            end
+            self.selectedBulb = self.availableBulbs[self.selectedBulbIndex]
+            pcall(function()
+                if getSoundManager and self.character then
+                    getSoundManager():PlayWorldSound("LightSwitch", self.character:getSquare(), 0.3, 3, 1.0, false)
+                end
+            end)
+            return true
+        end
+    end
+
     -- Botao [EFETUAR TROCA]
     local btnX = PAD + 20
     local btnY = self.height - 34
@@ -121,9 +194,10 @@ function LV_BulbSwapHUD:onMouseDown(x, y)
     local btnH = 24
 
     if x >= btnX and x <= (btnX + btnW) and y >= btnY and y <= (btnY + btnH) then
-        if self.hasScrewdriver and self.hasBulb and self.character and self.targetLight then
+        if self.hasBulb and self.selectedBulb and self.character and self.targetLight then
             local pObj = self.character
             local lObj = self.targetLight
+            local bulbToInstall = self.selectedBulb
             LV_BulbSwapHUD.close()
 
             if luautils and luautils.walkAdjObject then
@@ -131,7 +205,7 @@ function LV_BulbSwapHUD:onMouseDown(x, y)
             elseif luautils and luautils.walkAdj then
                 luautils.walkAdj(pObj, lObj:getSquare(), true)
             end
-            ISTimedActionQueue.add(ISReplaceLightBulbAction:new(pObj, lObj, 80))
+            ISTimedActionQueue.add(ISReplaceLightBulbAction:new(pObj, lObj, bulbToInstall, self.hasScrewdriver and 120 or 160))
             return true
         end
     end
@@ -185,54 +259,76 @@ function LV_BulbSwapHUD:render()
     end
 
     -- Slot 1: Bocal Atual
-    local boxW = 100
-    local boxH = 50
-    local box1X = PAD + 14
+    local boxW = 105
+    local boxH = 54
+    local box1X = PAD + 12
     local boxY = cy + 4
 
     self:drawRect(box1X, boxY, boxW, boxH, 0.40, 0.08, 0.09, 0.10)
     self:drawRectBorder(box1X, boxY, boxW, boxH, 0.50, isBurnt and ACCENT_RED[1] or 0.5, isBurnt and ACCENT_RED[2] or 0.6, isBurnt and ACCENT_RED[3] or 0.7)
-    self:drawText("Bocal Atual", box1X + 16, boxY + 4, 0.70, 0.75, 0.80, 0.90, FONT_S)
+    self:drawText("Bocal Atual", box1X + 18, boxY + 4, 0.70, 0.75, 0.80, 0.90, FONT_S)
     if isBurnt then
-        self:drawText("[QUEIMADA]", box1X + 10, boxY + 22, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3], 1.0, FONT_S)
+        self:drawText("[QUEIMADA]", box1X + 14, boxY + 24, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3], 1.0, FONT_S)
     else
-        self:drawText("[OPERANTE]", box1X + 12, boxY + 22, ACCENT_GREEN[1], ACCENT_GREEN[2], ACCENT_GREEN[3], 1.0, FONT_S)
+        self:drawText("[OPERANTE]", box1X + 16, boxY + 24, ACCENT_GREEN[1], ACCENT_GREEN[2], ACCENT_GREEN[3], 1.0, FONT_S)
     end
 
     -- Seta central
-    local arrowX = box1X + boxW + 18
-    self:drawText("-->", arrowX, boxY + 16, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_M)
+    local arrowX = box1X + boxW + 12
+    self:drawText("-->", arrowX, boxY + 18, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 1.0, FONT_M)
 
-    -- Slot 2: Lampada Nova
-    local box2X = self.width - PAD - boxW - 14
-    self:drawRect(box2X, boxY, boxW, boxH, 0.40, 0.08, 0.09, 0.10)
+    -- Slot 2: Lampada Nova Selecionada
+    local box2X = self.width - PAD - 125 - 20
+    local box2W = 125
+    self:drawRect(box2X, boxY, box2W, boxH, 0.40, 0.08, 0.09, 0.10)
     local b2Col = self.hasBulb and ACCENT_GREEN or ACCENT_RED
-    self:drawRectBorder(box2X, boxY, boxW, boxH, 0.50, b2Col[1], b2Col[2], b2Col[3])
-    self:drawText("Lampada Nova", box2X + 12, boxY + 4, 0.70, 0.75, 0.80, 0.90, FONT_S)
+    self:drawRectBorder(box2X, boxY, box2W, boxH, 0.50, b2Col[1], b2Col[2], b2Col[3])
+
+    -- Controles de Navegacao [<] e [>] se houver multiplas lampadas
+    if #self.availableBulbs > 1 then
+        local prevX = box2X - 22
+        local prevY = boxY + 12
+        self:drawRect(prevX, prevY, 18, 28, 0.50, 0.15, 0.16, 0.18)
+        self:drawRectBorder(prevX, prevY, 18, 28, 0.80, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3])
+        self:drawText("<", prevX + 5, prevY + 6, 1.0, 1.0, 1.0, 1.0, FONT_S)
+
+        local nextX = box2X + box2W + 4
+        local nextY = boxY + 12
+        self:drawRect(nextX, nextY, 18, 28, 0.50, 0.15, 0.16, 0.18)
+        self:drawRectBorder(nextX, nextY, 18, 28, 0.80, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3])
+        self:drawText(">", nextX + 6, nextY + 6, 1.0, 1.0, 1.0, 1.0, FONT_S)
+    end
+
+    self:drawText("Lampada Nova", box2X + 16, boxY + 4, 0.70, 0.75, 0.80, 0.90, FONT_S)
     if self.hasBulb and self.selectedBulb then
         local bName = (self.selectedBulb.getName and self.selectedBulb:getName()) or "LightBulb"
-        if #bName > 13 then bName = bName:sub(1, 11) .. ".." end
+        if #bName > 14 then bName = bName:sub(1, 12) .. ".." end
         self:drawText(bName, box2X + 8, boxY + 22, ACCENT_GREEN[1], ACCENT_GREEN[2], ACCENT_GREEN[3], 1.0, FONT_S)
+
+        if #self.availableBulbs > 1 then
+            local countText = string.format("(%d/%d)", self.selectedBulbIndex, #self.availableBulbs)
+            self:drawText(countText, box2X + 8, boxY + 37, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.85, FONT_S)
+        end
     else
-        self:drawText("[SEM BULBO]", box2X + 10, boxY + 22, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3], 1.0, FONT_S)
+        self:drawText("[SEM BULBO]", box2X + 16, boxY + 24, ACCENT_RED[1], ACCENT_RED[2], ACCENT_RED[3], 1.0, FONT_S)
     end
 
     -- Requisitos de Ferramentas
     local reqY = boxY + boxH + 8
-    local sdText = self.hasScrewdriver and "Chave de Fenda: OK" or "Falta: Chave de Fenda!"
-    local sdCol = self.hasScrewdriver and ACCENT_GREEN or ACCENT_RED
-    self:drawText(sdText, PAD + 16, reqY, sdCol[1], sdCol[2], sdCol[3], 0.95, FONT_S)
+    local sdText = self.hasScrewdriver and "Chave de Fenda: OK (+Rapido)" or "Chave de Fenda: Nao (Manual)"
+    local sdCol = self.hasScrewdriver and ACCENT_GREEN or {0.70, 0.70, 0.70}
+    self:drawText(sdText, PAD + 14, reqY, sdCol[1], sdCol[2], sdCol[3], 0.95, FONT_S)
 
-    local bText = self.hasBulb and "Lampada Reserva: OK" or "Falta: Lampada Reserva!"
+    local bText = self.hasBulb and string.format("Lampada(s): %d disp.", #self.availableBulbs) or "Falta: Lampada Reserva!"
     local bCol = self.hasBulb and ACCENT_GREEN or ACCENT_RED
-    self:drawTextRight(bText, self.width - PAD - 16, reqY, bCol[1], bCol[2], bCol[3], 0.95, FONT_S)
+    self:drawTextRight(bText, self.width - PAD - 14, reqY, bCol[1], bCol[2], bCol[3], 0.95, FONT_S)
 
     -- Botao de Acao Primaria [EFETUAR TROCA]
     local btnX = PAD + 20
     local btnY = self.height - 34
     local btnW = self.width - (PAD * 2) - 40
     local btnH = 24
-    local canSwap = self.hasScrewdriver and self.hasBulb
+    local canSwap = self.hasBulb and (self.selectedBulb ~= nil)
 
     if canSwap then
         self:drawRect(btnX, btnY, btnW, btnH, 0.70, ACCENT_AMBER[1] * 0.40, ACCENT_AMBER[2] * 0.40, ACCENT_AMBER[3] * 0.40)
@@ -241,7 +337,7 @@ function LV_BulbSwapHUD:render()
     else
         self:drawRect(btnX, btnY, btnW, btnH, 0.30, 0.15, 0.15, 0.15)
         self:drawRectBorder(btnX, btnY, btnW, btnH, 0.40, 0.40, 0.40, 0.40)
-        self:drawTextCentre("FERRAMENTAS INSUFICIENTES", btnX + (btnW / 2), btnY + 4, 0.60, 0.60, 0.60, 0.80, FONT_S)
+        self:drawTextCentre("FALTA LAMPADA RESERVA", btnX + (btnW / 2), btnY + 4, 0.60, 0.60, 0.60, 0.80, FONT_S)
     end
 end
 

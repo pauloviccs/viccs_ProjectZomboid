@@ -104,6 +104,10 @@ local DEFAULTS = {
     EnableLightBulbBurnout = true,
     LightBulbBurnoutChance = 1.5,
 
+    -- Minigame de Habilidade (Skill Check DBD)
+    EnableSkillCheckMinigame = true,
+    SkillCheckDifficulty = 2,
+
     -- Consumo e Desgaste de Itens e Aparelhos (Sandbox)
     ToiletPaperDrainPercent = 15,
     ToiletFlushWaterDrain = 1.0,
@@ -333,5 +337,16 @@ end
 --- Retorna a chance percentual horaria de uma lampada acesa queimar.
 function LV_Config.getLightBulbBurnoutChance()
     return math.max(0.0, math.min(10.0, tonumber(LV_Config.get("LightBulbBurnoutChance")) or 1.5))
+end
+
+--- Retorna se o minigame de teste de habilidade (Skill Check) esta habilitado.
+function LV_Config.isSkillCheckMinigameEnabled()
+    return LV_Config.get("EnableSkillCheckMinigame") ~= false
+end
+
+--- Retorna a dificuldade do minigame de Skill Check (1 = Facil, 2 = Normal, 3 = Dificil).
+function LV_Config.getSkillCheckDifficulty()
+    local diff = tonumber(LV_Config.get("SkillCheckDifficulty")) or 2
+    return math.max(1, math.min(3, diff))
 end
 

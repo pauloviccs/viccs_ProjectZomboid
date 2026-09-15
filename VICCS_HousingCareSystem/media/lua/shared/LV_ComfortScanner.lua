@@ -854,6 +854,9 @@ function LV_ComfortScanner.processSquare(sq, res)
 
             local isBurnt = LV_LightingSystem and LV_LightingSystem.isBulbBurnt and LV_LightingSystem.isBulbBurnt(obj)
             if isBurnt then
+                if (obj.isActivated and obj:isActivated()) or (obj.hasLightBulb and obj:hasLightBulb()) then
+                    LV_LightingSystem.turnOffSwitch(obj)
+                end
                 res.hasBurntBulb = true
                 res.cleanlinessPenalty = res.cleanlinessPenalty + 4
                 res.squalorDirt = (res.squalorDirt or 0) + 5

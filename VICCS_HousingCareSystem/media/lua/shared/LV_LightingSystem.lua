@@ -16,6 +16,25 @@ require "LV_Config"
 
 LV_LightingSystem = LV_LightingSystem or {}
 
+local function getSafeText(key, fallback)
+    if LV_SkillCheckUI and LV_SkillCheckUI.getText then
+        return LV_SkillCheckUI.getText(key, fallback)
+    end
+    if getTextOrNull then
+        local val = getTextOrNull(key)
+        if val and val ~= key and val ~= "" and not string.find(val, "^UI_") then
+            return val
+        end
+    end
+    if getText then
+        local val = getText(key)
+        if val and val ~= key and val ~= "" and not string.find(val, "^UI_") then
+            return val
+        end
+    end
+    return fallback or key
+end
+
 --- Identifica se um item do inventario e uma lampada valida (LightBulb)
 function LV_LightingSystem.isLightBulbItem(item)
     if not item then return false end
@@ -57,37 +76,127 @@ function LV_LightingSystem.setBulbBurnt(obj, isBurnt)
     if not obj then return end
     local md = obj.getModData and obj:getModData()
     if md then
-        md.LV_LightBulbBurnt = isBurnt and true or nil
+        if isBurnt then
+            local curBulb = (obj.getBulbItem and obj:getBulbItem())
+            if curBulb and curBulb ~= "" then
+                md.LV_OriginalBulbItem = curBulb
+            end
+            md.LV_LightBulbBurnt = true
+        else
+            md.LV_LightBulbBurnt = nil
+        end
+    end
+    if isBurnt then
+        LV_LightingSystem.turnOffSwitch(obj)
     end
     if obj.transmitModData then
         pcall(function() obj:transmitModData() end)
     end
 end
 
---- Desliga forcadamente o interruptor e apaga a luz
+--- Desliga forcadamente o interruptor e apaga completamente a luz em todos os niveis da engine PZ
 function LV_LightingSystem.turnOffSwitch(obj)
     if not obj then return end
     pcall(function()
+        -- 1. Zera bulbItem no Java IsoLightSwitch (garante que hasLightBulb() e canSwitchLight() retornem false)
+        if obj.setBulbItemRaw then
+            obj:setBulbItemRaw(nil)
+        end
+
+        -- 2. Desativa flag e interruptores fisicos
         if obj.setActive then
+            obj:setActive(false, false, true)
             obj:setActive(false)
         elseif obj.setActivated then
             obj:setActivated(false)
         end
+
+        -- 3. Desliga a iluminacao do comodo (RoomDef.lightsActive = false)
+        if obj.switchLight then
+            obj:switchLight(false)
+        end
+
+        -- 4. Remove lampposts de luz ativos associados a esta luminaria
+        local lights = obj.getLights and obj:getLights()
+        if lights then
+            for i = 0, lights:size() - 1 do
+                local ls = lights:get(i)
+                if ls then
+                    ls:setActive(false)
+                    local cell = getCell() or (IsoWorld and IsoWorld.instance and IsoWorld.instance.currentCell)
+                    if cell and cell.removeLamppost then
+                        pcall(function() cell:removeLamppost(ls) end)
+                    end
+                end
+            end
+        end
+
+        -- 5. Forca a engine Java do PZ a invalidar o mapa de luz global (GPU / LightMap)
+        if LightingJNI and LightingJNI.doInvalidateGlobalLights and IsoPlayer and IsoPlayer.getPlayerIndex then
+            pcall(function() LightingJNI.doInvalidateGlobalLights(IsoPlayer.getPlayerIndex()) end)
+        end
+
+        -- 6. Sincroniza em rede / multiplayer
         if obj.syncIsoObject then
             obj:syncIsoObject(false, 0, nil, nil)
         end
     end)
 end
 
---- Liga o interruptor apos troca de lampada
-function LV_LightingSystem.turnOnSwitch(obj)
+--- Liga o interruptor apos troca de lampada e restaura iluminacao
+function LV_LightingSystem.turnOnSwitch(obj, newBulbType)
     if not obj then return end
     pcall(function()
+        local md = obj.getModData and obj:getModData()
+        local bType = newBulbType or (md and md.LV_OriginalBulbItem) or "Base.LightBulb"
+
+        -- 1. Restaura bulbItem no Java IsoLightSwitch
+        if obj.setBulbItemRaw then
+            obj:setBulbItemRaw(bType)
+        end
+
+        -- 2. Ativa o switch
         if obj.setActive then
+            obj:setActive(true, false, true)
             obj:setActive(true)
         elseif obj.setActivated then
             obj:setActivated(true)
         end
+
+        -- 3. Liga a iluminacao do comodo
+        if obj.switchLight then
+            obj:switchLight(true)
+        end
+
+        -- 4. Recria as fontes de luz
+        if obj.createLights then
+            pcall(function() obj:createLights(true) end)
+        end
+        if obj.addLightSourceFromSprite then
+            pcall(function() obj:addLightSourceFromSprite() end)
+        end
+
+        -- 5. Reativa lampposts
+        local lights = obj.getLights and obj:getLights()
+        if lights then
+            for i = 0, lights:size() - 1 do
+                local ls = lights:get(i)
+                if ls then
+                    ls:setActive(true)
+                    local cell = getCell() or (IsoWorld and IsoWorld.instance and IsoWorld.instance.currentCell)
+                    if cell and cell.addLamppost then
+                        pcall(function() cell:addLamppost(ls) end)
+                    end
+                end
+            end
+        end
+
+        -- 6. Invalida mapa de luz global para iluminar a sala imediatamente
+        if LightingJNI and LightingJNI.doInvalidateGlobalLights and IsoPlayer and IsoPlayer.getPlayerIndex then
+            pcall(function() LightingJNI.doInvalidateGlobalLights(IsoPlayer.getPlayerIndex()) end)
+        end
+
+        -- 7. Sincroniza em rede
         if obj.syncIsoObject then
             obj:syncIsoObject(true, 1, nil, nil)
         end
@@ -127,9 +236,60 @@ end
 
 function ISReplaceLightBulbAction:update()
     self.character:faceThisObject(self.lightObj)
+
+    -- Se o teste falhou, aborta imediatamente
+    if self.skillCheckFailed then
+        self:forceStop()
+        return
+    end
+
+    -- Acionamento do minigame DBD de Skill Check (se habilitado)
+    if not self.skillCheckTriggered and self:getJobDelta() >= 0.25 then
+        self.skillCheckTriggered = true
+        local isEnabled = (LV_Config and LV_Config.isSkillCheckMinigameEnabled and LV_Config.isSkillCheckMinigameEnabled())
+        if isEnabled and (isClient() or not isServer()) and LV_SkillCheckUI and LV_SkillCheckUI.trigger then
+            if self.character and (not self.character.isLocalPlayer or self.character:isLocalPlayer()) then
+                self.skillCheckPending = true
+                local pType = (Perks and Perks.Electricity) or nil
+                local pLabel = getSafeText("UI_LV_SkillCheck_Electricity", "TESTE ELETRICO")
+                LV_SkillCheckUI.trigger(self.character, self, pType, pLabel,
+                    function(isCrit)
+                        self.skillCheckPending = false
+                        self.skillCheckSuccess = true
+                        self.isCritical = isCrit
+                        if isCrit and self.setCurrentTime and self.maxTime then
+                            self:setCurrentTime(self.maxTime * 0.90)
+                        end
+                    end,
+                    function()
+                        self.skillCheckPending = false
+                        self.skillCheckFailed = true
+                        self.skillCheckSuccess = false
+                        self:forceStop()
+                    end
+                )
+            else
+                self.skillCheckSuccess = true
+            end
+        else
+            self.skillCheckSuccess = true
+        end
+    end
+
+    -- TRAVA DE SEGURANCA: Enquanto o minigame estiver em andamento, congela a barra nos 30%
+    if self.skillCheckPending then
+        if self:getJobDelta() >= 0.30 then
+            self:setCurrentTime(self.maxTime * 0.30)
+        end
+    end
 end
 
 function ISReplaceLightBulbAction:start()
+    self.skillCheckTriggered = false
+    self.skillCheckPending = false
+    self.skillCheckSuccess = false
+    self.skillCheckFailed = false
+    self.isCritical = false
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "High")
     local sq = self.lightObj:getSquare()
@@ -141,31 +301,51 @@ function ISReplaceLightBulbAction:start()
 end
 
 function ISReplaceLightBulbAction:stop()
+    self.skillCheckPending = false
+    self.skillCheckFailed = true
     ISBaseTimedAction.stop(self)
 end
 
 function ISReplaceLightBulbAction:perform()
+    -- TRAVA DE FERRO: Se o teste falhou ou se o teste ativo nao foi concluido com sucesso, aborta sem trocar nada!
+    if self.skillCheckFailed or (self.skillCheckTriggered and not self.skillCheckSuccess) then
+        return
+    end
+
     local inv = self.character:getInventory()
+    local bulbItem = nil
+    local bulbFullType = "Base.LightBulb"
+
     if inv then
-        local bulbItem = nil
-        local items = inv:getItems()
-        if items then
-            for i = 0, items:size() - 1 do
-                local it = items:get(i)
-                if LV_LightingSystem.isLightBulbItem(it) then
-                    bulbItem = it
-                    break
+        -- 1. Prioriza o bulbo especifico selecionado pelo jogador no painel
+        if self.targetBulbItem and inv:contains(self.targetBulbItem) then
+            bulbItem = self.targetBulbItem
+            bulbFullType = (bulbItem.getFullType and bulbItem:getFullType()) or "Base.LightBulb"
+        else
+            -- 2. Fallback: primeira lampada valida no inventario
+            local items = inv:getItems()
+            if items then
+                for i = 0, items:size() - 1 do
+                    local it = items:get(i)
+                    if LV_LightingSystem.isLightBulbItem(it) then
+                        bulbItem = it
+                        bulbFullType = (it.getFullType and it:getFullType()) or "Base.LightBulb"
+                        break
+                    end
                 end
             end
         end
+
         if bulbItem then
             inv:Remove(bulbItem)
+        else
+            return
         end
     end
 
-    -- Limpa o estado de queimada e reativa a luz
+    -- Limpa o estado de queimada e reativa a luz com o bulbo correto
     LV_LightingSystem.setBulbBurnt(self.lightObj, false)
-    LV_LightingSystem.turnOnSwitch(self.lightObj)
+    LV_LightingSystem.turnOnSwitch(self.lightObj, bulbFullType)
 
     -- Feedback sonoro e visual
     local sq = self.lightObj:getSquare()
@@ -177,10 +357,18 @@ function ISReplaceLightBulbAction:perform()
 
     if self.character.setHaloNote then
         pcall(function()
-            local note = (getText and getText("UI_LV_Halo_BulbReplaced")) or "Living House: Lampada substituida com sucesso!"
-            if note == "UI_LV_Halo_BulbReplaced" then note = "Living House: Lampada substituida com sucesso!" end
+            local note = getSafeText("UI_LV_Halo_BulbReplaced", "Living House: Lampada substituida com sucesso!")
             self.character:setHaloNote(note, 100, 240, 140, 200)
         end)
+    end
+
+    -- Recompensa de XP e multiplicador temporario de eletrica
+    if (isClient() or not isServer()) and LV_SkillCheckUI and LV_SkillCheckUI.grantXpAndBoost then
+        local pType = (Perks and Perks.Electricity) or nil
+        if pType then
+            local buffName = getSafeText("UI_LV_SkillCheck_BuffElectricity", "Mente Conectada (+50% XP Eletrica)")
+            LV_SkillCheckUI.grantXpAndBoost(self.character, pType, 20, self.isCritical, 2.0, 1.5, buffName)
+        end
     end
 
     -- Bonus de tarefas domesticas no lar
@@ -196,13 +384,30 @@ function ISReplaceLightBulbAction:perform()
     ISBaseTimedAction.perform(self)
 end
 
-function ISReplaceLightBulbAction:new(character, lightObj, time)
+function ISReplaceLightBulbAction:new(character, lightObj, targetBulbItemOrTime, time)
     local o = ISBaseTimedAction.new(self, character)
     o.lightObj = lightObj
+
+    if type(targetBulbItemOrTime) == "number" then
+        o.targetBulbItem = nil
+        o.maxTime = targetBulbItemOrTime
+    else
+        o.targetBulbItem = targetBulbItemOrTime
+        o.maxTime = time
+    end
+
+    o.skillCheckTriggered = false
+    o.skillCheckPending = false
+    o.skillCheckSuccess = false
+    o.skillCheckFailed = false
+    o.isCritical = false
     o.stopOnWalk = true
     o.stopOnRun = true
     o.stopOnAim = true
-    o.maxTime = time or 80
+
+    local inv = character and character:getInventory()
+    local hasSd = inv and (inv:getFirstTypeRecurse("Base.Screwdriver") or inv:getFirstTypeRecurse("Screwdriver"))
+    o.maxTime = o.maxTime or (hasSd and 130 or 170)
     return o
 end
 
@@ -275,8 +480,7 @@ function LV_LightingSystem.onHourBurnoutCheck()
                                 local dy = math.abs(player:getY() - y)
                                 if dx <= 14 and dy <= 14 and player.setHaloNote then
                                     pcall(function()
-                                        local note = (getText and getText("UI_LV_Halo_BulbBurnt")) or "Living House: Uma lampada de teto queimou!"
-                                        if note == "UI_LV_Halo_BulbBurnt" then note = "Living House: Uma lampada de teto queimou!" end
+                                        local note = getSafeText("UI_LV_Halo_BulbBurnt", "Living House: Uma lampada de teto queimou!")
                                         player:setHaloNote(note, 240, 180, 60, 250)
                                     end)
                                 end
@@ -336,19 +540,17 @@ function LV_LightingSystem.onFillWorldObjectContextMenu(playerNum, context, worl
             elseif luautils and luautils.walkAdj then
                 luautils.walkAdj(pObj, lightObj:getSquare(), true)
             end
-            ISTimedActionQueue.add(ISReplaceLightBulbAction:new(pObj, lightObj, 80))
+            ISTimedActionQueue.add(ISReplaceLightBulbAction:new(pObj, lightObj, nil, nil))
         end
 
-        local optText = (getText and getText("UI_LV_ReplaceBurntBulb")) or "Substituir Lampada Queimada"
-        if optText == "UI_LV_ReplaceBurntBulb" then optText = "Substituir Lampada Queimada" end
+        local optText = getSafeText("UI_LV_ReplaceBurntBulb", "Substituir Lampada Queimada")
         local opt = context:addOption(optText, player, onReplaceAction, clickedLight)
         if not hasBulb then
             opt.notAvailable = true
             local tooltip = ISToolTip:new()
             tooltip:initialise()
             tooltip:setVisible(false)
-            local tipText = (getText and getText("UI_LV_ReplaceBurntBulb_Tooltip")) or "Requer uma Lampada nova (LightBulb) no inventario."
-            if tipText == "UI_LV_ReplaceBurntBulb_Tooltip" then tipText = "Requer uma Lampada nova (LightBulb) no inventario." end
+            local tipText = getSafeText("UI_LV_ReplaceBurntBulb_Tooltip", "Requer uma Lampada nova (LightBulb) no inventario.")
             tooltip.description = tipText
             opt.toolTip = tooltip
         end
@@ -356,6 +558,91 @@ function LV_LightingSystem.onFillWorldObjectContextMenu(playerNum, context, worl
 end
 
 Events.OnFillWorldObjectContextMenu.Add(LV_LightingSystem.onFillWorldObjectContextMenu)
+
+-- =============================================================================
+-- ENFORCEMENT & HOOKS: Garantia de Apagamento Real e Interceptacao de Cliques
+-- =============================================================================
+
+--- Varre periodicamente para garantir que nenhuma lampada queimada no edificio fique acesa
+function LV_LightingSystem.enforceBurntBulbsDarkness()
+    local player = getPlayer and getPlayer()
+    if not player or player:isDead() then return end
+    local sq = player:getCurrentSquare()
+    if not sq then return end
+    local building = (sq.getBuilding and sq:getBuilding()) or (sq.getRoom and sq:getRoom() and sq:getRoom().getBuilding and sq:getRoom():getBuilding())
+    if not building then return end
+    local bDef = building.getDef and building:getDef()
+    if not bDef then return end
+    local cell = sq:getCell()
+    if not cell then return end
+
+    local minX = bDef:getX()
+    local minY = bDef:getY()
+    local maxX = minX + bDef:getW()
+    local maxY = minY + bDef:getH()
+
+    for x = minX, maxX do
+        for y = minY, maxY do
+            local tSq = cell:getGridSquare(x, y, sq:getZ())
+            if tSq and tSq.getObjects then
+                local objs = tSq:getObjects()
+                for i = 0, objs:size() - 1 do
+                    local obj = objs:get(i)
+                    if obj and LV_LightingSystem.isLightSwitch(obj) then
+                        if LV_LightingSystem.isBulbBurnt(obj) then
+                            local isLit = (obj.isActivated and obj:isActivated()) or (obj.hasLightBulb and obj:hasLightBulb())
+                            if isLit then
+                                LV_LightingSystem.turnOffSwitch(obj)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+Events.EveryOneMinute.Add(LV_LightingSystem.enforceBurntBulbsDarkness)
+
+-- Hook em ISToggleLightAction para impedir que o jogador acenda uma lampada queimada
+require "TimedActions/ISToggleLightAction"
+if ISToggleLightAction and not ISToggleLightAction._LV_Hooked then
+    ISToggleLightAction._LV_Hooked = true
+    local original_complete = ISToggleLightAction.complete
+    function ISToggleLightAction:complete()
+        if self.object and LV_LightingSystem and LV_LightingSystem.isBulbBurnt and LV_LightingSystem.isBulbBurnt(self.object) then
+            LV_LightingSystem.turnOffSwitch(self.object)
+            if self.character and self.character.setHaloNote then
+                pcall(function()
+                    local note = getSafeText("UI_LV_Halo_BulbIsBurnt", "Living House: *Clic* A lampada esta queimada!")
+                    self.character:setHaloNote(note, 240, 90, 90, 220)
+                end)
+            end
+            return true
+        end
+        return original_complete(self)
+    end
+end
+
+-- Hook no menu de contexto do mundo (Turn On / Turn Off)
+if ISWorldObjectContextMenu and not ISWorldObjectContextMenu._LV_LightHooked then
+    ISWorldObjectContextMenu._LV_LightHooked = true
+    local original_onToggleLight = ISWorldObjectContextMenu.onToggleLight
+    ISWorldObjectContextMenu.onToggleLight = function(worldobjects, light, player)
+        if light and LV_LightingSystem and LV_LightingSystem.isBulbBurnt and LV_LightingSystem.isBulbBurnt(light) then
+            LV_LightingSystem.turnOffSwitch(light)
+            local pObj = getSpecificPlayer(player)
+            if pObj and pObj.setHaloNote then
+                pcall(function()
+                    local note = getSafeText("UI_LV_Halo_BulbIsBurnt", "Living House: *Clic* A lampada esta queimada!")
+                    pObj:setHaloNote(note, 240, 90, 90, 220)
+                end)
+            end
+            return
+        end
+        return original_onToggleLight(worldobjects, light, player)
+    end
+end
 
 print("[LarVivo] LV_LightingSystem carregado com sucesso (Desgaste e Queima de Lampadas Ativo).")
 

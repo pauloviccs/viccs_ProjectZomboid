@@ -454,9 +454,60 @@ end
 
 function ISUnclogToiletAction:update()
     self.character:faceThisObject(self.toiletObject)
+
+    -- Se o teste falhou, aborta imediatamente
+    if self.skillCheckFailed then
+        self:forceStop()
+        return
+    end
+
+    -- Dispara minigame de Skill Check DBD no inicio da acao
+    if not self.skillCheckTriggered and self:getJobDelta() >= 0.15 then
+        self.skillCheckTriggered = true
+        local isEnabled = (LV_Config and LV_Config.isSkillCheckMinigameEnabled and LV_Config.isSkillCheckMinigameEnabled())
+        if isEnabled and LV_SkillCheckUI and LV_SkillCheckUI.trigger then
+            if self.character and (not self.character.isLocalPlayer or self.character:isLocalPlayer()) then
+                self.skillCheckPending = true
+                local pType = (Perks and Perks.Maintenance) or nil
+                local pLabel = (LV_SkillCheckUI and LV_SkillCheckUI.getText and LV_SkillCheckUI.getText("UI_LV_SkillCheck_Maintenance", "MANUTENCAO")) or "MANUTENCAO"
+                LV_SkillCheckUI.trigger(self.character, self, pType, pLabel,
+                    function(isCrit)
+                        self.skillCheckPending = false
+                        self.skillCheckSuccess = true
+                        self.isCritical = isCrit
+                        if isCrit and self.setCurrentTime and self.maxTime then
+                            self:setCurrentTime(self.maxTime * 0.90)
+                        end
+                    end,
+                    function()
+                        self.skillCheckPending = false
+                        self.skillCheckFailed = true
+                        self.skillCheckSuccess = false
+                        self:forceStop()
+                    end
+                )
+            else
+                self.skillCheckSuccess = true
+            end
+        else
+            self.skillCheckSuccess = true
+        end
+    end
+
+    -- TRAVA DE SEGURANCA: Enquanto o minigame estiver em andamento, congela a barra nos 30%
+    if self.skillCheckPending then
+        if self:getJobDelta() >= 0.30 then
+            self:setCurrentTime(self.maxTime * 0.30)
+        end
+    end
 end
 
 function ISUnclogToiletAction:start()
+    self.skillCheckTriggered = false
+    self.skillCheckPending = false
+    self.skillCheckSuccess = false
+    self.skillCheckFailed = false
+    self.isCritical = false
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "Low")
     local sq = self.toiletObject:getSquare()
@@ -468,10 +519,17 @@ function ISUnclogToiletAction:start()
 end
 
 function ISUnclogToiletAction:stop()
+    self.skillCheckPending = false
+    self.skillCheckFailed = true
     ISBaseTimedAction.stop(self)
 end
 
 function ISUnclogToiletAction:perform()
+    -- TRAVA DE FERRO: Se o teste falhou ou se o teste ativo nao foi aprovado, aborta sem desentupir nada!
+    if self.skillCheckFailed or (self.skillCheckTriggered and not self.skillCheckSuccess) then
+        return
+    end
+
     -- Desentope a privada
     if LV_DirtScoreData and LV_DirtScoreData.setApplianceClogged then
         LV_DirtScoreData.setApplianceClogged(self.toiletObject, false)
@@ -492,6 +550,15 @@ function ISUnclogToiletAction:perform()
         end)
     end
 
+    -- Recompensa de XP e multiplicador temporario de manutencao
+    if LV_SkillCheckUI and LV_SkillCheckUI.grantXpAndBoost then
+        local pType = (Perks and Perks.Maintenance) or nil
+        if pType then
+            local buffName = (LV_SkillCheckUI and LV_SkillCheckUI.getText and LV_SkillCheckUI.getText("UI_LV_SkillCheck_BuffMaintenance", "Maos Habeis (+50% XP Manutencao)")) or "Maos Habeis (+50% XP Manutencao)"
+            LV_SkillCheckUI.grantXpAndBoost(self.character, pType, 20, self.isCritical, 2.0, 1.5, buffName)
+        end
+    end
+
     if LV_HomemakingActions and LV_HomemakingActions.onChoreCompleted then
         LV_HomemakingActions.onChoreCompleted(self.character, "Cleaning", 15)
     end
@@ -502,10 +569,15 @@ end
 function ISUnclogToiletAction:new(character, toiletObject, time)
     local o = ISBaseTimedAction.new(self, character)
     o.toiletObject = toiletObject
+    o.skillCheckTriggered = false
+    o.skillCheckPending = false
+    o.skillCheckSuccess = false
+    o.skillCheckFailed = false
+    o.isCritical = false
     o.stopOnWalk = true
     o.stopOnRun = true
     o.stopOnAim = true
-    o.maxTime = time or 100
+    o.maxTime = time or 150
     o.forceProgressBar = true
     return o
 end
