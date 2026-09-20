@@ -1,0 +1,53 @@
+VERSION = 1,
+
+option VICCS_Broadcasting.ZombieAttractionRadius
+{
+    type = integer,
+    default = 25,
+    min = 0,
+    max = 100,
+    page = VICCS_Broadcasting,
+    translation = VICCS_ZombieAttractionRadius,
+}
+
+option VICCS_Broadcasting.RequirePower
+{
+    type = boolean,
+    default = true,
+    page = VICCS_Broadcasting,
+    translation = VICCS_RequirePower,
+}
+
+option VICCS_Broadcasting.CDPlayerRequireHeadphones
+{
+    type = boolean,
+    default = true,
+    page = VICCS_Broadcasting,
+    translation = VICCS_CDPlayerRequireHeadphones,
+}
+
+option VICCS_Broadcasting.CDPlayerSilent
+{
+    type = boolean,
+    default = true,
+    page = VICCS_Broadcasting,
+    translation = VICCS_CDPlayerSilent,
+}
+
+option VICCS_Broadcasting.TrustedDomainsOnly
+{
+    type = boolean,
+    default = true,
+    page = VICCS_Broadcasting,
+    translation = VICCS_TrustedDomainsOnly,
+}
+
+option VICCS_Broadcasting.DefaultVolume
+{
+    type = integer,
+    default = 70,
+    min = 0,
+    max = 100,
+    page = VICCS_Broadcasting,
+    translation = VICCS_DefaultVolume,
+}

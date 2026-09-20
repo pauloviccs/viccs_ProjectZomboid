@@ -1,0 +1,21 @@
+Sandbox_PTBR = {
+    Sandbox_VICCS_Broadcasting = "VICCS Broadcasting",
+    
+    Sandbox_VICCS_ZombieAttractionRadius = "Raio de Atracao de Zumbis (Metros)",
+    Sandbox_VICCS_ZombieAttractionRadius_tooltip = "Distancia maxima em metros (tiles) que o som de TVs e radios viaja para atrair zumbis no volume maximo. Defina como 0 para jogar em modo totalmente silencioso.",
+
+    Sandbox_VICCS_RequirePower = "Exigir Energia ou Bateria",
+    Sandbox_VICCS_RequirePower_tooltip = "Quando ativado, os aparelhos exigem eletricidade na rede, gerador ativo ou bateria para funcionar. Se desativado, todos os aparelhos funcionam livremente sem consumir energia.",
+
+    Sandbox_VICCS_CDPlayerRequireHeadphones = "CD Player Exige Fones de Ouvido",
+    Sandbox_VICCS_CDPlayerRequireHeadphones_tooltip = "Quando ativado, o CD Player (Discman) so podera ser iniciado se o sobrevivente tiver fones de ouvido (Headphones ou Earbuds) plugados no aparelho.",
+
+    Sandbox_VICCS_CDPlayerSilent = "CD Player com Fones e 100% Silencioso",
+    Sandbox_VICCS_CDPlayerSilent_tooltip = "Quando ativado, a musica reproduzida no CD Player usando fones e privada e nao atrai nenhum zumbi, permitindo caminhar com seguranca.",
+
+    Sandbox_VICCS_TrustedDomainsOnly = "Apenas Links Confiaveis (YouTube/SoundCloud)",
+    Sandbox_VICCS_TrustedDomainsOnly_tooltip = "Quando ativado, bloqueia links desconhecidos e aceita somente URLs de plataformas suportadas (YouTube e SoundCloud) para maior estabilidade e seguranca do servidor.",
+
+    Sandbox_VICCS_DefaultVolume = "Volume Inicial Padrao (%)",
+    Sandbox_VICCS_DefaultVolume_tooltip = "Nivel de volume em porcentagem (0 a 100%) em que novos aparelhos e reprodutores iniciam quando ligados pela primeira vez. Padrao: 70%.",
+}

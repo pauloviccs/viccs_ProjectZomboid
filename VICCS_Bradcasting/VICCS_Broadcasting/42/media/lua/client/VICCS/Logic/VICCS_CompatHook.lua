@@ -10,6 +10,11 @@ VICCS.Compat = VICCS.Compat or {}
 function VICCS.Compat.hasDevicePower(deviceObj)
     if not deviceObj then return false, false end
     
+    -- Opcao de Sandbox: se "Exigir Energia ou Bateria" estiver desativado, concede energia irrestrita
+    if VICCS.Config and VICCS.Config.getSandboxVar and not VICCS.Config.getSandboxVar("RequirePower", true) then
+        return true, true
+    end
+    
     local hasPower = false
     local isTurnedOn = false
     
@@ -105,7 +110,33 @@ end
 function VICCS.Compat.detectDeviceType(obj)
     if not obj then return nil end
     
-    -- 1. Classes nativas de Rádio e Televisão no mundo (IsoWaveSignal / IsoRadio / IsoTelevision)
+    -- 1. Item solto no chão do mundo (IsoWorldInventoryItem)
+    if instanceof(obj, "IsoWorldInventoryItem") then
+        local item = obj:getItem()
+        if item then
+            local fullType = item.getFullType and item:getFullType()
+            local iType = item.getType and item:getType()
+            if fullType == "Base.CDplayer" or iType == "CDplayer" then
+                return "CDPLAYER"
+            end
+            if (item.isTwoWayRadio and item:isTwoWayRadio()) or (item.getDeviceData and item:getDeviceData()) then
+                return "RADIO"
+            end
+        end
+        return nil
+    end
+
+    -- 2. Item no inventário ou container (Radio ou InventoryItem com DeviceData ou CD Player)
+    if instanceof(obj, "Radio") or (instanceof(obj, "InventoryItem") and obj.getDeviceData and obj:getDeviceData()) then
+        local fullType = obj.getFullType and obj:getFullType()
+        local iType = obj.getType and obj:getType()
+        if fullType == "Base.CDplayer" or iType == "CDplayer" then
+            return "CDPLAYER"
+        end
+        return "RADIO"
+    end
+    
+    -- 3. Classes nativas de Rádio e Televisão no mundo (IsoWaveSignal / IsoRadio / IsoTelevision)
     if instanceof(obj, "IsoWaveSignal") or instanceof(obj, "IsoRadio") or instanceof(obj, "IsoTelevision") then
         local isTV = false
         pcall(function()
@@ -115,27 +146,16 @@ function VICCS.Compat.detectDeviceType(obj)
             end
         end)
         if not isTV and obj.getSprite and obj:getSprite() then
-            local sName = string.lower(obj:getSprite():getName() or "")
-            if string.find(sName, "tv") or string.find(sName, "television") then
-                isTV = true
+            local sprite = obj:getSprite()
+            local sprName = sprite and sprite.getName and sprite:getName()
+            if sprName and type(sprName) == "string" and #sprName > 0 then
+                local sLower = string.lower(sprName)
+                if string.find(sLower, "tv") or string.find(sLower, "television") then
+                    isTV = true
+                end
             end
         end
         return isTV and "TELEVISION" or "RADIO"
-    end
-    
-    -- 2. Item solto no chão do mundo (IsoWorldInventoryItem)
-    if instanceof(obj, "IsoWorldInventoryItem") then
-        local item = obj:getItem()
-        if item then
-            if (item.isTwoWayRadio and item:isTwoWayRadio()) or (item.getDeviceData and item:getDeviceData()) then
-                return "RADIO"
-            end
-        end
-    end
-    
-    -- 3. Item de rádio em inventário ou container
-    if instanceof(obj, "Radio") then
-        return "RADIO"
     end
     
     -- 4. Qualquer objeto do jogo que possua DeviceData (Retrocompatibilidade Total)
@@ -153,14 +173,18 @@ function VICCS.Compat.detectDeviceType(obj)
     
     -- 5. Busca ampla por nomes de sprites de tilesets do Vanilla e de mapas customizados
     if obj.getSprite and obj:getSprite() then
-        local sName = string.lower(obj:getSprite():getName() or "")
-        if string.find(sName, "appliances_television") or string.find(sName, "television") or string.find(sName, "tv") then
-            return "TELEVISION"
-        elseif string.find(sName, "appliances_radio") or string.find(sName, "radio") or string.find(sName, "boombox") 
-            or string.find(sName, "stereo") or string.find(sName, "jukebox") or string.find(sName, "recreation_01_") then
-            return "RADIO"
-        elseif string.find(sName, "computer") or string.find(sName, "terminal") or string.find(sName, "pc") then
-            return "COMPUTER"
+        local sprite = obj:getSprite()
+        local sprName = sprite and sprite.getName and sprite:getName()
+        if sprName and type(sprName) == "string" and #sprName > 0 then
+            local sName = string.lower(sprName)
+            if string.find(sName, "appliances_television") or string.find(sName, "television") or string.find(sName, "tv") then
+                return "TELEVISION"
+            elseif string.find(sName, "appliances_radio") or string.find(sName, "radio") or string.find(sName, "boombox") 
+                or string.find(sName, "stereo") or string.find(sName, "jukebox") or string.find(sName, "recreation_01_") then
+                return "RADIO"
+            elseif string.find(sName, "computer") or string.find(sName, "terminal") or string.find(sName, "pc") then
+                return "COMPUTER"
+            end
         end
     end
     
@@ -317,36 +341,199 @@ local function onFillInventoryObjectContextMenu(playerNum, context, items)
     if not player then player = getPlayer() end
     if not player or not context then return end
     
+    local pNum = (type(playerNum) == "number" and playerNum) or (player.getPlayerNum and player:getPlayerNum()) or 0
+    local hotbar = getPlayerHotbar and getPlayerHotbar(pNum)
+
     for _, item in ipairs(items) do
         local realItem = item
         if not instanceof(item, "InventoryItem") and item.items then
             realItem = item.items[1]
         end
         
-        if realItem and ((realItem.isTwoWayRadio and realItem:isTwoWayRadio()) or (realItem.getDeviceData and realItem:getDeviceData())) then
-            local hasPower, isTurnedOn = VICCS.Compat.hasDevicePower(realItem)
-            local label = getText("UI_VICCS_MediaHub") or "VICCS Media Hub"
+        if realItem then
+            local itemType = realItem.getType and realItem:getType()
+            local fullType = realItem.getFullType and realItem:getFullType()
+            local strType = (itemType and type(itemType) == "string" and itemType) or ""
+            local strFull = (fullType and type(fullType) == "string" and fullType) or ""
+            local isCDPlayer = (strType == "CDplayer" or strFull == "Base.CDplayer" or (string.find(string.lower(strType), "cdplayer") ~= nil))
             
-            if hasPower then
-                context:addOption(label, realItem, function(target)
-                    if not isTurnedOn and target and target.getDeviceData then
-                        pcall(function()
-                            local dd = target:getDeviceData()
-                            if dd and not dd:getIsTurnedOn() then
-                                if dd.setIsTurnedOn then
-                                    dd:setIsTurnedOn(true)
-                                end
+            if isCDPlayer then
+                -- Certifica attachmentType para permitir acoplagem nas ranhuras do cinto
+                if not realItem.getAttachmentType or not realItem:getAttachmentType() or realItem:getAttachmentType() == "" then
+                    pcall(function() realItem:setAttachmentType("Walkie") end)
+                end
+                
+                local isPrimary = (player:getPrimaryHandItem() == realItem)
+                local isSecondary = (player:getSecondaryHandItem() == realItem)
+                local isBelt = (player.isAttachedItem and player:isAttachedItem(realItem)) or
+                               (hotbar and hotbar.isInHotbar and hotbar:isInHotbar(realItem)) or
+                               (realItem.getAttachedSlot and realItem:getAttachedSlot() > 0)
+                local isEquipped = isPrimary or isSecondary or isBelt
+                
+                -- Checagem de Fones de Ouvido (plugados ou no inventário/equipados)
+                local dd = realItem.getDeviceData and realItem:getDeviceData()
+                local hasPluggedHeadphones = dd and dd.getHeadphoneType and dd:getHeadphoneType() >= 0
+                
+                local inv = player:getInventory()
+                local headphoneItem = nil
+                if inv then
+                    headphoneItem = inv:getFirstTypeRecurse("Base.Headphones") or
+                                    inv:getFirstTypeRecurse("Base.Earbuds") or
+                                    inv:getFirstTypeRecurse("Headphones") or
+                                    inv:getFirstTypeRecurse("Earbuds")
+                end
+                if not headphoneItem and player.getWornItem then
+                    headphoneItem = player:getWornItem("Ears") or player:getWornItem("Headphones") or player:getWornItem("Earbuds")
+                end
+                local requireHP = (VICCS.Config and VICCS.Config.getSandboxVar and VICCS.Config.getSandboxVar("CDPlayerRequireHeadphones", true))
+                if requireHP == nil then requireHP = true end
+                local canListen = (not requireHP) or hasPluggedHeadphones or (headphoneItem ~= nil)
+                
+                -- Checagem de Bateria/Energia
+                local hasPower, isTurnedOn = VICCS.Compat.hasDevicePower(realItem)
+                
+                -- Detecção de Slots do Cinto (Hotbar)
+                local leftBeltSlotIndex = nil
+                local leftBeltSlotDef = nil
+                local rightBeltSlotIndex = nil
+                local rightBeltSlotDef = nil
+                if hotbar and hotbar.availableSlot then
+                    for slotIndex, slot in pairs(hotbar.availableSlot) do
+                        if slot.def then
+                            if slot.def.type == "SmallBeltLeft" or slot.slotType == "SmallBeltLeft" then
+                                leftBeltSlotIndex = slotIndex
+                                leftBeltSlotDef = slot.def
+                            elseif slot.def.type == "SmallBeltRight" or slot.slotType == "SmallBeltRight" then
+                                rightBeltSlotIndex = slotIndex
+                                rightBeltSlotDef = slot.def
                             end
-                        end)
+                        end
                     end
-                    VICCS.Main.openDeviceUI(player, target, "RADIO")
+                end
+                
+                -- Cria submenu dedicado para o Discman
+                local cdTitle = getText("UI_VICCS_CDPlayer_Title") or "VICCS CD Player (Discman)"
+                local cdOption = context:addOption(cdTitle, nil, nil)
+                local cdSubMenu = context:getNew(context)
+                context:addSubMenu(cdOption, cdSubMenu)
+                
+                -- 1. Abrir Player de Música
+                if isEquipped and canListen and hasPower then
+                    cdSubMenu:addOption(getText("UI_VICCS_Play") or "Abrir Player de Música", realItem, function(target)
+                        if not hasPluggedHeadphones and headphoneItem then
+                            pcall(function()
+                                if ISRadioAction then
+                                    ISTimedActionQueue.add(ISRadioAction:new("AddHeadphones", player, target, headphoneItem))
+                                elseif target.getDeviceData and target:getDeviceData().addHeadphones then
+                                    target:getDeviceData():addHeadphones(headphoneItem)
+                                end
+                            end)
+                        end
+                        if not isTurnedOn and target and target.getDeviceData then
+                            pcall(function()
+                                local dData = target:getDeviceData()
+                                if dData and not dData:getIsTurnedOn() and dData.setIsTurnedOn then
+                                    dData:setIsTurnedOn(true)
+                                end
+                            end)
+                        end
+                        VICCS.Main.openDeviceUI(player, target, "CDPLAYER")
+                    end)
+                else
+                    local disOpt = cdSubMenu:addOption(getText("UI_VICCS_Play") or "Abrir Player de Música", realItem, nil)
+                    disOpt.notAvailable = true
+                    local tooltip = ISWorldObjectContextMenu.addToolTip()
+                    if not isEquipped then
+                        tooltip.description = getText("UI_VICCS_NeedEquip") or "Precisa estar equipado na mão ou no cinto!"
+                    elseif not canListen then
+                        tooltip.description = getText("UI_VICCS_NeedHeadphones") or "Requer fones de ouvido (Headphones ou Earbuds)!"
+                    elseif not hasPower then
+                        tooltip.description = getText("UI_VICCS_NoPower_Tooltip") or "Este aparelho precisa de pilha (Bateria) para funcionar."
+                    end
+                    disOpt.toolTip = tooltip
+                end
+                
+                -- 2. Equipar na Mão Principal
+                local equipHandOpt = cdSubMenu:addOption(getText("UI_VICCS_EquipPrimary") or "Equipar na Mão Principal", realItem, function(target)
+                    ISInventoryPaneContextMenu.transferIfNeeded(player, target)
+                    ISInventoryPaneContextMenu.equipWeapon(target, true, false, pNum)
                 end)
+                if isPrimary then
+                    equipHandOpt.notAvailable = true
+                    local tip = ISWorldObjectContextMenu.addToolTip()
+                    tip.description = "Já equipado na Mão Principal."
+                    equipHandOpt.toolTip = tip
+                end
+                
+                -- 3. Equipar no Cinto (Esquerdo)
+                local equipBeltLeftOpt = cdSubMenu:addOption(getText("UI_VICCS_EquipBeltLeft") or "Equipar no Cinto (Esquerdo)", realItem, function(target)
+                    if hotbar and leftBeltSlotIndex and leftBeltSlotDef then
+                        local attachSlot = (leftBeltSlotDef.attachments and leftBeltSlotDef.attachments["Walkie"]) or "Walkie Belt Left"
+                        hotbar:attachItem(target, attachSlot, leftBeltSlotIndex, leftBeltSlotDef, true)
+                    end
+                end)
+                if not leftBeltSlotIndex then
+                    equipBeltLeftOpt.notAvailable = true
+                    local tip = ISWorldObjectContextMenu.addToolTip()
+                    tip.description = "Requer um cinto equipado no personagem."
+                    equipBeltLeftOpt.toolTip = tip
+                end
+                
+                -- 4. Equipar no Cinto (Direito)
+                local equipBeltRightOpt = cdSubMenu:addOption(getText("UI_VICCS_EquipBeltRight") or "Equipar no Cinto (Direito)", realItem, function(target)
+                    if hotbar and rightBeltSlotIndex and rightBeltSlotDef then
+                        local attachSlot = (rightBeltSlotDef.attachments and rightBeltSlotDef.attachments["Walkie"]) or "Walkie Belt Right"
+                        hotbar:attachItem(target, attachSlot, rightBeltSlotIndex, rightBeltSlotDef, true)
+                    end
+                end)
+                if not rightBeltSlotIndex then
+                    equipBeltRightOpt.notAvailable = true
+                    local tip = ISWorldObjectContextMenu.addToolTip()
+                    tip.description = "Requer um cinto equipado no personagem."
+                    equipBeltRightOpt.toolTip = tip
+                end
+                
+                -- 5. Conectar Fones de Ouvido (se disponíveis e ainda não plugados)
+                if not hasPluggedHeadphones and headphoneItem then
+                    local connLabel = (getText("UI_VICCS_ConnectHeadphones") or "Conectar Fones de Ouvido") .. " (" .. headphoneItem:getDisplayName() .. ")"
+                    cdSubMenu:addOption(connLabel, realItem, function(target)
+                        ISInventoryPaneContextMenu.transferIfNeeded(player, target)
+                        ISInventoryPaneContextMenu.transferIfNeeded(player, headphoneItem)
+                        if ISRadioAction then
+                            ISTimedActionQueue.add(ISRadioAction:new("AddHeadphones", player, target, headphoneItem))
+                        elseif target.getDeviceData and target:getDeviceData().addHeadphones then
+                            target:getDeviceData():addHeadphones(headphoneItem)
+                        end
+                    end)
+                end
+                
                 break
-            else
-                local disabledLabel = label .. " (" .. (getText("UI_VICCS_NoPower_Short") or "Sem Energia") .. ")"
-                local opt = context:addOption(disabledLabel, realItem, nil)
-                opt.notAvailable = true
-                break
+                
+            elseif (realItem.isTwoWayRadio and realItem:isTwoWayRadio()) or (realItem.getDeviceData and realItem:getDeviceData()) then
+                local hasPower, isTurnedOn = VICCS.Compat.hasDevicePower(realItem)
+                local label = getText("UI_VICCS_MediaHub") or "VICCS Media Hub"
+                
+                if hasPower then
+                    context:addOption(label, realItem, function(target)
+                        if not isTurnedOn and target and target.getDeviceData then
+                            pcall(function()
+                                local dd = target:getDeviceData()
+                                if dd and not dd:getIsTurnedOn() then
+                                    if dd.setIsTurnedOn then
+                                        dd:setIsTurnedOn(true)
+                                    end
+                                end
+                            end)
+                        end
+                        VICCS.Main.openDeviceUI(player, target, "RADIO")
+                    end)
+                    break
+                else
+                    local disabledLabel = label .. " (" .. (getText("UI_VICCS_NoPower_Short") or "Sem Energia") .. ")"
+                    local opt = context:addOption(disabledLabel, realItem, nil)
+                    opt.notAvailable = true
+                    break
+                end
             end
         end
     end

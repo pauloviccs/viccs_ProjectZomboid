@@ -39,8 +39,23 @@ VICCS.Config = {
     }
 }
 
+function VICCS.Config.getSandboxVar(varName, defaultValue)
+    if SandboxVars and SandboxVars.VICCS_Broadcasting and SandboxVars.VICCS_Broadcasting[varName] ~= nil then
+        return SandboxVars.VICCS_Broadcasting[varName]
+    end
+    return defaultValue
+end
+
 function VICCS.Config.isDomainAllowed(url)
     if not url or type(url) ~= "string" then return false end
+    
+    local trustedOnly = VICCS.Config.getSandboxVar("TrustedDomainsOnly", true)
+    if not trustedOnly then
+        -- Modo livre: aceita qualquer URL HTTP/HTTPS
+        local lower = string.lower(url)
+        return (string.find(lower, "^https?://") ~= nil) or (string.find(lower, "www%.") ~= nil)
+    end
+    
     local lower = string.lower(url)
     for _, domain in ipairs(VICCS.Config.AllowedDomains) do
         if string.find(lower, domain, 1, true) then
@@ -55,3 +70,4 @@ function VICCS.Config.cleanUrl(url)
     -- Remove espaços antes e depois
     return string.match(url, "^%s*(.-)%s*$") or url
 end
+

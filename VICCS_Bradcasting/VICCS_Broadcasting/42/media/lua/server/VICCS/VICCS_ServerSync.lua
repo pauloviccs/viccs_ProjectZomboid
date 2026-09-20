@@ -94,10 +94,40 @@ local function onClientCommand(module, command, player, args)
         sendServerCommand("VICCS", "SyncMedia", record)
         print("[VICCS Server] Transmissao iniciada para " .. args.deviceId .. " por " .. record.owner)
         
+    elseif command == "ResumeMedia" then
+        local record = activeServerDevices[args.deviceId]
+        if record then
+            record.state = "PLAYING"
+            record.startedAtServerTime = os.time() - (record.pausedOffset or 0)
+            
+            local cell = getCell()
+            if cell and record.x and record.y and record.z then
+                local sq = cell:getGridSquare(record.x, record.y, record.z)
+                local devObj = findDeviceOnSquare(sq, args.deviceId)
+                if devObj then
+                    local md = devObj:getModData()
+                    if md.viccsMedia then
+                        md.viccsMedia.state = "PLAYING"
+                        md.viccsMedia.startedAtServerTime = record.startedAtServerTime
+                        devObj:transmitModData()
+                    end
+                end
+            end
+            
+            sendServerCommand("VICCS", "SyncMedia", record)
+            print("[VICCS Server] Transmissao retomada para " .. args.deviceId)
+        end
+        
     elseif command == "PauseMedia" or command == "StopMedia" then
         local record = activeServerDevices[args.deviceId]
         if record then
-            record.state = (command == "PauseMedia") and "PAUSED" or "STOPPED"
+            if command == "PauseMedia" then
+                record.state = "PAUSED"
+                record.pausedOffset = math.max(0, os.time() - (record.startedAtServerTime or os.time()))
+            else
+                record.state = "STOPPED"
+                record.pausedOffset = 0
+            end
         else
             record = { deviceId = args.deviceId, state = "STOPPED" }
         end
@@ -110,6 +140,7 @@ local function onClientCommand(module, command, player, args)
                 local md = devObj:getModData()
                 if md.viccsMedia then
                     md.viccsMedia.state = record.state
+                    md.viccsMedia.pausedOffset = record.pausedOffset
                     devObj:transmitModData()
                 end
             end

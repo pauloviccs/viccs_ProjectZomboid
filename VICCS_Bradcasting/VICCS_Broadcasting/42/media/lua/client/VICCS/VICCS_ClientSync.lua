@@ -34,7 +34,14 @@ local function onServerCommand(module, command, args)
             VICCS.Main.registerPlayingDevice(deviceId, devObj, args.x or 0, args.y or 0, args.z or 0, args.volume or 0.7, args.url, args.deviceType or "RADIO", offsetSec)
             print(string.format("[VICCS ClientSync] Aparelho %s sincronizado no tempo +%ds", tostring(deviceId), offsetSec))
             
-        elseif args.state == "PAUSED" or args.state == "STOPPED" then
+        elseif args.state == "PAUSED" then
+            if VICCS.Main.pauseDevice then
+                VICCS.Main.pauseDevice(deviceId)
+            else
+                VICCS.Main.stopDevice(deviceId)
+            end
+            print(string.format("[VICCS ClientSync] Aparelho %s pausado pelo servidor", tostring(deviceId)))
+        elseif args.state == "STOPPED" then
             VICCS.Main.stopDevice(deviceId)
             print(string.format("[VICCS ClientSync] Aparelho %s parado pelo servidor", tostring(deviceId)))
         end

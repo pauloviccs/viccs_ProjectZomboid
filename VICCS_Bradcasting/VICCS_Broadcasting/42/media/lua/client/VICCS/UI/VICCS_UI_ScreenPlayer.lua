@@ -26,6 +26,14 @@ local function getTheme()
     }
 end
 
+local function getTranslated(key, default)
+    local t = getText(key)
+    if not t or t == key or t == "" then
+        return default
+    end
+    return t
+end
+
 VICCS.UI.ScreenPlayer = ISPanel:derive("VICCSScreenPlayer")
 
 function VICCS.UI.ScreenPlayer:new(x, y, width, height, player, deviceObj, deviceType)
@@ -41,8 +49,25 @@ function VICCS.UI.ScreenPlayer:new(x, y, width, height, player, deviceObj, devic
     o.backgroundColor = Theme.GlassBg
     o.borderColor = Theme.GlassBorder
     
-    o.currentVolume = 0.8
+    local defaultVol = 0.8
+    if VICCS.Config and VICCS.Config.getSandboxVar then
+        local sVol = VICCS.Config.getSandboxVar("DefaultVolume", 70)
+        if sVol then defaultVol = sVol / 100 end
+    end
+    o.currentVolume = defaultVol
+    pcall(function()
+        local dd = deviceObj and deviceObj.getDeviceData and deviceObj:getDeviceData()
+        if not dd and deviceObj and deviceObj.getItem and deviceObj:getItem() and deviceObj:getItem().getDeviceData then
+            dd = deviceObj:getItem():getDeviceData()
+        end
+        if dd and dd.getDeviceVolume then
+            o.currentVolume = dd:getDeviceVolume()
+        end
+    end)
+    
     o.isPlaying = false
+    o.isPaused = false
+    o.pausedOffset = 0
     o.currentUrl = ""
     o.currentTitle = "CANAL 03 - SINAL AV"
     
@@ -54,19 +79,25 @@ function VICCS.UI.ScreenPlayer:new(x, y, width, height, player, deviceObj, devic
     -- Sincroniza estado se o aparelho já estiver tocando no mundo
     local activeData = VICCS.Main and VICCS.Main.getPlayingDevice and VICCS.Main.getPlayingDevice(o.deviceId)
     if activeData then
-        o.isPlaying = true
+        o.isPaused = activeData.isPaused or false
+        o.isPlaying = not o.isPaused
+        o.pausedOffset = activeData.pausedOffset or 0
         o.currentVolume = activeData.volume or o.currentVolume
         o.currentUrl = activeData.url or ""
-        o.currentTitle = "SINTONIZANDO TRANSMISSAO..."
+        o.currentTitle = o.isPaused and getTranslated("UI_VICCS_Paused", "PAUSADO") or "SINTONIZANDO TRANSMISSAO..."
     elseif deviceObj and deviceObj.getModData then
         local md = deviceObj:getModData()
-        if md and md.viccsMedia and md.viccsMedia.state == "PLAYING" then
-            o.isPlaying = true
+        if md and md.viccsMedia and (md.viccsMedia.state == "PLAYING" or md.viccsMedia.state == "PAUSED") then
+            o.isPaused = (md.viccsMedia.state == "PAUSED")
+            o.isPlaying = not o.isPaused
             o.currentVolume = md.viccsMedia.volume or o.currentVolume
             o.currentUrl = md.viccsMedia.url or ""
-            o.currentTitle = "SINTONIZANDO TRANSMISSAO..."
+            o.currentTitle = o.isPaused and getTranslated("UI_VICCS_Paused", "PAUSADO") or "SINTONIZANDO TRANSMISSAO..."
             if VICCS.Main and VICCS.Main.registerPlayingDevice then
                 VICCS.Main.registerPlayingDevice(o.deviceId, deviceObj, dx, dy, dz, o.currentVolume, o.currentUrl, o.deviceType)
+                if o.isPaused and VICCS.Main.pauseDevice then
+                    VICCS.Main.pauseDevice(o.deviceId)
+                end
             end
         end
     end
@@ -119,7 +150,7 @@ function VICCS.UI.ScreenPlayer:createChildren()
     
     curY = curY + 36
     
-    -- 3. Controles de Transporte: Play, Pause, Stop
+    -- 3. Controles de Transporte: Play, Pause / Resume, Stop
     local btnW = math.floor((self.width - (pad * 2) - 16) / 3)
     
     self.btnPlay = VICCS.UI.GlowButton:new(pad, curY, btnW, 30, getText("UI_VICCS_Play") or "TOCAR", self, self.onPlay)
@@ -128,9 +159,11 @@ function VICCS.UI.ScreenPlayer:createChildren()
     self.btnPlay.isGlowActive = self.isPlaying
     self:addChild(self.btnPlay)
     
-    self.btnPause = VICCS.UI.GlowButton:new(pad + btnW + 8, curY, btnW, 30, getText("UI_VICCS_Pause") or "PAUSAR", self, self.onPause)
+    local pauseTitle = self.isPaused and (getText("UI_VICCS_Resume") or "RETOMAR") or (getText("UI_VICCS_Pause") or "PAUSAR")
+    self.btnPause = VICCS.UI.GlowButton:new(pad + btnW + 8, curY, btnW, 30, pauseTitle, self, self.onPause)
     self.btnPause:initialise()
     self.btnPause.accentColor = Theme.Amber
+    if self.isPaused then self.btnPause.isGlowActive = true end
     self:addChild(self.btnPause)
     
     self.btnStop = VICCS.UI.GlowButton:new(pad + (btnW * 2) + 16, curY, btnW, 30, getText("UI_VICCS_Stop") or "PARAR", self, self.onStop)
@@ -173,6 +206,12 @@ function VICCS.UI.ScreenPlayer:onPlay()
     local url = VICCS.Config and VICCS.Config.cleanUrl and VICCS.Config.cleanUrl(self.urlInput:getText()) or self.urlInput:getText()
     if not url or url == "" then return end
     
+    -- Se estiver pausado e for a mesma URL, apenas retoma do ponto onde parou
+    if self.isPaused and (url == self.currentUrl) then
+        self:onResume()
+        return
+    end
+
     if VICCS.Config and VICCS.Config.isDomainAllowed and not VICCS.Config.isDomainAllowed(url) then
         if self.player and self.player.Say then
             self.player:Say("Sinal nao compativel! Insira um link valido do YouTube.")
@@ -181,9 +220,15 @@ function VICCS.UI.ScreenPlayer:onPlay()
     end
     
     self.isPlaying = true
+    self.isPaused = false
+    self.pausedOffset = 0
     self.currentUrl = url
     if self.visualizer then self.visualizer.isPlaying = true end
     if self.btnPlay then self.btnPlay.isGlowActive = true end
+    if self.btnPause then 
+        self.btnPause.title = getText("UI_VICCS_Pause") or "PAUSAR"
+        self.btnPause.isGlowActive = false 
+    end
     self.currentTitle = "SINTONIZANDO TRANSMISSAO..."
     
     local x = self.deviceObj and self.deviceObj.getX and self.deviceObj:getX() or 0
@@ -203,23 +248,78 @@ function VICCS.UI.ScreenPlayer:onPlay()
     end
 end
 
+function VICCS.UI.ScreenPlayer:onResume()
+    if VICCS.Compat and VICCS.Compat.hasDevicePower then
+        local hasPower, isTurnedOn = VICCS.Compat.hasDevicePower(self.deviceObj)
+        if not hasPower then
+            if self.player and self.player.Say then
+                self.player:Say(getText("UI_VICCS_NoPower") or "Sem energia ou bateria!")
+            end
+            return
+        end
+        if not isTurnedOn and self.deviceObj and self.deviceObj.getDeviceData then
+            pcall(function()
+                local dd = self.deviceObj:getDeviceData()
+                if dd and not dd:getIsTurnedOn() and dd.setIsTurnedOn then
+                    dd:setIsTurnedOn(true)
+                end
+            end)
+        end
+    end
+
+    self.isPlaying = true
+    self.isPaused = false
+    if self.visualizer then self.visualizer.isPlaying = true end
+    if self.btnPlay then self.btnPlay.isGlowActive = true end
+    if self.btnPause then 
+        self.btnPause.title = getText("UI_VICCS_Pause") or "PAUSAR"
+        self.btnPause.isGlowActive = false 
+    end
+    self.currentTitle = "SINTONIZANDO TRANSMISSAO..."
+
+    if isClient() then
+        sendClientCommand("VICCS", "ResumeMedia", { deviceId = self.deviceId })
+    else
+        VICCS.Main.resumeDevice(self.deviceId)
+    end
+end
+
 function VICCS.UI.ScreenPlayer:onPause()
+    if self.isPaused then
+        self:onResume()
+        return
+    end
+
+    if not self.isPlaying then return end
+    
     self.isPlaying = false
+    self.isPaused = true
     if self.visualizer then self.visualizer.isPlaying = false end
     if self.btnPlay then self.btnPlay.isGlowActive = false end
+    if self.btnPause then 
+        self.btnPause.title = getTranslated("UI_VICCS_Resume", "RETOMAR")
+        self.btnPause.isGlowActive = true 
+    end
+    self.currentTitle = getTranslated("UI_VICCS_Paused", "PAUSADO")
     
     if isClient() then
         sendClientCommand("VICCS", "PauseMedia", { deviceId = self.deviceId })
     else
-        VICCS.Main.stopDevice(self.deviceId)
+        VICCS.Main.pauseDevice(self.deviceId)
     end
 end
 
 function VICCS.UI.ScreenPlayer:onStop()
     self.isPlaying = false
+    self.isPaused = false
+    self.pausedOffset = 0
     self.currentUrl = ""
     if self.visualizer then self.visualizer.isPlaying = false end
     if self.btnPlay then self.btnPlay.isGlowActive = false end
+    if self.btnPause then 
+        self.btnPause.title = getText("UI_VICCS_Pause") or "PAUSAR"
+        self.btnPause.isGlowActive = false 
+    end
     self.currentTitle = "CANAL 03 - SINAL AV"
     
     if isClient() then
@@ -231,6 +331,17 @@ end
 
 function VICCS.UI.ScreenPlayer:onVolumeChange(val)
     self.currentVolume = val
+    if self.deviceObj then
+        pcall(function()
+            local dd = self.deviceObj.getDeviceData and self.deviceObj:getDeviceData()
+            if not dd and self.deviceObj.getItem and self.deviceObj:getItem() and self.deviceObj:getItem().getDeviceData then
+                dd = self.deviceObj:getItem():getDeviceData()
+            end
+            if dd and dd.setDeviceVolume then
+                dd:setDeviceVolume(val)
+            end
+        end)
+    end
     if isClient() then
         sendClientCommand("VICCS", "SetVolume", { deviceId = self.deviceId, volume = val })
     else
@@ -277,7 +388,7 @@ function VICCS.UI.ScreenPlayer:prerender()
     local statusColor = self.isPlaying and Theme.Green or Theme.Amber
     self:drawText(self.currentTitle, self.screenX + 14, self.screenY + 12, statusColor.r, statusColor.g, statusColor.b, 0.95, UIFont.Medium)
     
-    if not self.isPlaying then
+    if (not self.currentUrl or self.currentUrl == "") and not self.isPlaying and not self.isPaused then
         self:drawText("COLE A URL DO VIDEO ABAIXO PARA TRANSMITIR", self.screenX + 14, self.screenY + 36, Theme.TextMuted.r, Theme.TextMuted.g, Theme.TextMuted.b, 0.8, UIFont.Small)
     end
     

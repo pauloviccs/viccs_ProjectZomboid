@@ -1,4 +1,4 @@
-UI_PT = {
+UI_PTBR = {
     UI_VICCS_MediaHub = "VICCS Media Hub",
     UI_VICCS_OpenPlayer = "Abrir Painel Multimidia (Web)",
     UI_VICCS_PastePrompt = "Cole o link (YouTube, SoundCloud)...",

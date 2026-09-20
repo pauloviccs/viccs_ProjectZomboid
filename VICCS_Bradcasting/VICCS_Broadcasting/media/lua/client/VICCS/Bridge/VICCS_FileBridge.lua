@@ -4,13 +4,14 @@ VICCS.Bridge = {}
 local sequenceOut = 0
 local lastSeqProcessed = 0
 
-function VICCS.Bridge.writeGameState(devicesList, activeCommand)
+function VICCS.Bridge.writeGameState(devicesList, activeCommand, isPaused)
     sequenceOut = sequenceOut + 1
     local payload = {
         protocol = VICCS.Config.Protocol,
         seq = sequenceOut,
         timestamp = os.time(),
         command = activeCommand,
+        isPaused = isPaused or false,
         devices = devicesList or {}
     }
     

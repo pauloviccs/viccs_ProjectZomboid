@@ -1,0 +1,21 @@
+Sandbox_EN = {
+    Sandbox_VICCS_Broadcasting = "VICCS Broadcasting",
+    
+    Sandbox_VICCS_ZombieAttractionRadius = "Zombie Attraction Radius (Meters)",
+    Sandbox_VICCS_ZombieAttractionRadius_tooltip = "Maximum distance in meters (tiles) that sound from TVs and radios travels to attract zombies at maximum volume. Set to 0 to play in completely silent mode.",
+
+    Sandbox_VICCS_RequirePower = "Require Power or Battery",
+    Sandbox_VICCS_RequirePower_tooltip = "When enabled, devices require power grid, active generator, or battery to operate. When disabled, all media devices play freely without power requirements.",
+
+    Sandbox_VICCS_CDPlayerRequireHeadphones = "CD Player Requires Headphones",
+    Sandbox_VICCS_CDPlayerRequireHeadphones_tooltip = "When enabled, the CD Player (Discman) can only be started if the survivor has headphones or earbuds connected to the device.",
+
+    Sandbox_VICCS_CDPlayerSilent = "CD Player with Headphones is 100% Silent",
+    Sandbox_VICCS_CDPlayerSilent_tooltip = "When enabled, music played on the CD Player using headphones is completely private and attracts zero zombies.",
+
+    Sandbox_VICCS_TrustedDomainsOnly = "Trusted Streaming Links Only (YouTube/SoundCloud)",
+    Sandbox_VICCS_TrustedDomainsOnly_tooltip = "When enabled, blocks arbitrary web links and only accepts verified media domains (YouTube and SoundCloud) for server stability and safety.",
+
+    Sandbox_VICCS_DefaultVolume = "Default Startup Volume (%)",
+    Sandbox_VICCS_DefaultVolume_tooltip = "Initial volume percentage (0 to 100%) when new players or radios are turned on for the first time. Default: 70%.",
+}
