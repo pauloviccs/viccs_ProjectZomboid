@@ -33,5 +33,6 @@ UI_EN = {
     UI_VICCS_HeadphonesDisconnected = "Headphones disconnected: Playback paused!",
     UI_VICCS_VehicleAudio = "VICCS Vehicle Sound System",
     UI_VICCS_VehicleAudio_Short = "Vehicle Audio",
-    UI_VICCS_VehicleNoBattery = "Vehicle battery is dead!"
+    UI_VICCS_VehicleNoBattery = "Vehicle battery is dead!",
+    UI_VICCS_SilentChannel = "Mute channels"
 }

@@ -33,5 +33,6 @@ UI_PTBR = {
     UI_VICCS_HeadphonesDisconnected = "Fones desconectados: Reproducao pausada!",
     UI_VICCS_VehicleAudio = "VICCS Som Automotivo",
     UI_VICCS_VehicleAudio_Short = "Som do Veiculo",
-    UI_VICCS_VehicleNoBattery = "Bateria do veiculo sem carga!"
+    UI_VICCS_VehicleNoBattery = "Bateria do veiculo sem carga!",
+    UI_VICCS_SilentChannel = "Silenciar canais"
 }

@@ -5,6 +5,7 @@ require "VICCS/UI/VICCS_UI_Theme"
 require "VICCS/UI/VICCS_UI_Components"
 require "VICCS/UI/VICCS_UI_RadioDock"
 require "VICCS/UI/VICCS_UI_ScreenPlayer"
+require "VICCS/Logic/VICCS_SilentChannel"
 
 VICCS = VICCS or {}
 VICCS.Main = {}
@@ -36,10 +37,33 @@ function VICCS.Main.registerPlayingDevice(id, deviceObj, x, y, z, baseVolume, ur
         startedAt = os.time() - (offsetSec or 0),
         pausedOffset = offsetSec or 0,
         isPaused = false,
-        haloTimer = 0
+        haloTimer = 0,
+        savedChannel = nil
     }
     activeDevices[id] = devRecord
     
+    -- 0. Suporte inicial dinâmico a Veículos
+    if devRecord.deviceType == "VEHICLE" then
+        local vehicle = nil
+        if deviceObj then
+            if instanceof(deviceObj, "BaseVehicle") then
+                vehicle = deviceObj
+            elseif deviceObj.getVehicle and deviceObj:getVehicle() then
+                vehicle = deviceObj:getVehicle()
+            elseif deviceObj.getParent and instanceof(deviceObj:getParent(), "BaseVehicle") then
+                vehicle = deviceObj:getParent()
+            end
+        end
+        if vehicle then
+            devRecord.vehicleObj = vehicle
+            devRecord.x = vehicle:getX()
+            devRecord.y = vehicle:getY()
+            devRecord.z = vehicle:getZ()
+            local pVeh = player and player.getVehicle and player:getVehicle()
+            devRecord.isListenerInside = (pVeh ~= nil and pVeh == vehicle)
+        end
+    end
+
     -- Salva o estado no ModData do objeto no mundo para persistencia total
     pcall(function()
         if deviceObj and deviceObj.getModData then
@@ -86,17 +110,15 @@ function VICCS.Main.registerPlayingDevice(id, deviceObj, x, y, z, baseVolume, ur
         HaloTextHelper.addGoodText(player, haloText)
     end
     
-    if deviceObj and deviceObj.AddDeviceText and devRecord.deviceType ~= "CDPLAYER" then
+    if deviceObj and devRecord.deviceType ~= "CDPLAYER" and devRecord.deviceType ~= "VEHICLE" and not instanceof(deviceObj, "VehiclePart") and deviceObj.AddDeviceText then
         pcall(function()
             deviceObj:AddDeviceText(haloText, 0.0, 0.9, 1.0, nil, nil, 10, false)
         end)
     end
 
     -- =========================================================================
-    -- Anti-Overlap: Silencia o canal vanilla do próprio aparelho e televisores/rádios ao redor
+    -- Canal "desligado" nativo (HUD Vanilla): Sintoniza sem alterar o volume da TV/Rádio
     -- =========================================================================
-    devRecord.savedVanillaVol = nil
-    devRecord.mutedVanillaDevices = {}
     pcall(function()
         local dd = nil
         if deviceObj.getDeviceData then
@@ -104,73 +126,43 @@ function VICCS.Main.registerPlayingDevice(id, deviceObj, x, y, z, baseVolume, ur
         elseif deviceObj.getItem and deviceObj:getItem() and deviceObj:getItem().getDeviceData then
             dd = deviceObj:getItem():getDeviceData()
         end
-        if dd and dd.getDeviceVolume and dd.setDeviceVolume then
-            devRecord.savedVanillaVol = dd:getDeviceVolume()
-            dd:setDeviceVolume(0.0)
-        end
-    end)
-    
-    -- Desliga o som de canais vanilla de qualquer TV ou rádio próximo para não dar sobreposição
-    pcall(function()
-        local cell = getCell()
-        if cell then
-            local rX = math.floor(devRecord.x)
-            local rY = math.floor(devRecord.y)
-            local rZ = math.floor(devRecord.z)
-            for cx = rX - 15, rX + 15 do
-                for cy = rY - 15, rY + 15 do
-                    local sq = cell:getGridSquare(cx, cy, rZ)
-                    if sq and sq.getObjects then
-                        local objs = sq:getObjects()
-                        if objs then
-                            for i = 0, objs:size() - 1 do
-                                local o = objs:get(i)
-                                if o and o ~= deviceObj and o.getDeviceData then
-                                    local oDd = o:getDeviceData()
-                                    if oDd and oDd.getDeviceVolume and oDd.setDeviceVolume then
-                                        local curVol = oDd:getDeviceVolume()
-                                        if curVol and curVol > 0.001 then
-                                            table.insert(devRecord.mutedVanillaDevices, { obj = o, vol = curVol })
-                                            oDd:setDeviceVolume(0.0)
-                                        end
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
+        if dd then
+            if VICCS.SilentChannel and VICCS.SilentChannel.ensureSilentPreset then
+                VICCS.SilentChannel.ensureSilentPreset(dd)
+            end
+            local silentFreq = (VICCS.SilentChannel and VICCS.SilentChannel.getSilentFrequency(dd)) or 202
+            devRecord.savedChannel = dd:getChannel()
+            if dd:getChannel() ~= silentFreq and dd.setChannel then
+                dd:setChannel(silentFreq)
+            end
+            if VICCS.SilentChannel and VICCS.SilentChannel.silenceDeviceIfOnChannel then
+                VICCS.SilentChannel.silenceDeviceIfOnChannel(dd)
+            end
+            -- Para fitas VHS ou cassetes para evitar sobreposicao de som
+            if dd.isPlayingMedia and dd:isPlayingMedia() and dd.StopPlayMedia then
+                dd:StopPlayMedia()
             end
         end
     end)
     
-    print(string.format("[VICCS] Dispositivo ativado: %s (%s) em [%d, %d, %d]", tostring(id), tostring(deviceType), x or 0, y or 0, z or 0))
+    print(string.format("[VICCS] Dispositivo ativado: %s (%s) em [%d, %d, %d] sintonizado em canal silencioso", tostring(id), tostring(deviceType), x or 0, y or 0, z or 0))
 end
 
 function VICCS.Main.stopDevice(id)
     if activeDevices[id] then
         local dev = activeDevices[id]
         
-        -- Restaura volumes originais dos aparelhos vanilla silenciados (Anti-Overlap)
+        -- Restaura canal original se sintonizado no canal "desligado"
         pcall(function()
-            if dev.savedVanillaVol and dev.obj then
+            if dev.savedChannel and dev.obj then
                 local dd = nil
                 if dev.obj.getDeviceData then
                     dd = dev.obj:getDeviceData()
                 elseif dev.obj.getItem and dev.obj:getItem() and dev.obj:getItem().getDeviceData then
                     dd = dev.obj:getItem():getDeviceData()
                 end
-                if dd and dd.setDeviceVolume then
-                    dd:setDeviceVolume(dev.savedVanillaVol)
-                end
-            end
-            if dev.mutedVanillaDevices then
-                for _, entry in ipairs(dev.mutedVanillaDevices) do
-                    if entry.obj and entry.obj.getDeviceData then
-                        local oDd = entry.obj:getDeviceData()
-                        if oDd and oDd.setDeviceVolume then
-                            oDd:setDeviceVolume(entry.vol)
-                        end
-                    end
+                if dd and dd.setChannel then
+                    dd:setChannel(dev.savedChannel)
                 end
             end
         end)
@@ -185,7 +177,7 @@ function VICCS.Main.stopDevice(id)
             end
         end)
         activeDevices[id] = nil
-        print(string.format("[VICCS] Dispositivo parado: %s (canais vanilla restaurados)", tostring(id)))
+        print(string.format("[VICCS] Dispositivo parado: %s", tostring(id)))
     end
 end
 
@@ -369,17 +361,32 @@ local function onTick()
         end
     end
     
+    local pVeh = player.getVehicle and player:getVehicle()
+    local listenerInClosedVehicle = false
+    if pVeh then
+        listenerInClosedVehicle = VICCS.Spatial and VICCS.Spatial.isVehicleEnclosed and VICCS.Spatial.isVehicleEnclosed(pVeh)
+    end
+    
     local listenerData = {
         x = player:getX(),
         y = player:getY(),
         z = player:getZ(),
-        roomClass = "outdoor",
-        outdoor = true
+        roomClass = pVeh and "vehicle_cabin" or "outdoor",
+        outdoor = (pVeh == nil)
     }
-    if VICCS.RoomClassifier and VICCS.RoomClassifier.classify then
+    if not pVeh and VICCS.RoomClassifier and VICCS.RoomClassifier.classify then
         local pSq = player:getCurrentSquare()
         listenerData.roomClass = VICCS.RoomClassifier.classify(pSq)
         listenerData.outdoor = (listenerData.roomClass == "outdoor")
+    elseif pVeh and not listenerInClosedVehicle then
+        -- Se o carro estiver com vidros/portas abertos e dentro de um galpão/construção:
+        local pSq = player:getCurrentSquare()
+        if VICCS.RoomClassifier and VICCS.RoomClassifier.classify then
+            local extClass = VICCS.RoomClassifier.classify(pSq)
+            if extClass ~= "outdoor" then
+                listenerData.roomClass = extClass
+            end
+        end
     end
     
     local devicesPayload = {}
@@ -402,7 +409,18 @@ local function onTick()
                         stillPowered = false
                     end
                     if dd.getDeviceVolume then
-                        vanillaVol = dd:getDeviceVolume()
+                        if VICCS.SilentChannel and VICCS.SilentChannel.isSilentChannel(dd) then
+                            if VICCS.SilentChannel.isMuted(dd) then
+                                vanillaVol = 0.0
+                            else
+                                vanillaVol = VICCS.SilentChannel.getUserVolume(dd)
+                            end
+                        else
+                            vanillaVol = dd:getDeviceVolume()
+                        end
+                    end
+                    if VICCS.SilentChannel and VICCS.SilentChannel.silenceDeviceIfOnChannel then
+                        VICCS.SilentChannel.silenceDeviceIfOnChannel(dd)
                     end
                 end
             end)
@@ -425,11 +443,11 @@ local function onTick()
                 end
                 
                 if vehicle then
+                    dev.vehicleObj = vehicle
                     dev.x = vehicle:getX()
                     dev.y = vehicle:getY()
                     dev.z = vehicle:getZ()
                     
-                    local pVeh = player.getVehicle and player:getVehicle()
                     dev.isListenerInside = (pVeh ~= nil and pVeh == vehicle)
                 end
             end
@@ -496,18 +514,15 @@ local function onTick()
             end
             
             -- 2. Emissão periódica de Halo Notify no aparelho (~ a cada 15 segundos)
-            if not isGamePaused and not dev.isPaused and dev.deviceType ~= "CDPLAYER" then
+            if not isGamePaused and not dev.isPaused and dev.deviceType ~= "CDPLAYER" and dev.deviceType ~= "VEHICLE" then
                 dev.haloTimer = (dev.haloTimer or 0) + 1
                 if dev.haloTimer >= 30 then
                     dev.haloTimer = 0
                     local haloText = getText("UI_VICCS_NowPlaying")
-                    if dev.deviceType == "VEHICLE" then
-                        haloText = "[ * Som Automotivo em Reproducao * ]"
-                    end
                     if not haloText or haloText == "UI_VICCS_NowPlaying" or string.find(haloText, "♪") then
                         haloText = "[ * Em Reproducao * ]"
                     end
-                    if dev.obj and dev.obj.AddDeviceText then
+                    if dev.obj and not instanceof(dev.obj, "VehiclePart") and dev.obj.AddDeviceText then
                         pcall(function()
                             dev.obj:AddDeviceText(haloText, 0.0, 0.9, 1.0, nil, nil, 10, false)
                         end)
@@ -525,14 +540,59 @@ local function onTick()
                 occl = { walls = 0, doors = 0, windows = 0, floors = 0, isBlocked = false }
                 roomClass = listenerData.roomClass
             elseif dev.deviceType == "VEHICLE" and dev.isListenerInside then
-                -- Passageiro ou Motorista dentro do carro: Som estéreo imersivo de cabine sem atenuação
-                dist = 0
+                -- Ouvinte dentro do próprio veículo onde o som toca:
+                -- Som surround imersivo de cabine sem atenuação por distância
+                dist = 0.5
                 volFactor = 1.0
-                pan = 0
                 occl = { walls = 0, doors = 0, windows = 0, floors = 0, isBlocked = false }
-                roomClass = "vehicle_cabin"
+                roomClass = listenerData.roomClass
+                
+                -- Palco surround de cabine:
+                -- Posiciona o áudio levemente de acordo com a posição do banco no veículo
+                local vehicle = dev.vehicleObj or (dev.obj and (instanceof(dev.obj, "BaseVehicle") and dev.obj or (dev.obj.getVehicle and dev.obj:getVehicle())))
+                local seat = (vehicle and vehicle.getSeat and vehicle:getSeat(player)) or 0
+                if seat == 0 then -- Motorista (lado esquerdo frontal)
+                    pan = -0.10
+                    screenX = -0.15
+                    screenY = 0.20
+                elseif seat == 1 then -- Passageiro dianteiro (lado direito frontal)
+                    pan = 0.10
+                    screenX = 0.15
+                    screenY = 0.20
+                elseif seat == 2 then -- Traseiro esquerdo
+                    pan = -0.12
+                    screenX = -0.15
+                    screenY = -0.20
+                elseif seat == 3 then -- Traseiro direito
+                    pan = 0.12
+                    screenX = 0.15
+                    screenY = -0.20
+                else
+                    pan = 0.0
+                    screenX = 0.0
+                    screenY = 0.10
+                end
             elseif VICCS.Spatial and VICCS.Spatial.calculate3D then
-                dist, volFactor, pan, occl, roomClass, screenX, screenY = VICCS.Spatial.calculate3D(player, dev.x, dev.y, dev.z)
+                -- Aparelhos externos (TVs, rádios de casa, ou carro ouvido do lado de fora)
+                local extraOccl = {}
+                
+                -- Se o som emitido vem de um carro e o ouvinte está fora:
+                if dev.deviceType == "VEHICLE" then
+                    local vehicle = dev.vehicleObj or (dev.obj and (instanceof(dev.obj, "BaseVehicle") and dev.obj or (dev.obj.getVehicle and dev.obj:getVehicle())))
+                    if vehicle and VICCS.Spatial.isVehicleEnclosed and VICCS.Spatial.isVehicleEnclosed(vehicle) then
+                        extraOccl.vehicleEnclosure = true
+                    end
+                end
+                
+                -- Se o ouvinte está dentro de um carro com vidros fechados ouvindo som de fora:
+                if pVeh and listenerInClosedVehicle and dev.deviceType ~= "CDPLAYER" then
+                    local vehicle = dev.vehicleObj or (dev.obj and (instanceof(dev.obj, "BaseVehicle") and dev.obj or (dev.obj.getVehicle and dev.obj:getVehicle())))
+                    if vehicle ~= pVeh then
+                        extraOccl.listenerInVehicle = true
+                    end
+                end
+                
+                dist, volFactor, pan, occl, roomClass, screenX, screenY = VICCS.Spatial.calculate3D(player, dev.x, dev.y, dev.z, extraOccl)
             end
             
             local effectiveDevVol = dev.volume * vanillaVol

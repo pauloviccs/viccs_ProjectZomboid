@@ -8,7 +8,41 @@ VICCS.Spatial = {}
 -- Raiz de 2 pré-calculada para conversão isométrica rápida
 local SQRT_2 = 1.41421356237
 
-function VICCS.Spatial.calculate3D(player, deviceX, deviceY, deviceZ)
+--- Verifica se o veículo está acusticamente fechado (todas as portas e janelas fechadas e intactas)
+function VICCS.Spatial.isVehicleEnclosed(vehicle)
+    if not vehicle then return true end
+    local isEnclosed = true
+    pcall(function()
+        local partCount = vehicle:getPartCount()
+        if not partCount or partCount <= 0 then return end
+        
+        for i = 0, partCount - 1 do
+            local part = vehicle:getPartByIndex(i)
+            if part then
+                local win = part:getWindow()
+                if win then
+                    local open = (win.isOpen and win:isOpen())
+                    local destroyed = (win.isDestroyed and win:isDestroyed())
+                    if open or destroyed then
+                        isEnclosed = false
+                        return
+                    end
+                end
+                local door = part:getDoor()
+                if door then
+                    local doorOpen = (door.isOpen and door:isOpen())
+                    if doorOpen then
+                        isEnclosed = false
+                        return
+                    end
+                end
+            end
+        end
+    end)
+    return isEnclosed
+end
+
+function VICCS.Spatial.calculate3D(player, deviceX, deviceY, deviceZ, extraOccl)
     if not player then 
         return 0, 1.0, 0, { walls = 0, doors = 0, windows = 0, floors = 0 }, "outdoor", 0, 0 
     end
@@ -51,7 +85,7 @@ function VICCS.Spatial.calculate3D(player, deviceX, deviceY, deviceZ)
         occl = VICCS.AcousticProbe.traceAcoustics(deviceX, deviceY, deviceZ, px, py, pz)
     end
     
-    -- 4. Cálculo Psicoacústico de Perda em Decibéis (dB) - Realismo de Alvenaria
+    -- 4. Cálculo Psicoacústico de Perda em Decibéis (dB) - Realismo de Alvenaria e Lataria
     local dbLoss = 0.0
     
     -- Fachada externa (Dentro vs Fora): Barreira maciça de alvenaria/madeira externa
@@ -82,6 +116,13 @@ function VICCS.Spatial.calculate3D(player, deviceX, deviceY, deviceZ)
     if occl.floors > 0 then
         dbLoss = dbLoss + (occl.floors * 16.0) -- -16 dB por andar
     end
+
+    -- Oclusão de Lataria e Vidros do Veículo (Dentro do carro ouvindo fora, ou fora ouvindo som do carro)
+    if extraOccl and (extraOccl.vehicleEnclosure or extraOccl.listenerInVehicle) then
+        occl.vehicleEnclosure = true
+        occl.windows = (occl.windows or 0) + 1
+        dbLoss = dbLoss + 14.0 -- -14 dB de atenuação direta da cabine fechada
+    end
     
     -- Multiplicador da Sandbox para Intensidade de Oclusão (0% a 100%)
     local occlIntensity = 1.0
@@ -109,4 +150,4 @@ function VICCS.Spatial.calculate3D(player, deviceX, deviceY, deviceZ)
     return dist, volFactor, pan, occl, roomClass, screenX, screenY
 end
 
-print("[VICCS] SpatialEmitter v1.2.1 (Atenuação Psicoacústica de Paredes) carregado.")
+print("[VICCS] SpatialEmitter v1.2.2 (Atenuação Psicoacústica de Paredes e Veículos) carregado.")

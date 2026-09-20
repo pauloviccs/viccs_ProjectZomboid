@@ -30,5 +30,9 @@
     "UI_VICCS_NeedHeadphones": "Requires Headphones or Earbuds",
     "UI_VICCS_ConnectHeadphones": "Plug Headphones into CD Player",
     "UI_VICCS_NeedEquip": "CD Player must be equipped on Belt or Hand to listen!",
-    "UI_VICCS_HeadphonesDisconnected": "Headphones disconnected: Playback paused!"
+    "UI_VICCS_HeadphonesDisconnected": "Headphones disconnected: Playback paused!",
+    "UI_VICCS_VehicleAudio": "VICCS Vehicle Sound System",
+    "UI_VICCS_VehicleAudio_Short": "Vehicle Audio",
+    "UI_VICCS_VehicleNoBattery": "Vehicle battery is dead!",
+    "UI_VICCS_SilentChannel": "Mute channels"
 }

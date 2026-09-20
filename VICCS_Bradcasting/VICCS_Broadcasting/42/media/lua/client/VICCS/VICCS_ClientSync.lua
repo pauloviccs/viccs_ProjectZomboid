@@ -18,14 +18,35 @@ local function onServerCommand(module, command, args)
             local cell = getCell()
             local devObj = nil
             if cell and args.x and args.y and args.z then
-                local sq = cell:getGridSquare(args.x, args.y, args.z)
-                if sq then
-                    local objs = sq:getObjects()
-                    for i = 0, objs:size() - 1 do
-                        local obj = objs:get(i)
-                        if obj and (instanceof(obj, "IsoRadio") or instanceof(obj, "IsoTelevision") or (obj.getDeviceData and obj:getDeviceData())) then
-                            devObj = obj
-                            break
+                if args.deviceType == "VEHICLE" then
+                    local sq = cell:getGridSquare(args.x, args.y, args.z)
+                    if sq and sq.getVehicleContainer and sq:getVehicleContainer() then
+                        local veh = sq:getVehicleContainer()
+                        devObj = (veh.getPartById and veh:getPartById("Radio")) or veh
+                    end
+                    if not devObj and cell.getVehicles then
+                        local vehList = cell:getVehicles()
+                        if vehList then
+                            for i = 0, vehList:size() - 1 do
+                                local v = vehList:get(i)
+                                if v and (string.find(tostring(deviceId), tostring(v:getId())) or 
+                                   (math.abs(v:getX() - args.x) < 4.0 and math.abs(v:getY() - args.y) < 4.0)) then
+                                    devObj = (v.getPartById and v:getPartById("Radio")) or v
+                                    break
+                                end
+                            end
+                        end
+                    end
+                else
+                    local sq = cell:getGridSquare(args.x, args.y, args.z)
+                    if sq then
+                        local objs = sq:getObjects()
+                        for i = 0, objs:size() - 1 do
+                            local obj = objs:get(i)
+                            if obj and (instanceof(obj, "IsoRadio") or instanceof(obj, "IsoTelevision") or (obj.getDeviceData and obj:getDeviceData())) then
+                                devObj = obj
+                                break
+                            end
                         end
                     end
                 end

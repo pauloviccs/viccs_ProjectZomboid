@@ -74,6 +74,20 @@ function VICCS.UI.RadioDock:new(x, y, width, height, player, deviceObj, deviceTy
         local pNum = (player and player.getPlayerNum and player:getPlayerNum()) or 0
         local itemID = (deviceObj and deviceObj.getID and deviceObj:getID()) or (tostring(pNum) .. "-discman")
         o.deviceId = "cdplayer-" .. tostring(itemID)
+    elseif o.deviceType == "VEHICLE" then
+        local vehicle = nil
+        if deviceObj then
+            if instanceof(deviceObj, "BaseVehicle") then
+                vehicle = deviceObj
+            elseif deviceObj.getVehicle and deviceObj:getVehicle() then
+                vehicle = deviceObj:getVehicle()
+            elseif deviceObj.getParent and instanceof(deviceObj:getParent(), "BaseVehicle") then
+                vehicle = deviceObj:getParent()
+            end
+        end
+        o.vehicleObj = vehicle
+        local vehId = (vehicle and vehicle.getId and vehicle:getId()) or "car"
+        o.deviceId = "vehicle-" .. tostring(vehId)
     else
         local dx = deviceObj and deviceObj.getX and deviceObj:getX() or 0
         local dy = deviceObj and deviceObj.getY and deviceObj:getY() or 0
@@ -99,9 +113,21 @@ function VICCS.UI.RadioDock:new(x, y, width, height, player, deviceObj, deviceTy
             o.currentUrl = md.viccsMedia.url or ""
             o.currentTitle = o.isPaused and getTranslated("UI_VICCS_Paused", "PAUSADO") or "TRANSMITINDO AUDIO..."
             if VICCS.Main and VICCS.Main.registerPlayingDevice then
-                local dx = (o.deviceType == "CDPLAYER" and player and player:getX()) or (deviceObj.getX and deviceObj:getX() or 0)
-                local dy = (o.deviceType == "CDPLAYER" and player and player:getY()) or (deviceObj.getY and deviceObj:getY() or 0)
-                local dz = (o.deviceType == "CDPLAYER" and player and player:getZ()) or (deviceObj.getZ and deviceObj:getZ() or 0)
+                local dx, dy, dz = 0, 0, 0
+                if o.deviceType == "CDPLAYER" then
+                    dx = player and player:getX() or 0
+                    dy = player and player:getY() or 0
+                    dz = player and player:getZ() or 0
+                elseif o.deviceType == "VEHICLE" then
+                    local veh = o.vehicleObj
+                    dx = veh and veh:getX() or 0
+                    dy = veh and veh:getY() or 0
+                    dz = veh and veh:getZ() or 0
+                else
+                    dx = deviceObj and deviceObj.getX and deviceObj:getX() or 0
+                    dy = deviceObj and deviceObj.getY and deviceObj:getY() or 0
+                    dz = deviceObj and deviceObj.getZ and deviceObj:getZ() or 0
+                end
                 VICCS.Main.registerPlayingDevice(o.deviceId, deviceObj, dx, dy, dz, o.currentVolume, o.currentUrl, o.deviceType)
                 if o.isPaused and VICCS.Main.pauseDevice then
                     VICCS.Main.pauseDevice(o.deviceId)
@@ -245,9 +271,30 @@ function VICCS.UI.RadioDock:onPlay()
     end
     self.currentTitle = "Conectando stream..."
     
-    local x = (self.deviceType == "CDPLAYER" and self.player and self.player:getX()) or (self.deviceObj and self.deviceObj.getX and self.deviceObj:getX() or 0)
-    local y = (self.deviceType == "CDPLAYER" and self.player and self.player:getY()) or (self.deviceObj and self.deviceObj.getY and self.deviceObj:getY() or 0)
-    local z = (self.deviceType == "CDPLAYER" and self.player and self.player:getZ()) or (self.deviceObj and self.deviceObj.getZ and self.deviceObj:getZ() or 0)
+    local x, y, z = 0, 0, 0
+    if self.deviceType == "CDPLAYER" then
+        x = self.player and self.player:getX() or 0
+        y = self.player and self.player:getY() or 0
+        z = self.player and self.player:getZ() or 0
+    elseif self.deviceType == "VEHICLE" then
+        local veh = self.vehicleObj
+        if not veh and self.deviceObj then
+            if instanceof(self.deviceObj, "BaseVehicle") then
+                veh = self.deviceObj
+            elseif self.deviceObj.getVehicle and self.deviceObj:getVehicle() then
+                veh = self.deviceObj:getVehicle()
+            elseif self.deviceObj.getParent and instanceof(self.deviceObj:getParent(), "BaseVehicle") then
+                veh = self.deviceObj:getParent()
+            end
+        end
+        x = veh and veh:getX() or 0
+        y = veh and veh:getY() or 0
+        z = veh and veh:getZ() or 0
+    else
+        x = self.deviceObj and self.deviceObj.getX and self.deviceObj:getX() or 0
+        y = self.deviceObj and self.deviceObj.getY and self.deviceObj:getY() or 0
+        z = self.deviceObj and self.deviceObj.getZ and self.deviceObj:getZ() or 0
+    end
     
     if isClient() then
         sendClientCommand("VICCS", "PlayMedia", {
