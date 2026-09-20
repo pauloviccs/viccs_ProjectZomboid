@@ -292,6 +292,19 @@ local function onTick()
         end
     end
     
+    local listenerData = {
+        x = player:getX(),
+        y = player:getY(),
+        z = player:getZ(),
+        roomClass = "outdoor",
+        outdoor = true
+    }
+    if VICCS.RoomClassifier and VICCS.RoomClassifier.classify then
+        local pSq = player:getCurrentSquare()
+        listenerData.roomClass = VICCS.RoomClassifier.classify(pSq)
+        listenerData.outdoor = (listenerData.roomClass == "outdoor")
+    end
+    
     local devicesPayload = {}
     local devicesToStop = {}
     
@@ -361,12 +374,19 @@ local function onTick()
                         if player.getWornItem and (player:getWornItem("Ears") or player:getWornItem("Headphones")) then
                             hasHeadphones = true
                         end
+                        local inv = player:getInventory()
+                        if not hasHeadphones and inv then
+                            hasHeadphones = (inv:getFirstTypeRecurse("Base.Headphones") ~= nil) or
+                                            (inv:getFirstTypeRecurse("Base.Earbuds") ~= nil) or
+                                            (inv:getFirstTypeRecurse("Headphones") ~= nil) or
+                                            (inv:getFirstTypeRecurse("Earbuds") ~= nil)
+                        end
                     end
                 end
                 
                 if not isEquipped or not hasHeadphones then
                     if not dev.isPaused then
-                        VICCS.Main.pauseDevice(id)
+                        dev.isPaused = true
                         if player and HaloTextHelper and HaloTextHelper.addBadText then
                             local pauseMsg = getText("UI_VICCS_HeadphonesDisconnected") or "Fones desconectados: Reproducao pausada!"
                             HaloTextHelper.addBadText(player, pauseMsg)
@@ -392,16 +412,17 @@ local function onTick()
                 end
             end
             
-            -- 3. Cálculo de Áudio 3D integrado com Volume Vanilla
-            local dist, volFactor, pan, isOccluded = 0, 1.0, 0, false
+            -- 3. Cálculo de Áudio 3D integrado com Volume Vanilla e Oclusão Acústica
+            local dist, volFactor, pan, occl, roomClass, screenX, screenY = 0, 1.0, 0, { walls = 0, doors = 0, windows = 0, floors = 0 }, "outdoor", 0, 0
             if dev.deviceType == "CDPLAYER" then
-                -- Fone de ouvido: som direto sem atenuação por distância
+                -- Fone de ouvido: som direto sem atenuação por distância ou barreiras
                 dist = 0
                 volFactor = 1.0
                 pan = 0
-                isOccluded = false
+                occl = { walls = 0, doors = 0, windows = 0, floors = 0, isBlocked = false }
+                roomClass = listenerData.roomClass
             elseif VICCS.Spatial and VICCS.Spatial.calculate3D then
-                dist, volFactor, pan, isOccluded = VICCS.Spatial.calculate3D(player, dev.x, dev.y, dev.z)
+                dist, volFactor, pan, occl, roomClass, screenX, screenY = VICCS.Spatial.calculate3D(player, dev.x, dev.y, dev.z)
             end
             
             local effectiveDevVol = dev.volume * vanillaVol
@@ -410,9 +431,14 @@ local function onTick()
             table.insert(devicesPayload, {
                 deviceId = id,
                 volume = finalVol,
+                rawVolume = dev.volume,
                 pan = pan,
                 distance = dist,
-                occluded = isOccluded,
+                occluded = occl.isBlocked or (occl.walls > 0 or occl.doors > 0 or occl.floors > 0 or occl.exteriorWall == true or occl.interiorWall == true),
+                occl = occl,
+                roomClass = roomClass,
+                screenX = screenX,
+                screenY = screenY,
                 url = dev.url,
                 deviceType = dev.deviceType,
                 startedAt = dev.startedAt,
@@ -440,9 +466,9 @@ local function onTick()
         VICCS.Main.stopDevice(deadId)
     end
     
-    -- 5. Transmissao atomica de estado para o PZHub com flag de pausa
+    -- 5. Transmissao atomica de estado para o PZHub com flag de pausa e listenerData
     if VICCS.Bridge and VICCS.Bridge.writeGameState then
-        VICCS.Bridge.writeGameState(devicesPayload, nil, isGamePaused)
+        VICCS.Bridge.writeGameState(devicesPayload, nil, isGamePaused, listenerData)
     end
     
     -- 6. Leitura de respostas do PZHub
