@@ -1,0 +1,23 @@
+UI_PT = {
+    UI_VICCS_MediaHub = "VICCS Media Hub",
+    UI_VICCS_OpenPlayer = "Abrir Painel Multimidia (Web)",
+    UI_VICCS_PastePrompt = "Cole o link (YouTube, SoundCloud)...",
+    UI_VICCS_Play = "TOCAR",
+    UI_VICCS_Pause = "PAUSAR",
+    UI_VICCS_Stop = "PARAR",
+    UI_VICCS_Volume = "VOLUME",
+    UI_VICCS_NoSignal = "SEM SINAL / OFF",
+    UI_VICCS_CompanionDisconnected = "PZHub Desconectado",
+    UI_VICCS_AttractingZombies = "ATRAINDO ZUMBIS!",
+    UI_VICCS_PasteClipboard = "Colar",
+    UI_VICCS_RadioDock_Title = "VICCS Audio Dock",
+    UI_VICCS_TVPlayer_Title = "VICCS Video & Broadcast Monitor",
+    UI_VICCS_Power = "ENERGIA",
+    UI_VICCS_Status_Playing = "REPRODUZINDO",
+    UI_VICCS_Status_Paused = "PAUSADO",
+    UI_VICCS_Status_Stopped = "PARADO",
+    UI_VICCS_NoPower = "Sem energia ou bateria!",
+    UI_VICCS_NoPower_Short = "Sem Energia",
+    UI_VICCS_NoPower_Tooltip = "Este aparelho precisa de eletricidade (rede/gerador) ou bateria com carga para funcionar.",
+    UI_VICCS_PowerLost = "Aparelho desligou (sem energia)!"
+}

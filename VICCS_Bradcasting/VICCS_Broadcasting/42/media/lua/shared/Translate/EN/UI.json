@@ -1,0 +1,23 @@
+{
+    "UI_VICCS_MediaHub": "VICCS Media Hub",
+    "UI_VICCS_OpenPlayer": "Open Media Panel (Web)",
+    "UI_VICCS_PastePrompt": "Paste link (YouTube, SoundCloud)...",
+    "UI_VICCS_Play": "PLAY",
+    "UI_VICCS_Pause": "PAUSE",
+    "UI_VICCS_Stop": "STOP",
+    "UI_VICCS_Volume": "VOLUME",
+    "UI_VICCS_NoSignal": "NO SIGNAL / OFF",
+    "UI_VICCS_CompanionDisconnected": "PZHub Disconnected",
+    "UI_VICCS_AttractingZombies": "ATTRACTING ZOMBIES!",
+    "UI_VICCS_PasteClipboard": "Paste Clipboard",
+    "UI_VICCS_RadioDock_Title": "VICCS Audio Dock",
+    "UI_VICCS_TVPlayer_Title": "VICCS Video & Broadcast Monitor",
+    "UI_VICCS_Power": "POWER",
+    "UI_VICCS_Status_Playing": "PLAYING",
+    "UI_VICCS_Status_Paused": "PAUSED",
+    "UI_VICCS_Status_Stopped": "STOPPED",
+    "UI_VICCS_NoPower": "No power or battery!",
+    "UI_VICCS_NoPower_Short": "No Power",
+    "UI_VICCS_NoPower_Tooltip": "This device requires electricity (power grid/generator) or a charged battery to function.",
+    "UI_VICCS_PowerLost": "Device turned off (no power)!"
+}
