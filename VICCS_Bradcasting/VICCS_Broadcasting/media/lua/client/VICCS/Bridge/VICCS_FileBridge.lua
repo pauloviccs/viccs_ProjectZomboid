@@ -9,10 +9,22 @@ local lastSeqProcessed = 0
 
 function VICCS.Bridge.writeGameState(devicesList, activeCommand, isPaused, listenerData)
     sequenceOut = sequenceOut + 1
+    local nowSec = os.time()
+    pcall(function()
+        if getTimestamp then
+            local ts = getTimestamp()
+            if ts and ts > 1000000000000 then
+                nowSec = ts / 1000.0
+            elseif ts and ts > 0 then
+                nowSec = ts
+            end
+        end
+    end)
+
     local payload = {
         protocol = 2,
         seq = sequenceOut,
-        timestamp = (getTimestamp and getTimestamp()) or os.time(),
+        timestamp = nowSec,
         command = activeCommand,
         isPaused = isPaused or false,
         listener = listenerData or { x = 0, y = 0, z = 0, roomClass = "outdoor", outdoor = true },
@@ -56,4 +68,12 @@ function VICCS.Bridge.readAppResponse()
     return nil
 end
 
-print("[VICCS] FileBridge v1.2.0 (Protocol v2) pronto.")
+local function onDisconnect()
+    pcall(function()
+        print("[VICCS] Desconexao detectada: enviando sinal STOP para PZHub.")
+        VICCS.Bridge.writeGameState({}, "STOP", false, nil)
+    end)
+end
+Events.OnDisconnect.Add(onDisconnect)
+
+print("[VICCS] FileBridge v1.2.2 (Protocol v2) pronto.")

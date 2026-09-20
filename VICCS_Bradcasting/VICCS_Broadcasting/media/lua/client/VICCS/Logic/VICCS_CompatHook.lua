@@ -19,6 +19,46 @@ function VICCS.Compat.hasDevicePower(deviceObj)
     local isTurnedOn = false
     
     pcall(function()
+        -- 0. Suporte Especial a Veículos (BaseVehicle ou VehiclePart do Rádio)
+        local vehicle = nil
+        if instanceof(deviceObj, "BaseVehicle") then
+            vehicle = deviceObj
+        elseif deviceObj.getVehicle and deviceObj:getVehicle() then
+            vehicle = deviceObj:getVehicle()
+        elseif deviceObj.getParent and instanceof(deviceObj:getParent(), "BaseVehicle") then
+            vehicle = deviceObj:getParent()
+        end
+        
+        if vehicle then
+            local batPart = vehicle.getPartById and vehicle:getPartById("Battery")
+            local batCharge = 0
+            if batPart and batPart.getContainerContentAmount then
+                batCharge = batPart:getContainerContentAmount() or 0
+            end
+            
+            local isEngRunning = vehicle.isEngineRunning and vehicle:isEngineRunning()
+            local isKeyIn = vehicle.isKeysInIgnition and vehicle:isKeysInIgnition()
+            
+            if batCharge > 0.05 or isEngRunning or isKeyIn then
+                hasPower = true
+            end
+            
+            local dd = nil
+            if deviceObj.getDeviceData then
+                dd = deviceObj:getDeviceData()
+            elseif vehicle.getPartById then
+                local radioPart = vehicle:getPartById("Radio")
+                if radioPart and radioPart.getDeviceData then
+                    dd = radioPart:getDeviceData()
+                end
+            end
+            
+            if dd and dd.getIsTurnedOn and dd:getIsTurnedOn() then
+                isTurnedOn = true
+            end
+            return
+        end
+
         local dd = nil
         if deviceObj.getDeviceData then
             dd = deviceObj:getDeviceData()
@@ -110,6 +150,20 @@ end
 function VICCS.Compat.detectDeviceType(obj)
     if not obj then return nil end
     
+    -- 0. Peça de Veículo ou Veículo (BaseVehicle / VehiclePart)
+    if instanceof(obj, "VehiclePart") then
+        local pId = obj.getId and obj:getId()
+        if pId == "Radio" or (obj.getDeviceData and obj:getDeviceData()) then
+            return "VEHICLE"
+        end
+    end
+    if instanceof(obj, "BaseVehicle") then
+        local radioPart = obj.getPartById and obj:getPartById("Radio")
+        if radioPart and radioPart.getDeviceData and radioPart:getDeviceData() then
+            return "VEHICLE"
+        end
+    end
+
     -- 1. Item solto no chão do mundo (IsoWorldInventoryItem)
     if instanceof(obj, "IsoWorldInventoryItem") then
         local item = obj:getItem()
@@ -272,12 +326,26 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
             end
         end
     end
+
+    -- 2.1 Verifica se o quadrado clicado possui um veículo associado
+    if sq and sq.getVehicleContainer and sq:getVehicleContainer() then
+        addCandidate(sq:getVehicleContainer())
+    end
+
+    -- 2.2 Se o jogador estiver dentro de um veículo, inclui o veículo como candidato
+    if player and player.getVehicle and player:getVehicle() then
+        addCandidate(player:getVehicle())
+    end
     
     -- 3. Identifica se há aparelho multimídia e valida energia
     for _, obj in ipairs(candidates) do
         local devType = VICCS.Compat.detectDeviceType(obj)
         if devType then
             local hasPower, isTurnedOn = VICCS.Compat.hasDevicePower(obj)
+            local itemLabel = label
+            if devType == "VEHICLE" then
+                itemLabel = getText("UI_VICCS_VehicleAudio") or "VICCS Som Automotivo"
+            end
             
             if hasPower then
                 local openCallback = function(device)
@@ -295,7 +363,7 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
                     VICCS.Main.openDeviceUI(player, device, devType)
                 end
                 
-                local opt = context:addOption(label, obj, openCallback)
+                local opt = context:addOption(itemLabel, obj, openCallback)
                 
                 -- Ícone nativo vanilla
                 pcall(function()
@@ -307,15 +375,16 @@ local function onFillWorldObjectContextMenu(playerNum, context, worldobjects, te
                 end)
                 
                 print(string.format("[VICCS] Menu ativo '%s' adicionado para %s em [%d, %d, %d] (Power: OK, Ligado: %s)",
-                    label, devType, obj:getX() or 0, obj:getY() or 0, obj:getZ() or 0, tostring(isTurnedOn)))
+                    itemLabel, devType, obj:getX() or 0, obj:getY() or 0, obj:getZ() or 0, tostring(isTurnedOn)))
                 break
             else
-                -- Em saves antigos sem energia no grid: mostra a opção desabilitada com Tooltip
-                local disabledLabel = label .. " (" .. (getText("UI_VICCS_NoPower_Short") or "Sem Energia") .. ")"
+                -- Em saves antigos sem energia no grid ou bateria arriada
+                local noPwrText = (devType == "VEHICLE" and (getText("UI_VICCS_VehicleNoBattery") or "Sem Carga na Bateria")) or (getText("UI_VICCS_NoPower_Short") or "Sem Energia")
+                local disabledLabel = itemLabel .. " (" .. noPwrText .. ")"
                 local opt = context:addOption(disabledLabel, obj, nil)
                 opt.notAvailable = true
                 
-                local tooltipText = getText("UI_VICCS_NoPower_Tooltip") or "Este aparelho precisa de eletricidade (rede/gerador) ou bateria para funcionar."
+                local tooltipText = (devType == "VEHICLE" and (getText("UI_VICCS_VehicleNoBattery") or "A bateria do carro precisa de carga para ligar o som.")) or (getText("UI_VICCS_NoPower_Tooltip") or "Este aparelho precisa de eletricidade (rede/gerador) ou bateria para funcionar.")
                 local tooltip = ISWorldObjectContextMenu.addToolTip()
                 tooltip.description = tooltipText
                 opt.toolTip = tooltip
@@ -575,10 +644,47 @@ local function hookRadioWindow()
 end
 
 -- =========================================================================
+-- ESTRATÉGIA E: Injeção no Menu Radial de Veículos (ISVehicleMenu)
+-- =========================================================================
+local function hookVehicleRadialMenu()
+    pcall(function()
+        if not ISVehicleMenu then return end
+        local original_showRadialMenu = ISVehicleMenu.showRadialMenu
+        if not original_showRadialMenu then return end
+        
+        ISVehicleMenu.showRadialMenu = function(player)
+            original_showRadialMenu(player)
+            
+            pcall(function()
+                if not player then return end
+                local vehicle = player:getVehicle()
+                if not vehicle then return end
+                
+                local radioPart = vehicle.getPartById and vehicle:getPartById("Radio")
+                if not radioPart then return end
+                
+                local pNum = (player.getPlayerNum and player:getPlayerNum()) or 0
+                local menu = getPlayerRadialMenu and getPlayerRadialMenu(pNum)
+                if not menu then return end
+                
+                local label = getText("UI_VICCS_VehicleAudio") or "VICCS Som Automotivo"
+                local texture = getTexture("media/ui/Item_Radio.png")
+                
+                menu:addSlice(label, texture, function()
+                    VICCS.Main.openDeviceUI(player, radioPart, "VEHICLE")
+                end)
+            end)
+        end
+        print("[VICCS] Hook em ISVehicleMenu.showRadialMenu injetado com sucesso.")
+    end)
+end
+
+-- =========================================================================
 -- Registro de Eventos da B42
 -- =========================================================================
 Events.OnFillWorldObjectContextMenu.Add(onFillWorldObjectContextMenu)
 Events.OnFillInventoryObjectContextMenu.Add(onFillInventoryObjectContextMenu)
 Events.OnGameStart.Add(hookRadioWindow)
+Events.OnGameStart.Add(hookVehicleRadialMenu)
 
 print("[VICCS] CompatHook (Build 42) carregado com sucesso — menus de contexto registrados.")
