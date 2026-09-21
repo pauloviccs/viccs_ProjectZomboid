@@ -4,389 +4,268 @@
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![Multiplayer Safe](https://img.shields.io/badge/Multiplayer-100%25%20Tested%20%26%20Safe-success?style=for-the-badge)]()
 [![Performance](https://img.shields.io/badge/Engine-Zero%20Lag%20Time--Slicing-purple?style=for-the-badge)]()
-[![Languages](https://img.shields.io/badge/Locales-PTBR%20%7C%20EN%20%7C%20ES%20%7C%20CH%20%7C%20CN-orange?style=for-the-badge)]()
-[![Version](https://img.shields.io/badge/Mod%20Version-1.5.8-brightgreen?style=for-the-badge)]()
+[![UI Standard](https://img.shields.io/badge/Design-Frameless%20Soft%20Glass-cyan?style=for-the-badge)]()
+[![Locales](https://img.shields.io/badge/Locales-PTBR%20%7C%20EN%20%7C%20ES%20%7C%20CN%20%7C%20TW-orange?style=for-the-badge)]()
 
 ---
 
-> **Bem-vindo à suíte de modificações VICCS para o Project Zomboid (Build 42).**  
-> Nossa filosofia de engenharia é direta: **Imersão profunda, arquitetura não-invasiva, zero impacto no FPS e 100% de estabilidade multiplayer.**
+> **Bem-vindo à suíte oficial de modificações e ferramentas VICCS para o Project Zomboid (Build 42).**  
+> Nossa filosofia de engenharia é inegociável: **Imersão profunda, arquitetura não-invasiva, zero impacto no FPS e 100% de estabilidade multiplayer.**
 
 ---
 
 ## 📑 Índice Geral
 
-1. [🏛️ Catálogo de Módulos & Categorias](#-catálogo-de-módulos--categorias)
-2. [🌟 Mod em Destaque: VICCS Housing Care System (Living House)](#-mod-em-destaque-viccs-housing-care-system-living-house)
-   - [O que é e Por que Existe? (ELI5)](#o-que-é-e-por-que-existe-eli5)
-   - [Mecânicas Principais & Impacto na Gameplay](#mecânicas-principais--impacto-na-gameplay)
-   - [Sistema de Conforto (Buffs)](#sistema-de-conforto-buffs)
-   - [Sistema de Insalubridade / Squalor (Debuffs)](#sistema-de-insalubridade--squalor-debuffs)
-   - [Economia de Pontuação & Balanceamento (v1.5.8 Nerf)](#economia-de-pontuação--balanceamento-v158-nerf)
-   - [Painel de Inspeção de Cômodo (Tecla K)](#painel-de-inspeção-de-cômodo-tecla-k)
-   - [Sistema de Propriedade & Reivindicação de Base](#sistema-de-propriedade--reivindicação-de-base)
-   - [Motor de Vida Ativa & Tarefas Domésticas (Homemaking)](#motor-de-vida-ativa--tarefas-domésticas-homemaking)
-   - [Rotinas Táticas, Streaks & Casa Impecável](#rotinas-táticas-streaks--casa-impecável)
-   - [Sazonalidade Tática (Inverno & Verão)](#sazonalidade-tática-inverno--verão)
-   - [Higiene Bucal & Cuidados Dentais](#higiene-bucal--cuidados-dentais)
-   - [Dashboard de Infraestrutura da Base (Tecla J)](#dashboard-de-infraestrutura-da-base-tecla-j)
-   - [Sono Reparador & Travesseiros (Sleep Revitalize)](#sono-reparador--travesseiros-sleep-revitalize)
-   - [Ciclo de Higiene Corporal & Sujeira Ambiental](#ciclo-de-higiene-corporal--sujeira-ambiental)
-   - [Necessidades Fisiológicas (Banheiro)](#necessidades-fisiológicas-banheiro)
-   - [Interface do Usuário & Controles (HUD Dinâmica)](#interface-do-usuário--controles-hud-dinâmica)
-3. [🛠️ Guia para Donos de Servidores & Administradores](#️-guia-para-donos-de-servidores--administradores)
-   - [Performance & Time-Slicing (Zero-Lag)](#performance--time-slicing-zero-lag)
-   - [Integração com Safehouses (Multiplayer Dedicado)](#integração-com-safehouses-multiplayer-dedicado)
-   - [Tabela Completa de Sandbox Options](#tabela-completa-de-sandbox-options)
-   - [Compatibilidade Mid-Save](#compatibilidade-mid-save)
-4. [🌐 Wiki & GDD Portal Interativo](#-wiki--gdd-portal-interativo)
-5. [📦 Instalação & Setup](#-instalação--setup)
-6. [🌐 Localização & Suporte a Idiomas](#-localização--suporte-a-idiomas)
+1. [🏛️ O Ecossistema VICCS (Visão Geral)](#️-o-ecossistema-viccs-visão-geral)
+2. [🗺️ Arquitetura Integrada da Suíte](#️-arquitetura-integrada-da-suíte)
+3. [🏠 Módulo 1: VICCS Housing Care System (Living House)](#-módulo-1-viccs-housing-care-system-living-house)
+   - [O que é e Como Funciona](#o-que-é-e-como-funciona-housing)
+   - [Sistemas de Conforto & Insalubridade](#sistemas-de-conforto--insalubridade)
+   - [Rotinas, Homemaking & Higiene](#rotinas-homemaking--higiene)
+   - [📖 Mini Tutorial: Como Jogar](#-mini-tutorial-como-jogar-housing)
+4. [🃏 Módulo 2: VICCS Trading Card Game (1999 Base Set)](#-módulo-2-viccs-trading-card-game-1999-base-set)
+   - [O que é e Como Funciona](#o-que-é-e-como-funciona-tcg)
+   - [Boosters, Raridades & Fichário 3D](#boosters-raridades--fichário-3d)
+   - [📖 Mini Tutorial: Como Jogar](#-mini-tutorial-como-jogar-tcg)
+5. [📻 Módulo 3: VICCS Media Broadcasting](#-módulo-3-viccs-media-broadcasting)
+   - [O que é e Como Funciona](#o-que-é-e-como-funciona-broadcasting)
+   - [Streaming Sincronizado & Áudio Espacial 3D](#streaming-sincronizado--áudio-espacial-3d)
+   - [Acústica & Atração de Hordas](#acústica--atração-de-hordas)
+   - [📖 Mini Tutorial: Como Jogar](#-mini-tutorial-como-jogar-broadcasting)
+6. [🛰️ Módulo 4: VICCS PZHub (Desktop App & Squad Radar)](#️-módulo-4-viccs-pzhub-desktop-app--squad-radar)
+   - [O que é e Como Funciona](#o-que-é-e-como-funciona-pzhub)
+   - [Radar Tático ao Vivo & Suporte à B42 (-32 a +32 Z-Levels)](#radar-tático-ao-vivo--suporte-à-b42--32-a-32-z-levels)
+   - [Central de Mods, GPS & Overlay](#central-de-mods-gps--overlay)
+   - [📖 Mini Tutorial: Como Jogar](#-mini-tutorial-como-jogar-pzhub)
+7. [🛠️ Guia do Administrador de Servidor](#️-guia-do-administrador-de-servidor)
+   - [Configuração de server.ini](#configuração-de-serverini)
+   - [Tabela Geral de Opções de Sandbox](#tabela-geral-de-opções-de-sandbox)
+   - [Filosofia Zero-Lag (Time-Slicing & Amostragem)](#filosofia-zero-lag-time-slicing--amostragem)
+8. [📦 Instalação & Setup Rápido](#-instalação--setup-rápido)
+9. [🌐 Localização & Créditos](#-localização--créditos)
 
 ---
 
-## 🏛️ Catálogo de Módulos & Categorias
+## 🏛️ O Ecossistema VICCS (Visão Geral)
 
-Este repositório foi arquitetado para abrigar múltiplos mods modulares. Conheça as categorias oficiais da suíte:
+A suíte VICCS reúne módulos independentes e altamente integrados projetados especificamente para a **Build 42 do Project Zomboid**. Você pode utilizar qualquer um dos módulos de forma isolada (standalone) ou usufruir da experiência completa em conjunto:
 
-| Categoria | Mod ID | Status | Descrição Curta |
-| :--- | :--- | :---: | :--- |
-| **🏠 Base Building & Imersão** | `VICCS_HousingCareSystem` | **v1.5.8 Estável** | Sistema orgânico de conforto, tarefas domésticas, higiene, sazonalidade, rotinas e sono reparador para lares. |
-<!-- | **🎒 Sobrevivência & Inventário** | *Em breve* | 🔨 Planejamento | Módulos voltados para ergonomia de loot, organização de mochilas e preservação. |
-| **🚗 Veículos & Manutenção** | *Em breve* | 🔨 Planejamento | Mecânicas avançadas de customização, desgaste e acampamento veicular. |
-| **🧟 Combate & Sanidade** | *Em breve* | 🔨 Planejamento | Resposta psicológica ao combate prolongado, estresse pós-traumático e moral. |
-| **⚙️ Utilitários de Servidor** | *Em breve* | 🔨 Planejamento | Ferramentas de telemetria, moderação e balanceamento de economia comunitária. | -->
-
----
-
-## 🌟 Mod em Destaque: VICCS Housing Care System (Living House)
-
-> **ID do Mod:** `VICCS_HousingCareSystem`  
-> **Versão Atual:** `1.5.8`  
-> **Versão Suportada:** Project Zomboid **Build 42.0+** (42.20.x+)  
-> **Dependências:** Nenhuma (100% Standalone)
-
-![VICCS Poster](VICCS_HousingCareSystem/poster.png)
-
-### O que é e Por que Existe? (ELI5)
-
-> 💡 **Analogia Simples:**  
-> Imagine que você passou o dia inteiro fugindo de zumbis na chuva fria, carregando troncos pesados e sangrando.  
-> - Se você volta para uma casa imunda, com poças de sangue no chão, cadáveres na sala e dorme no chão duro: **seu personagem vai enlouquecer de estresse, acordar cansado e ficar doente.**  
-> - Mas se você volta para um lar limpo, com lareira acesa, paredes decoradas com quadros, tapetes, sofá macio e dorme em uma cama arrumada com travesseiro: **seu personagem descansa como um rei, acorda revigorado e ganha bônus de energia e cura acelerada.**
-
-Inspirado na aclamada mecânica de conforto de jogos como *Valheim*, o **Housing Care System** transforma a construção e decoração de bases de uma atividade meramente cosmética em uma **vantagem tática vital de sobrevivência**.
+| Módulo / Projeto | ID do Mod | Versão | Tipo | Descrição Breve |
+| :--- | :--- | :---: | :---: | :--- |
+| **🏠 Housing Care System** | `VICCS_HousingCareSystem` | `v1.5.8` | Mod In-Game | Sistema orgânico de conforto, insalubridade, tarefas domésticas, sono reparador e rotinas para bases. |
+| **🃏 Trading Card Game** | `VICCS_TCG` | `v1.0.1` | Mod In-Game | Coleção nostálgica de 102 cartas colecionáveis (Base Set 1999) com abertura animada e fichário de luxo. |
+| **📻 Media Broadcasting** | `VICCS_Broadcasting` | `v1.2.0` | Mod In-Game | Plataforma de streaming de áudio/vídeo sincronizado (YouTube/SoundCloud) com áudio 3D e atração de hordas. |
+| **🛰️ PZHub & Radar Bridge** | `VICCSRadarBridge` | `v1.0.0` | Desktop + Mod | Companion Desktop (Tauri/Rust) com mapa tático ao vivo, radar de esquadrão, rotas GPS e mod manager. |
 
 ---
 
-### Mecânicas Principais & Impacto na Gameplay
+## 🗺️ Arquitetura Integrada da Suíte
 
 ```mermaid
-flowchart TD
-    A[Sobrevivente Entra na Base / Pressiona 'K'] --> B[Scanner Assíncrono com Time-Slicing]
-    B --> C{Análise do Ambiente}
-    C -->|Móveis, Luz, Decoração, Limpeza| D[Cálculo de Conforto: 0 a 100 pts]
-    C -->|Sangue, Cadáveres, Lixo, Podridão| E[Cálculo de Squalor: 0 a 100 pts]
-    D --> F[Aclimatação: 30 min in-game]
-    F --> G[Ativação de Buffs Tiers 1-4]
-    E --> H[Ativação de Debuffs Tiers 1-4]
-    G --> I[Duração de 8h a 12h fora da Base]
-    J[Realizar Tarefas: Limpar, Cozinhar, Plantar] -->|Homemaking Engine| I
-    K[Dormir 6h+ em Cama com Travesseiro] -->|Sleep Revitalize| L[Buff Revigorado: Zera Estresse/Tédio]
-    M[Manter Tier 3+ por 3 Dias] -->|Routine Streak| N[Blindagem Mental Persistente]
-    O[Escovação de Dentes em Pia] -->|Dental Need| P[Buff Hálito Fresco 4h]
+flowchart TB
+    subgraph Host["💻 Computador do Jogador / Sistema Operacional"]
+        PZHubApp["🛰️ VICCS PZHub (Desktop Tauri/Rust)<br/>• Mapa Tático B42 (-32 a +32 Z)<br/>• Radar de Esquadrão em Tempo Real<br/>• Gerenciador de Modpacks & Rotas GPS"]
+        BrowserBridge["🌐 Streaming & Web Companion<br/>• YouTube / SoundCloud Audio Engine"]
+    end
+
+    subgraph PZClient["🎮 Project Zomboid (Build 42 Engine)"]
+        subgraph InGameMods["🧩 Suíte de Mods VICCS"]
+            HCS["🏠 Housing Care System<br/>• Scanner Time-Slicing (25 tiles/tick)<br/>• Conforto, Squalor, Sono, Higiene<br/>• Tecla 'K' (Room) & Tecla 'J' (Infra)"]
+            TCG["🃏 Trading Card Game (1999)<br/>• 102 Cartas Colecionáveis<br/>• Reveal Modal & Fichário Frameless"]
+            MBC["📻 Media Broadcasting<br/>• Rádios, TVs, Boomboxes, CD Player<br/>• Áudio 3D, Oclusão Acústica & Alerta de Zumbis"]
+            RAD["📡 Radar Bridge Mini-Mod<br/>• Telemetria Ultraleve (<0.001% CPU)"]
+        end
+    end
+
+    subgraph PZServer["🖥️ Servidor Multiplayer Dedicado"]
+        ServerSync["⚡ Sincronização de Estados Multiplayer<br/>• Safehouses & Bases Reivindicadas<br/>• Posição de Esquadrões & Facções<br/>• Transmissão de Rádio Sincronizada"]
+    end
+
+    RAD <-->|Telemetria Segura I/O| PZHubApp
+    MBC <-->|Sync de Áudio/URL| BrowserBridge
+    PZClient <-->|ModData & Network Packets| ServerSync
 ```
 
 ---
 
-### Sistema de Conforto (Buffs)
+## 🏠 Módulo 1: VICCS Housing Care System (Living House)
 
-O mod avalia o ambiente e converte a pontuação acumulada (0 a 100) em **4 Tiers progressivos de Conforto**:
+> **ID do Mod:** `VICCS_HousingCareSystem`  
+> **Versão:** `1.5.8` | **Compatibilidade:** Build 42.20+ (Singleplayer & Servidores Dedicados)
 
-| Tier | Nome do Status | Pontos | Efeitos Ativos na Gameplay |
-| :---: | :--- | :---: | :--- |
-| **Tier 1** | 🌿 **Aconchego Básico** | `20+ pts` | Redução contínua de ganho de **Pânico** (-15%). |
-| **Tier 2** | ☕ **Lar Organizado** | `40+ pts` | Redução de Pânico (-20%), **Regeneração Acelerada de Endurance** e redução de fadiga física (*Energizado*). |
-| **Tier 3** | 🛋️ **Refúgio Confortável** | `60+ pts` | Redução drástica de **Infelicidade / Tristeza**, saciedade digestiva prolongada (*Saciado*) e **Cicatrização Acelerada** de arranhões e cortes. |
-| **Tier 4** | 🏰 **Santuário** | `80+ pts` | **Imunidade a Pânico leve**, redução contínua de **Estresse**, regeneração rápida de feridas e resistência a infecções. |
+![Housing Poster](VICCS_HousingCareSystem/poster.png)
 
----
+### O que é e Como Funciona (Housing)
+Inspirado na dinâmica de conforto de *Valheim*, o **Housing Care System** transforma a base de uma simples garagem de loot em um **refúgio vital de regeneração psicológica e física**. 
 
-### Sistema de Insalubridade / Squalor (Debuffs)
+O sistema avalia cada cômodo em tempo real calculando duas forças opostas:
+1. **Conforto (0 a 100 pts):** Gerado por móveis de qualidade, iluminação ativa, variedade decorativa e carpintaria artesanal.
+2. **Insalubridade / Squalor (0 a 100 pts):** Gerado por sangue seco no chão, cadáveres em decomposição, lixo acumulado e sanitários imundos.
 
-Bases negligenciadas não apenas perdem bônus, como tornam o ambiente tóxico para a mente e corpo do sobrevivente:
+> 🚨 **Regra de Precedência Crítica:** Se o nível de sujeira ultrapassar `Squalor >= 50`, **todos os benefícios de conforto são instantaneamente anulados**, independentemente de quão luxuosa for a mobília.
 
-| Tier | Nome do Status | Pontos | Efeitos Negativos |
-| :---: | :--- | :---: | :--- |
-| **Tier 1** | ⚠️ **Ambiente Desagradável** | `20+ pts` | Aumento leve e contínuo de **Infelicidade / Depressão**. |
-| **Tier 2** | 🪰 **Ambiente Insalubre** | `40+ pts` | Acúmulo de **Estresse**, perda passiva de **Endurance** (cansaço rápido). |
-| **Tier 3** | 🤢 **Antro Imundo** | `60+ pts` | **Náuseas frequentes**, tontura e fadiga mental constante. |
-| **Tier 4** | ☠️ **Foco de Doença** | `80+ pts` | **Febre severa**, risco extremo de infecção em qualquer machucado. |
+### Sistemas de Conforto & Insalubridade
 
-> 🚨 **A Regra de Precedência Crítica:**  
-> Se o nível de sujeira/cadáveres ultrapassar o limite crítico (`Squalor >= 50`), **todos os bônus de conforto são instantaneamente anulados**, independentemente de quão luxuosa for a mobília.
+| Nível | Conforto (Buffs) | Insalubridade (Debuffs) |
+| :---: | :--- | :--- |
+| **Tier 1 (20+ pts)** | 🌿 **Aconchego Básico:** -15% de ganho de pânico. | ⚠️ **Desagradável:** Ganho lento de infelicidade/tristeza. |
+| **Tier 2 (40+ pts)** | ☕ **Lar Organizado:** Regeneração acelerada de estamina (*Energizado*). | 🪰 **Insalubre:** Acúmulo de estresse e cansaço físico contínuo. |
+| **Tier 3 (60+ pts)** | 🛋️ **Refúgio Confortável:** Zera tristeza, cura rápida de cortes e arranhões. | 🤢 **Antro Imundo:** Náuseas frequentes, tontura e fadiga mental. |
+| **Tier 4 (80+ pts)** | 🏰 **Santuário:** Imunidade a pânico leve, redução rápida de estresse e bônus imunológico. | ☠️ **Foco de Doença:** Febre severa e alto risco de infecção de feridas. |
 
----
+### Rotinas, Homemaking & Higiene
+- **Tarefas Domésticas (Homemaking):** Limpar sangue, cozinhar no fogão, cuidar de hortas ou barricar janelas estende o bônus de conforto em até **+8h adicionais** por dia.
+- **Sono Reparador (Sleep Revitalize):** Dormir 6h+ em uma cama limpa com um **Travesseiro** (equipado, no inventário ou sobre a cama) zera 100% de tédio, estresse e tristeza ao acordar.
+- **Higiene Bucal & Banheiro:** Escove os dentes em pias com pasta de dente para receber o buff *Hálito Fresco* (-15 estresse, -10 tédio por 4h). Alivie a bexiga no vaso sanitário para evitar penalidades de urgência.
+- **Sazonalidade:** Lareiras e tapetes aquecem e dão conforto massivo no inverno; ventiladores e cortinas fechadas protegem no verão.
 
-### Economia de Pontuação & Balanceamento (v1.5.8 Nerf)
-
-A partir da v1.5.8, a economia de pontuação foi **massivamente rebalanceada** para tornar a progressão de Tiers verdadeiramente desafiadora e satisfatória:
-
-| Item | Pontos Antigos | Pontos Atuais | Redução |
-| :--- | :---: | :---: | :---: |
-| Cama | 25 pts | **10 pts** | -60% |
-| Sofá | 15 pts | **7 pts** | -53% |
-| Cadeira/Poltrona | 12 pts | **3 pts** | -75% |
-| Mesa/Balcão | 15 pts | **4 pts** | -73% |
-| Armário/Cômodas | 15 pts | **4 pts** | -73% |
-| Fogão/Forno | 12 pts | **6 pts** | -50% |
-| TV/Rádio | 12 pts | **5 pts** | -58% |
-| Lâmpada/Vela (acesa) | 15 pts | **5 pts** | -67% |
-| Tapetes | 12 pts | **4 pts** | -67% |
-| Quadros | 8 pts | **3 pts** | -63% |
-
-**Retornos Decrescentes Endurecidos:**
-- 1º item da categoria: **100%** do valor
-- 2º item: **60%**
-- 3º item: **35%**
-- 4º item: **15%**
-- 5º+ item: **5%** (near-zero)
-
-**Tetos de Categoria por Cômodo:**
-| Categoria | Teto Máximo |
-| :--- | :---: |
-| Mobília Pesada | 40 pts |
-| Iluminação Ativa | 10 pts |
-| Decoração & Itens 3D | 25 pts |
-| Toque Artesanal (Carpintaria) | 5 pts |
-
-> Isso significa que atingir Tier 4 (Santuário) agora exige **diversidade real**: múltiplos cômodos bem organizados, variedade de categorias, e manutenção rigorosa de limpeza. Nada de empilhar 50 cadeiras num canto.
+### 📖 Mini Tutorial: Como Jogar (Housing)
+1. **Reivindique sua Base:** Clique com o botão direito no piso do seu abrigo e selecione *"Living House: Estabelecer Residência como Meu Lar"* (em servidores multiplayer, use a Safehouse oficial).
+2. **Abra o Painel de Inspeção (`Tecla K`):** Veja a pontuação detalhada do cômodo, a categoria de cada móvel e o diagnóstico inteligente do que falta para subir de Tier.
+3. **Limpe o Local:** Antes de mobiliar, remova cadáveres para longe e limpe o chão com pano, água e cândida.
+4. **Decore com Sabedoria:** Combine camas, sofás, mesas, luzes e quadros. Lembre-se: colocar 10 cadeiras repetidas não funciona devido à curva de retornos decrescentes.
+5. **Acompanhe a Infraestrutura (`Tecla J`):** Monitore o combustível dos geradores elétricos e o nível de água dos barris coletores de chuva sem precisar sair da casa.
 
 ---
 
-### Painel de Inspeção de Cômodo (Tecla K)
+## 🃏 Módulo 2: VICCS Trading Card Game (1999 Base Set)
 
-O **Room Inspector** (`LV_RoomInspectorDashboard.lua`) é um painel Frameless Glass dedicado que detalha:
+> **ID do Mod:** `VICCS_TCG`  
+> **Versão:** `1.0.1` | **Compatibilidade:** Build 42.0+ (Singleplayer & Multiplayer)
 
-- **Pontuação granular por categoria** (Mobílias, Eletrônicos, Decoração, 3D)
-- **Inventário visual** com pontuação individual e curva decrescente aplicada
-- **Comparativo claro** de TIER DO CÔMODO vs TIER GERAL DA SAFEHOUSE
-- **Diagnóstico inteligente ELI5** indicando exatamente o que falta para subir de Tier
-- **Detecção precisa de Área Externa:** Estar no gramado, quintal, rua ou jardim é identificado como `AREA EXTERNA`, zerando conforto e suspendendo a aclimatação
-- **Texto dinâmico com auto-ajuste de altura** (sem vazamento de texto fora da janela)
+![TCG Poster](VICCS_TCG/poster.png)
 
----
+### O que é e Como Funciona (TCG)
+O **VICCS TCG** transporta a lendária febre das cartas colecionáveis do final dos anos 90 para o apocalipse de Knox County. O mod adiciona todas as **102 cartas clássicas do Base Set de 1999**, permitindo ao sobrevivente encontrar pacotes selados, vivenciar a emoção de abri-los e catalogar sua coleção em um fichário de luxo.
 
-### Sistema de Propriedade & Reivindicação de Base
+### Boosters, Raridades & Fichário 3D
+- **Distribuição de Pacotes:** Encontrados no loot de casas de família, cômodos infantis, armários escolares, bancas de revistas e lojas de brinquedos.
+- **Sistema de Raridades Autêntico:** Cartas Comuns (●), Incomuns (◆), Raras (★) e as cobiçadas **Holofoils Brilhantes** (com chance de 33% por padrão ao tirar uma rara).
+- **Fichário Interativo (Binder UI):** Interface Frameless Soft Glass com grade 3x3 (9 cartas por página), navegação fluida, contador de progresso (ex: `47/102 Coletadas - 46% Concluído`) e filtros.
+- **Alívio Mental Real:** Descobrir cartas novas ou folhear o fichário durante noites chuvosas reduz intensamente o Tédio e a Depressão do seu personagem.
 
-Nem toda casa visitada deve agir como refúgio imediato:
-
-- **Multiplayer:** Conforto restrito a Safehouses oficiais onde o jogador é dono ou morador registrado.
-- **Single Player:** Menu de contexto com clique direito: `Living House: Estabelecer Residência como Meu Lar` e `Desocupar Base / Abandonar Lar`.
-- **Casas não reivindicadas** aparecem como `IMÓVEL NEUTRO` sem bônus de aconchego.
-- **Modo Casual:** Configurável na Sandbox (`RequireSafehouseClaim = false`) para jogadores que preferem benefícios em qualquer casa.
-
----
-
-### Motor de Vida Ativa & Tarefas Domésticas (Homemaking)
-
-O mod recompensa o jogador por **manter a base ativa**. Ao realizar tarefas cotidianas dentro do seu abrigo, você estende a duração dos seus bônus de conforto em até **+8 horas diárias**:
-
-* 🧹 **Limpeza do Lar:** Limpar manchas de sangue com água/alvejante ou recolher lixo do chão (**+15% de duração**).
-* 🍳 **Culinária Caseira:** Preparar refeições elaboradas, sopas, assados e sanduíches no fogão (**+20% de duração**).
-* 🌾 **Jardinagem & Agricultura:** Regar, plantar, adubar ou colher hortaliças (**+15% de duração**).
-* 🔨 **Construção & Manutenção:** Serrar madeira, erguer paredes, portas, pintar ou barricar janelas (**+25% de duração**).
-* 🖼️ **Decoração:** Posicionar móveis e organizar objetos decorativos (**+15% de duração**).
-* 🎵 **Hobbies & Lazer:** Tocar violão, piano, flauta, ler livros recreativos ou jogar jogos de tabuleiro (**+15% de duração**, alívio de tédio e tristeza).
+### 📖 Mini Tutorial: Como Jogar (TCG)
+1. **Colete Pacotes de Cartas:** Durante suas expedições de loot, fique atento a mochilas escolares, mesas de centro e cômodos residenciais.
+2. **Abra o Booster:** Clique com o botão direito no pacote de cartas no inventário e selecione *"Abrir Pacote de Cartas"*.
+3. **Vire as Cartas (Reveal Modal):** Uma tela interativa se abrirá. Clique nas cartas viradas para baixo para revelar uma a uma e descobrir suas raridades.
+4. **Organize seu Fichário:** Clique com o botão direito no item *Fichário de Cartas* e selecione *"Abrir Fichário"*. Arraste suas cartas do inventário para os slots do fichário.
+5. **Inspecione com Zoom:** Dê um duplo clique em qualquer carta guardada no fichário para ver sua arte em alta resolução, ataques e detalhes nostálgicos.
 
 ---
 
-### Rotinas Táticas, Streaks & Casa Impecável
+## 📻 Módulo 3: VICCS Media Broadcasting
 
-- **Manhã Aconchegante (`LV_MorningCozy`):** Dormir 6h+ → Lavar o rosto/banho → Café/chá quente = Resistência à fadiga e recuperação de estamina até a tarde.
-- **Rotina Estabelecida (`LV_RoutineStreak`):** Manter Tier 3+ por 3+ dias consecutivos = Blindagem mental persistente (redução de estresse e pânico) que **não se perde** durante expedições externas.
-- **Casa Impecável (`LV_SpotlessHome`):** Base com Squalor < 5% e alto conforto = Leitura e aprendizado de habilidades acelerados.
-- **Vida Social:** 2+ sobreviventes aliados na mesma base = Redução contínua de tédio e depressão.
-- **Poeira Passiva:** Acúmulo gradual de sujeira ao longo das semanas, estimulando faxinas periódicas.
+> **ID do Mod:** `VICCS_Broadcasting`  
+> **Versão:** `1.2.0` | **Compatibilidade:** Build 42.0+ (Sincronização Multiplayer Dedicada)
 
----
+![Broadcasting Poster](VICCS_Bradcasting/VICCS_Broadcasting/poster.png)
 
-### Sazonalidade Tática (Inverno & Verão)
+### O que é e Como Funciona (Broadcasting)
+O **VICCS Media Broadcasting** é uma solução completa de mídia e transmissão ao vivo no Project Zomboid. Ele permite que rádios, televisões, boomboxes e aparelhos de som portáteis toquem músicas e fluxos de áudio reais de fontes como **YouTube, YouTube Music e SoundCloud**, perfeitamente sincronizados entre todos os jogadores conectados.
 
-Integração profunda com o Climate Manager da Build 42:
+### Streaming Sincronizado & Áudio Espacial 3D
+- **Sincronia Global em Multiplayer:** Se você ligar uma música em um boombox na sua base, todos os membros do esquadrão presentes na sala escutarão o mesmo som, no mesmo segundo exato.
+- **Motor de Áudio Espacial Posicional:** O áudio possui atenuação por distância, balanço estéreo dinâmico e oclusão acústica: se o rádio estiver no andar de baixo ou atrás de paredes grossas, o som ficará abafado de forma hiper-realista.
+- **Dispositivos Suportados:** Televisores residenciais, rádios AM/FM comerciais, estações de som portáteis (Boomboxes) e CD Players portáteis de bolso.
 
-| Estação | Condição | Efeito |
-| :--- | :--- | :--- |
-| ❄️ **Inverno** | Lareiras, fogões a lenha ou aquecedores ligados | **+24 conforto** |
-| ❄️ **Inverno** | Tapetes e peles de animais no chão | **+18 conforto** (+6 extra por isolamento) |
-| ❄️ **Inverno** | Sem fonte de calor e temp ≤ 5°C | **-10 conforto** (penalidade) |
-| ☀️ **Verão** | Ventiladores ligados | **+10 conforto** |
-| ☀️ **Verão** | Cortinas fechadas (bloqueio solar) | **+4 conforto** |
-| ☀️ **Verão** | Fogo aceso em interior fechado | **+12 squalor** (penalidade) |
+### Acústica & Atração de Hordas
+- **Risco Tático:** Som tem peso no apocalipse. Tocar músicas altas em caixas de som abertas atrairá zumbis em um raio de até **25 tiles** (ajustável no Sandbox).
+- **Fones de Ouvido Silenciosos:** Ao equipar fones de ouvido no seu CD Player portátil, o áudio toca apenas para o seu personagem, zerando o ruído externo e mantendo você em segurança furtiva durante expedições.
 
----
-
-### Higiene Bucal & Cuidados Dentais
-
-- **Ação `ISBrushTeethAction`:** Escovação de dentes usando pia sanitária, consumindo 1 unidade de água e 5% de pasta de dente por uso (20 usos por tubo).
-- **Buff *Hálito Fresco* (`LV_FreshBreath`):** Redução de estresse (-15) e tédio (-10) por 4 horas.
-- **Barra nativa de "Restante:"** no inventário e tooltips para pastas de dente (B42 Drainable + hooks de UI).
+### 📖 Mini Tutorial: Como Jogar (Broadcasting)
+1. **Ligue o Aparelho:** Aproxime-se de uma TV, Rádio, Boombox ou equipe um CD Player. Certifique-se de que há energia elétrica (gerador ou baterias carregadas).
+2. **Abra o Player:** Clique com o botão direito no aparelho e selecione *"Sintonizar / Abrir VICCS Media Player"*.
+3. **Cole a Mídia:** Insira a URL ou link da música/playlist desejada (YouTube ou SoundCloud) e clique no botão Play.
+4. **Controle o Volume:** Ajuste os controles deslizantes de volume na HUD translúcida.
+5. **Use em Segurança:** Conecte fones de ouvido caso queira escutar suas faixas favoritas sem transformar sua casa em um ímã de hordas.
 
 ---
 
-### Dashboard de Infraestrutura da Base (Tecla J)
+## 🛰️ Módulo 4: VICCS PZHub (Desktop App & Squad Radar)
 
-Painel dedicado Frameless Soft Glass com telemetria em tempo real:
+> **ID do Mod:** `VICCSRadarBridge` (Mod In-Game) + `VICCS_PZHub` (Desktop Tauri Companion)  
+> **Versão:** `1.0.0` | **Compatibilidade:** Build 42 (Suporte total Z-Levels -32 a +32) e Build 41
 
-- ⚡ **Geradores Elétricos:** Combustível (%), integridade mecânica (%), status operacional.
-- 💧 **Barris de Chuva:** Volume total em litros e capacidade máxima agregada.
-- 🏠 **Governança da Safehouse:** Nome da base, conforto, insalubridade, sobreviventes e clima.
-- 💬 **Comandos de Chat:** `/lv_status`, `/lv`, `/livinghouse` para consulta rápida.
+![PZHub Poster](VICCS_PZHub/VICCS_PZHub/server-mod/poster.png)
 
----
+### O que é e Como Funciona (PZHub)
+O **VICCS PZHub** é o centro de comando definitivo para o jogador moderno de Project Zomboid. Desenvolvido sobre **Tauri e Rust**, o aplicativo desktop atua em sintonia direta com o mini-mod `VICCSRadarBridge`, fornecendo telemetria em tempo real, visualização de mapa tático e sincronização de esquadrão sem interferir na estabilidade do jogo.
 
-### Sono Reparador & Travesseiros (Sleep Revitalize)
+### Radar Tático ao Vivo & Suporte à B42 (-32 a +32 Z-Levels)
+- **Mapeamento em Alta Resolução:** Mapa completo de Knox Country com projeção isométrica fiel ao jogo.
+- **Escala Vertical Build 42:** Suporte nativo aos novos andares subterrâneos (-32) e arranha-céus (+32) introduzidos na Build 42, rastreando a elevação exata de cada membro da equipe.
+- **Rastreamento de Esquadrão:** Visualize onde seus amigos estão, sua saúde, status de veículos e direção de movimento em tempo real.
 
-Dormir bem no apocalipse agora faz toda a diferença:
-1. **Dormir 6+ horas in-game** em uma cama ou sofá confortável.
-2. **Ter um Travesseiro** (no inventário, equipado na mão ou colocado como objeto 3D sobre a cama).
-3. **Resultado ao Acordar:**
-   - **Zera 100% da Tristeza, Tédio e Estresse.**
-   - Aplica o efeito **Revigorado** e renova a carga máxima de bônus do Lar por 8 horas.
+### Central de Mods, GPS & Overlay
+- **Navegador GPS Ponto a Ponto:** Trace rotas de comboio e navegação entre postos de gasolina, hospitais, safehouses e pontos de extração.
+- **Modpack & Mod Scanner:** Identifique automaticamente mods locais instalados, verifique integridade e instale atualizações com um clique.
+- **Picture-in-Picture & Overlay:** Posicione o radar tático como uma janela translúcida sobreposta ao jogo ou jogue com mapa dinâmico em um segundo monitor.
 
----
-
-### Ciclo de Higiene Corporal & Sujeira Ambiental
-
-- **Sujeira nos pés/calçado:** Andar em terra, grama, asfalto, lama ou pisar em cadáveres acumula sujeira no corpo e transfere para o piso da casa.
-- **Faxina Ativa:** Ações com tempo para limpar pisos (`ISCleanFloorAction`) e peças sanitárias (`ISCleanFixtureAction`) com auto-equip inteligente da mochila.
-- **Manchas Visuais:** Gotejamento de sangue vanilla ao caminhar sangrando e overlays de sujeira no piso com Hard Caps (máx. 15% do cômodo).
-- **Acúmulo Passivo de Poeira:** +Sujeira a cada 24h in-game sem limpeza.
+### 📖 Mini Tutorial: Como Jogar (PZHub)
+1. **Inicie o App Desktop:** Abra o aplicativo `VICCS PZHub` no seu computador.
+2. **Instalação do Mini-Mod:** No menu de configurações (⚙️) do PZHub, clique em *"Instalar Mod no Project Zomboid"* (ou copie a pasta `server-mod` para sua pasta de mods como `VICCSRadarBridge`).
+3. **Ative no Jogo:** No menu de mods do Project Zomboid, marque `VICCS PZMap Live Squad Radar Bridge` como ATIVO.
+4. **Crie ou Junte-se a um Esquadrão:** Na aba Social do PZHub, gere um código de esquadrão e envie para seus companheiros de equipe.
+5. **Navegue com GPS:** Abra o mapa tático, visualize os blips do seu time em tempo real e trace rotas táticas com estimativa de trajeto.
 
 ---
 
-### Necessidades Fisiológicas (Banheiro)
+## 🛠️ Guia do Administrador de Servidor
 
-- Acúmulo estritamente crescente de bexiga (nunca regride sozinha), acelerado por comida e líquidos.
-- **Tiers de urgência** (Vontade → Aperto → Urgência) com penalidades graduais.
-- Ao atingir 100%: dano contínuo leve + debuffs severos até aliviar-se.
-- **Uso de sanitário** (com som de descarga vanilla) ou **alívio na natureza** fora de casa.
-- Buff **Aliviado** (`LV_Relieved`) ao usar sanitário limpo.
+Projetado do zero para suportar servidores dedicados de alta densidade (20 a 100+ jogadores simultâneos) sem quedas de tickrate ou desyncs.
 
----
+### Configuração de server.ini
+Para ativar todos os módulos no seu servidor dedicado, adicione os IDs correspondentes na diretiva `Mods` do arquivo de configuração do seu servidor:
 
-### Interface do Usuário & Controles (HUD Dinâmica)
+```ini
+Mods=VICCS_HousingCareSystem;VICCS_TCG;VICCS_Broadcasting;VICCSRadarBridge;
+```
 
-O mod inclui uma interface moderna no padrão **Frameless Soft Glass (estética CHStatusHUD)**:
+### Tabela Geral de Opções de Sandbox
 
-* ⌨️ **Tecla `K`:** Força uma varredura instantânea e abre o Painel de Inspeção de Cômodo.
-* ⌨️ **Tecla `J`:** Abre o Dashboard de Infraestrutura da Base.
-* 🖱️ **Painel Flutuante Drag & Drop:** Pode ser arrastado para qualquer lugar da tela e lembra a posição.
-* 📊 **Barra de Progresso Adaptativa:**
-  - 🔵 **Azul/Ciano:** Indicador de aclimatação.
-  - 🟢 **Verde:** Conforto ativo, pontuação e tempo restante do buff.
-  - 🟠 **Laranja/Vermelho:** Alerta de Insalubridade.
-* 🏷️ **Moodles Nativos:** Totalmente integrado com a coluna lateral direita de moodlets do PZ.
+Todas as variáveis podem ser ajustadas em tempo real via menu de administração in-game ou pelo arquivo `server_SandboxVars.lua`:
 
----
+| Módulo | Opção Sandbox | Padrão | Intervalo | Finalidade |
+| :--- | :--- | :---: | :---: | :--- |
+| **Housing** | `HousingCareSystem.SystemEnabled` | `true` | bool | Liga/desliga o cálculo de conforto e squalor. |
+| **Housing** | `HousingCareSystem.RequireSafehouseClaim` | `true` | bool | Restringe bônus a Safehouses oficiais registradas. |
+| **Housing** | `HousingCareSystem.SqualorOverrideThreshold` | `50` | 10 a 90 | Nível de sujeira que anula qualquer conforto. |
+| **Housing** | `HousingCareSystem.AcclimatizationMinutes` | `30` | 0 a 120 | Tempo em minutos in-game para ativar os bônus. |
+| **TCG** | `VICCS_TCG.SpawnRate` | `3` | 1 a 6 | Frequência de loot de pacotes de cartas pelo mapa. |
+| **TCG** | `VICCS_TCG.HoloChancePercent` | `33` | 0 a 100 | Porcentagem de chance de vir carta Holo no slot raro. |
+| **TCG** | `VICCS_TCG.PreFilledBinderChance` | `50` | 0 a 100 | Chance de fichários encontrados no loot já conterem cartas. |
+| **Broadcasting** | `VICCS_Broadcasting.ZombieAttractionRadius` | `25` | 0 a 100 | Raio em tiles que o som da música alerta zumbis. |
+| **Broadcasting** | `VICCS_Broadcasting.CDPlayerSilent` | `true` | bool | Garante que fones de ouvido não atraiam zumbis. |
+| **Broadcasting** | `VICCS_Broadcasting.SpatialAudioEnabled` | `true` | bool | Ativa motor de áudio 3D e oclusão de paredes. |
 
-## 🛠️ Guia para Donos de Servidores & Administradores
-
-Projetado do zero para servidores dedicados de grande porte (20 a 100+ jogadores simultâneos).
-
-### Performance & Time-Slicing (Zero-Lag)
-
-* **Varredura em Fatias de Tempo:** O scanner processa apenas `25 tiles por tick` no `Events.OnTick`. Isso elimina os micro-stutters clássicos de mods de base.
-* **Amostragem Inteligente para Mansões:** Em Safehouses gigantes (>10 tiles de largura), o algoritmo aplica amostragem espacial com passo de 3 tiles, garantindo **78% de economia de CPU** com fidelidade de pontuação impecável.
-* **Sem Monkey-Patching:** O código não substitui funções internas da VM Java/Kahlua. Zero risco de corrupção ou conflito com outros mods.
-
-### Integração com Safehouses (Multiplayer Dedicado)
-
-Por padrão, a reivindicação de propriedade é **obrigatória** (`RequireSafehouseClaim = true`):
-* **Multiplayer:** Buffs só para membros autorizados da Safehouse oficial.
-* **Single Player:** Menu de contexto com clique direito para estabelecer ou abandonar residência.
-* **Desativável:** Configure `RequireSafehouseClaim = false` na Sandbox para modo casual.
+### Filosofia Zero-Lag (Time-Slicing & Amostragem)
+- **Varredura em Fatias de Tempo:** O scanner do *Housing Care System* processa rigorosamente apenas `25 tiles por tick`, eliminando picos de processamento na CPU.
+- **Radar Bridge Ultraleve:** O módulo de radar do PZHub utiliza chamadas de I/O em intervalos de 500ms com impacto de CPU inferior a 0.001%.
+- **Zero Monkey-Patching:** Nenhuma função fundamental do núcleo do Project Zomboid ou da máquina virtual Kahlua é sobrescrita, prevenindo qualquer incompatibilidade com outros mods da Steam Workshop.
 
 ---
 
-### Tabela Completa de Sandbox Options
+## 📦 Instalação & Setup Rápido
 
-Todas as opções podem ser configuradas no painel de Sandbox do jogo ou no arquivo `.ini` do servidor:
+### 👤 Singleplayer & Co-op Local
+1. Extraia ou copie as pastas dos módulos desejados para o seu diretório de mods:  
+   `C:\Users\<SeuUsuario>\Zomboid\mods\`
+2. Inicie o **Project Zomboid**, clique em **MODS** no menu principal e marque como **ATIVOS** os módulos que deseja jogar.
+3. Crie um novo mundo ou continue seu save atual com tranquilidade.
 
-| Nome da Opção Sandbox | Tipo | Padrão | Intervalo | Descrição |
-| :--- | :---: | :---: | :---: | :--- |
-| `HousingCareSystem.SystemEnabled` | Bool | `true` | `true/false` | Ativa ou desativa todo o sistema globalmente. |
-| `HousingCareSystem.AcclimatizationMinutes` | Int | `30` | `0 a 120` | Minutos in-game para ativar buffs. |
-| `HousingCareSystem.ComfortCheckIntervalHours` | Int | `6` | `1 a 24` | Frequência de varreduras automáticas. |
-| `HousingCareSystem.ComfortRadiusTiles` | Int | `15` | `5 a 40` | Raio de tiles para cômodos sem tag. |
-| `HousingCareSystem.RequireRoofedRoom` | Bool | `true` | `true/false` | Exige teto/cômodo fechado. |
-| `HousingCareSystem.RequireSafehouseClaim` | Bool | `true` | `true/false` | Exige Safehouse / reivindicação. |
-| `HousingCareSystem.Tier1Threshold` | Int | `20` | `10 a 50` | Pontuação mínima para Tier 1. |
-| `HousingCareSystem.Tier2Threshold` | Int | `40` | `20 a 70` | Pontuação mínima para Tier 2. |
-| `HousingCareSystem.Tier3Threshold` | Int | `60` | `40 a 90` | Pontuação mínima para Tier 3. |
-| `HousingCareSystem.Tier4Threshold` | Int | `80` | `60 a 100` | Pontuação mínima para Tier 4. |
-| `HousingCareSystem.BuffDurationBaseHours` | Double | `8.0` | `0.5 a 24.0` | Duração base do buff ao sair. |
-| `HousingCareSystem.BuffDurationMaxHours` | Double | `12.0` | `1.0 a 72.0` | Duração máxima dos buffs. |
-| `HousingCareSystem.BuffMagnitudeMultiplier` | Double | `1.0` | `0.1 a 5.0` | Multiplicador de intensidade. |
-| `HousingCareSystem.SqualorSystemEnabled` | Bool | `true` | `true/false` | Ativa sistema de insalubridade. |
-| `HousingCareSystem.SqualorOverrideThreshold` | Int | `50` | `10 a 90` | Squalor que anula conforto. |
-| `HousingCareSystem.HomemakingEnabled` | Bool | `true` | `true/false` | Ativa bônus por tarefas domésticas. |
-| `HousingCareSystem.HomemakingMaxBonusHours` | Double | `8.0` | `1.0 a 48.0` | Teto diário de horas extras. |
-| `HousingCareSystem.HomemakingCooldownSeconds` | Int | `45` | `5 a 300` | Cooldown anti-spam entre tarefas. |
-| `HousingCareSystem.EnableMorningRoutine` | Bool | `true` | `true/false` | Ativa micro-rotina Manhã Aconchegante. |
-| `HousingCareSystem.EnableRoutineStreaks` | Bool | `true` | `true/false` | Ativa sistema de streaks de 3+ dias. |
-| `HousingCareSystem.EnablePassiveDust` | Bool | `true` | `true/false` | Ativa acúmulo de poeira passiva. |
-| `HousingCareSystem.PassiveDustDailyAmount` | Double | `3.0` | `0.5 a 15.0` | Sujeira acumulada por dia de jogo. |
-| `HousingCareSystem.EnableSpotlessBonus` | Bool | `true` | `true/false` | Ativa bônus Casa Impecável. |
-| `HousingCareSystem.EnableSeasonalComfort` | Bool | `true` | `true/false` | Ativa sazonalidade no scanner. |
-| `HousingCareSystem.EnableSocialBonus` | Bool | `true` | `true/false` | Ativa bônus de Vida Social. |
-| `HousingCareSystem.ServerTelemetryEnabled` | Bool | `true` | `true/false` | Ativa telemetria no chat do servidor. |
+### 🖥️ Servidores Dedicados
+1. Faça o upload das pastas dos mods para o diretório de mods do servidor.
+2. Adicione os IDs correspondentes à linha `Mods=` no arquivo `<NomeDoServidor>.ini`.
+3. Inicie o servidor. Os arquivos de Sandbox serão injetados automaticamente.
+
+> [!TIP]
+> **Compatibilidade Mid-Save:** Todos os mods da suíte VICCS são 100% seguros para serem adicionados ou removidos no meio de uma campanha sem corromper mundos salvos.
 
 ---
 
-### Compatibilidade Mid-Save
+## 🌐 Localização & Créditos
 
-* ✅ **Adição Segura:** Pode ser adicionado a qualquer momento em mundos singleplayer ou servidores já em andamento.
-* ✅ **Remoção Limpa:** Os dados são armazenados de forma transitória no `ModData` do jogador usando timestamps nativos (`getWorldAgeHours`). Se o mod for removido, o save continua funcionando sem erros.
-
----
-
-## 🌐 Wiki & GDD Portal Interativo
-
-O mod conta com um **portal web interativo** (HTML/CSS/JS puro, zero dependências) que serve como:
-
-- **Wiki de Operações:** Guia tático passo a passo de todas as mecânicas do mod.
-- **GDD & Arquitetura:** Documento de design vivo com fluxogramas e diagramas.
-- **Banco de Itens & Clutter:** Tabela interativa de todos os objetos com pontuação.
-- **Calculadora de Ações:** Simulador de tarefas domésticas e impacto nos buffs.
-- **Opções de Sandbox:** Referência completa e visual de todas as configurações.
-- **Blueprint Sandbox:** Simulador interativo de cômodos com toggles de objetos.
-
-O portal utiliza a identidade visual tática da marca VICCS (Midnight Navy, Tactical Teal, Rust Orange) com estética de **painel de agência secreta/hacker** e ícones Font Awesome 6.
-
----
-
-## 📦 Instalação & Setup
-
-### 👤 Singleplayer & Coop Local
-1. Extraia ou clone a pasta `VICCS_HousingCareSystem` para o diretório de mods:  
-   `C:\Users\<SeuUsuario>\Zomboid\mods\VICCS_HousingCareSystem`
-2. No menu principal do jogo, clique em **Mods** e ative **Housing Care System (Living House)**.
-3. Ao iniciar um novo jogo ou carregar um save, configure as opções de Sandbox desejadas.
-
-### 🖥️ Servidor Dedicado
-1. Adicione o Mod ID ao seu arquivo `server.ini`:
-   ```ini
-   Mods=VICCS_HousingCareSystem
-   ```
-2. Adicione as opções de Sandbox ao arquivo `server_SandboxVars.lua` ou utilize o painel de administração in-game.
-3. Reinicie o servidor.
-
----
-
-## 🌐 Localização & Suporte a Idiomas
-
-O mod conta com tradução nativa e completa (textos de interface, moodlets, halo notes e opções de sandbox) para **5 idiomas**:
+A suíte possui localização completa (interfaces, halos de notificação, moodlets e sandboxes) para **5 idiomas globais**:
 
 * 🇧🇷 **Português (Brasil)** — Nativo
 * 🇺🇸 **Inglês (English)** — Nativo
@@ -397,7 +276,7 @@ O mod conta com tradução nativa e completa (textos de interface, moodlets, hal
 ---
 
 <div align="center">
-  <sub>Desenvolvido com excelência técnica por <b>VICCS</b> para a comunidade global de Project Zomboid.</sub>
+  <sub>Desenvolvido com excelência técnica por <b>VICCS</b> para a comunidade mundial de Project Zomboid.</sub>  
   <br>
-  <sub>Versão 1.5.8 — Setembro 2026</sub>
+  <sub>Suíte VICCS Build 42 — Documento Mestre de Engenharia & Design</sub>
 </div>
