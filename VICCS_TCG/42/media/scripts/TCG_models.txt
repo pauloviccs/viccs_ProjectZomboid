@@ -1,0 +1,44 @@
+module Base
+{
+    model TCG_Binder
+    {
+        mesh = WorldItems/TCG_Binder,
+        texture = WorldItems/binder,
+        scale = 0.6,
+    }
+
+    model TCG_BinderGround
+    {
+        mesh = WorldItems/TCG_Binder,
+        texture = WorldItems/binder,
+        scale = 0.6,
+    }
+
+    model TCG_Card
+    {
+        mesh = WorldItems/TCG_Card,
+        texture = WorldItems/tcg_card_back,
+        scale = 1.0,
+    }
+
+    model TCG_CardGround
+    {
+        mesh = WorldItems/TCG_Card,
+        texture = WorldItems/tcg_card_back,
+        scale = 1.0,
+    }
+
+    model TCG_Boosterpack
+    {
+        mesh = WorldItems/TCG_Boosterpack,
+        texture = WorldItems/boosterpack,
+        scale = 1.0,
+    }
+
+    model TCG_BoosterpackGround
+    {
+        mesh = WorldItems/TCG_Boosterpack,
+        texture = WorldItems/boosterpack,
+        scale = 1.0,
+    }
+}
