@@ -101,10 +101,6 @@ if Events.OnFillContainer then
     Events.OnFillContainer.Add(onFillContainer)
 end
 
-if Events.OnPostDistributionMerge then
-    Events.OnPostDistributionMerge.Add(TCG_Distributions.init)
-end
-
 local function insertLoot(distName, itemType, baseWeight, mult)
     if not ProceduralDistributions or not ProceduralDistributions.list then return end
     if not mult or mult <= 0 then return end
@@ -186,4 +182,75 @@ end
 
 if Events.OnPostDistributionMerge then
     Events.OnPostDistributionMerge.Add(TCG_Distributions.init)
+end
+
+--- Hook de salvaguarda para mundos existentes (Saves antigos com cidades ja looteadas)
+--- Permite encontrar cartas e boosters raros nos bolsos de zumbis eliminados
+local function onZombieDead(zombie)
+    if not zombie then return end
+    local mult = TCG_Config.getSpawnMultiplier()
+    if mult <= 0 then return end
+
+    local roll = ZombRand(1000) + 1
+
+    -- Chance de carta avulsa no bolso do zumbi (~0.8% * multiplicador)
+    if roll <= math.floor(8 * mult) then
+        local inv = zombie:getInventory()
+        if inv then
+            local cardItem = inv:AddItem("Base.TCG_Card")
+            if cardItem then
+                local sets = { "base1", "jungle", "fossil", "rocket", "eeveeheroes" }
+                local chosenSet = sets[ZombRand(#sets) + 1]
+                local setDef = TCG_CardRegistry.Sets and TCG_CardRegistry.Sets[chosenSet]
+                local total = setDef and setDef.total or 102
+                local randNum = ZombRand(total) + 1
+                local cid = string.format("%s-%03d", chosenSet, randNum)
+                local cardDef = TCG_CardRegistry.getCard(cid)
+                if cardDef then
+                    local md = cardItem:getModData()
+                    local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+                    local nameEN = (type(cardDef.name) == "table") and cardDef.name.en or cardDef.name
+                    local namePT = (type(cardDef.name) == "table") and cardDef.name.pt or cardDef.name
+                    local displayName = isPT and namePT or nameEN
+                    local isHolo = false
+                    if cardDef.rarity and (cardDef.rarity.en == "Rare Holo" or cardDef.rarity == "Rare Holo") then
+                        isHolo = (ZombRand(100) + 1 <= TCG_Config.getHoloChance())
+                    end
+
+                    md.cardId = cardDef.id
+                    md.setId = chosenSet
+                    md.cardNumber = cardDef.number
+                    md.totalInSet = total
+                    md.name_en = nameEN
+                    md.name_pt = namePT
+                    md.cardName = displayName
+                    md.rarity = TCG_CardRegistry.getCardRarity(cardDef)
+                    md.isHolo = isHolo
+                    md.condition = ZombRand(30, 95)
+
+                    local prefix = isPT and (isHolo and "* Carta TCG (Holo): " or "Carta TCG: ")
+                                        or (isHolo and "* TCG Card (Holo): " or "TCG Card: ")
+                    cardItem:setName(string.format("%s%s [#%02d/%d]", prefix, displayName, cardDef.number, total))
+                end
+            end
+        end
+    -- Chance de booster pack raro no zumbi (~0.2% * multiplicador, 1 em 500 zumbis)
+    elseif roll <= math.floor(10 * mult) then
+        local inv = zombie:getInventory()
+        if inv then
+            local boosterTypes = {
+                "Base.TCG_Booster_Base1",
+                "Base.TCG_Booster_Jungle",
+                "Base.TCG_Booster_Fossil",
+                "Base.TCG_Booster_TeamRocket",
+                "Base.TCG_Booster_EeveeHeroes"
+            }
+            local chosenBooster = boosterTypes[ZombRand(#boosterTypes) + 1]
+            inv:AddItem(chosenBooster)
+        end
+    end
+end
+
+if Events.OnZombieDead then
+    Events.OnZombieDead.Add(onZombieDead)
 end

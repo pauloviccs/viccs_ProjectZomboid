@@ -1,6 +1,6 @@
-name=VICCS - Trading Card Game (1999 Base Set)
+name=VICCS - Trading Card Game (1999-2021 Multi-Set)
 id=VICCS_TCG
-description=Colecione e abra os pacotes de cartas colecionáveis do Base Set de 1999 no Project Zomboid Build 42. Inclui boosters, fichário com visualizador Frameless Soft Glass e sistema de raridade.
+description=Colecione e abra os pacotes de cartas colecionaveis das expansoes Base Set (1999), Jungle (1999), Fossil (1999), Equipe Rocket (2000) e Eevee Heroes (2021) no Project Zomboid Build 42. Inclui fichario com abas dinamicas, visualizador Frameless Soft Glass, fisica 3D de inspecao, efeitos sonoros imersivos vanilla e total compatibilidade com saves existentes.
 poster=poster.png
 icon=icon.png
 versionMin=42.0

@@ -76,18 +76,14 @@ function TCG_CardInspectModal.show(target, extraHolo, binderItem, cardCount, bin
     instance:addToUIManager()
     instance:setVisible(true)
 
-    -- Audio de inspecao
-    if isHolo then
-        TCG_Theme.playAudio("GainExperienceLevel", "UI_SelectCard")
-    else
-        TCG_Theme.playAudio("UI_SelectCard", "BookOpen")
-    end
+    -- Audio customizado de inspecao tatil
+    TCG_Theme.playInspectCard(isHolo)
 
     return instance
 end
 
 function TCG_CardInspectModal:closeModal()
-    TCG_Theme.playAudio("UI_ToggleOff", "BookClose")
+    TCG_Theme.playBookClose()
     self:setVisible(false)
     self:removeFromUIManager()
     instance = nil

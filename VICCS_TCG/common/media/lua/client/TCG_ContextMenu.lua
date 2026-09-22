@@ -101,7 +101,7 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                     playerObj:Say(isPT and "Nao posso abrir o fichario dirigindo!" or "I can't open the binder while driving!")
                     return
                 end
-                ISTimedActionQueue.add(TCG_OpenBinderTimedAction:new(playerObj, binderItem, 40))
+                ISTimedActionQueue.add(TCG_OpenBinderTimedAction:new(playerObj, binderItem, 50))
             end)
             optOpen.iconTexture = getTexture("media/textures/tcg_binder.png")
 
@@ -122,7 +122,7 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                             else
                                 binderItem:setName(baseLabel)
                             end
-                            TCG_Theme.playAudio("UI_ButtonSelect")
+                            TCG_Theme.playButtonClick()
                         end
                     end
                 end, playerNum)

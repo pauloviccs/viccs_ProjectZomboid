@@ -1,0 +1,163 @@
+module Base
+{
+    sound TCG_ButtonDefault
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_button_default.ogg,
+            volume = 0.8,
+        }
+    }
+
+    sound TCG_OpenBinder
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_open_binder.ogg,
+            distanceMin = 1,
+            distanceMax = 15,
+            volume = 0.9,
+        }
+    }
+
+    sound TCG_CloseBinder
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_close_binder.ogg,
+            distanceMin = 1,
+            distanceMax = 15,
+            volume = 0.85,
+        }
+    }
+
+    sound TCG_TurnPageBinder
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_turn_page_binder.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            volume = 0.9,
+        }
+    }
+
+    sound TCG_NextCategoryBinder
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_next_category_binder.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            volume = 0.9,
+        }
+    }
+
+    sound TCG_TakeCardBinder
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_take_card_binder.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            volume = 0.85,
+        }
+    }
+
+    sound TCG_StoreAllCards
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_store_all_cards_boosterpack.ogg,
+            distanceMin = 1,
+            distanceMax = 10,
+            volume = 0.9,
+        }
+    }
+
+    sound TCG_InspectCard
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_inspect_card.ogg,
+            volume = 0.85,
+        }
+    }
+
+    sound TCG_OpenBoosterpack
+    {
+        category = Item,
+        clip
+        {
+            file = media/sound/sound_open_boosterpack.ogg,
+            distanceMin = 1,
+            distanceMax = 15,
+            volume = 0.9,
+        }
+    }
+
+    sound TCG_NextCardBoosterpack
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_next_card_boosterpack.ogg,
+            volume = 0.85,
+        }
+    }
+
+    sound TCG_CardOneStar
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_card_one_star.ogg,
+            volume = 0.85,
+        }
+    }
+
+    sound TCG_CardTwoStar
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_card_two_star.ogg,
+            volume = 0.9,
+        }
+    }
+
+    sound TCG_CardThreeStar
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_card_three_star.ogg,
+            volume = 0.95,
+        }
+    }
+
+    sound TCG_PrismaticCard
+    {
+        category = UI,
+        is2D = true,
+        clip
+        {
+            file = media/sound/sound_prismatic_card.ogg,
+            volume = 1.0,
+        }
+    }
+}

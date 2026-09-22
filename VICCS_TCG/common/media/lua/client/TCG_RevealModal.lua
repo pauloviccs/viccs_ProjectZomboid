@@ -61,19 +61,24 @@ function TCG_RevealModal.show(cards, playerObj, spawnedCards)
     instance:addToUIManager()
     instance:setVisible(true)
 
-    -- Audio de abertura do pacote (rasgo metalico)
-    TCG_Theme.playAudio("BandageTear", "BookOpen")
+    -- Audio customizado de abertura do pacote (rasgo metalico)
+    TCG_Theme.playOpenBooster()
 
-    -- Se a primeira carta ja for holo (raro), toca fanfarra
-    if cards and cards[1] and cards[1].isHolo then
-        TCG_Theme.playAudio("GainExperienceLevel")
+    -- Se a primeira carta ja for holo (raro), toca som prismatico
+    if cards and cards[1] then
+        if cards[1].isHolo then
+            TCG_Theme.playAudio("TCG_PrismaticCard", "GainExperienceLevel")
+        else
+            local r = (cards[1].card and cards[1].card.rarity) or "Common"
+            TCG_Theme.playRarityReveal(r, false)
+        end
     end
 
     return instance
 end
 
 function TCG_RevealModal:closeModal()
-    TCG_Theme.playAudio("UI_ToggleOff", "BookClose")
+    TCG_Theme.playBookClose()
     self:setVisible(false)
     self:removeFromUIManager()
     instance = nil
@@ -125,10 +130,9 @@ function TCG_RevealModal:onMouseUp(x, y)
                 if i <= self.currentIndex or true then
                     self.currentIndex = i
                     local cur = self.cards[i]
-                    if cur and cur.isHolo then
-                        TCG_Theme.playAudio("GainExperienceLevel")
-                    else
-                        TCG_Theme.playAudio("PageTurn", "UI_SelectCard")
+                    if cur then
+                        local r = (cur.card and cur.card.rarity) or "Common"
+                        TCG_Theme.playRarityReveal(r, cur.isHolo)
                     end
                     return true
                 end
@@ -170,7 +174,7 @@ function TCG_RevealModal:storeAndClose()
                              or "No binder found! Cards kept in backpack."
             pcall(function() player:setHaloNote(msg, 240, 200, 80, 250) end)
         end
-        TCG_Theme.playAudio("ItemPlacement", "PutItemInBag")
+        TCG_Theme.playCardSlot()
     end
 
     self:closeModal()
@@ -192,10 +196,9 @@ function TCG_RevealModal:revealNext()
     if self.currentIndex < #self.cards then
         self.currentIndex = self.currentIndex + 1
         local nextData = self.cards[self.currentIndex]
-        if nextData and nextData.isHolo then
-            TCG_Theme.playAudio("GainExperienceLevel")
-        else
-            TCG_Theme.playAudio("PageTurn", "UI_SelectCard")
+        if nextData then
+            local r = (nextData.card and nextData.card.rarity) or "Common"
+            TCG_Theme.playRarityReveal(r, nextData.isHolo)
         end
     end
 end

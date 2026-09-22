@@ -109,11 +109,11 @@ function TCG_BinderUI.open(binderItem)
     instance:addToUIManager()
     instance:setVisible(true)
 
-    TCG_Theme.playAudio("BookOpen", "UI_SelectCard")
+    TCG_Theme.playBookOpen()
     return instance
 end
 
---- Inicializa e garante persistencia isolada por item fisico (Anti-Shared State com UUID)
+--- Inicializa e garante persistencia isolada por item fisico com Auto-Heal para saves legados
 function TCG_BinderUI.getBinderDataFromItem(binderItem)
     if not binderItem then return { collected = {}, activeSet = "base1" } end
     local md = binderItem:getModData()
@@ -130,23 +130,74 @@ function TCG_BinderUI.getBinderDataFromItem(binderItem)
         }
     end
 
-    if not md.TCG_Binder.uuid then
-        md.TCG_Binder.uuid = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000, 999999))
+    local b = md.TCG_Binder
+    if not b.uuid then
+        b.uuid = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000, 999999))
     end
-    if not md.TCG_Binder.activeSet then
-        md.TCG_Binder.activeSet = "base1"
+    if not b.activeSet or b.activeSet == "" then
+        b.activeSet = b.setId or "base1"
     end
-    if not md.TCG_Binder.themeColor then
-        md.TCG_Binder.themeColor = "CYAN"
+    if not b.themeColor or b.themeColor == "" then
+        b.themeColor = "CYAN"
     end
-    if not md.TCG_Binder.badge then
-        md.TCG_Binder.badge = "COLLECTOR"
+    if not b.badge or b.badge == "" then
+        b.badge = "COLLECTOR"
     end
-    if not md.TCG_Binder.collected then
-        md.TCG_Binder.collected = {}
+    if not b.collected then
+        b.collected = {}
     end
 
-    return md.TCG_Binder
+    -- AUTO-HEAL: Migra formatos de saves anteriores (chaves numericas, sem zeros ou sem tabela)
+    local hasLegacyKeys = false
+    for k, v in pairs(b.collected) do
+        local sk = tostring(k)
+        if (type(k) == "number") or (not sk:find("-")) or (sk:match("%-(%d+)$") and #sk:match("%-(%d+)$") < 3) or (type(v) ~= "table") then
+            hasLegacyKeys = true
+            break
+        end
+    end
+
+    if hasLegacyKeys then
+        local healed = {}
+        for k, v in pairs(b.collected) do
+            local sk = tostring(k)
+            local targetCid = sk
+            if not sk:find("-") then
+                local num = tonumber(sk) or 1
+                targetCid = string.format("base1-%03d", num)
+            else
+                local sId, sNum = sk:match("^([^-]+)%-(%d+)$")
+                if sId and sNum and #sNum < 3 then
+                    targetCid = string.format("%s-%03d", sId, tonumber(sNum))
+                end
+            end
+
+            local entry = { number = 1, isHolo = false, count = 1 }
+            if type(v) == "table" then
+                entry.number = tonumber(v.number) or tonumber(targetCid:match("%-(%d+)$")) or 1
+                entry.isHolo = (v.isHolo == true)
+                entry.count = tonumber(v.count) or 1
+            elseif type(v) == "number" then
+                entry.number = tonumber(targetCid:match("%-(%d+)$")) or 1
+                entry.isHolo = false
+                entry.count = math.max(1, v)
+            elseif type(v) == "boolean" then
+                entry.number = tonumber(targetCid:match("%-(%d+)$")) or 1
+                entry.isHolo = v
+                entry.count = 1
+            end
+
+            if healed[targetCid] then
+                healed[targetCid].count = healed[targetCid].count + entry.count
+                if entry.isHolo then healed[targetCid].isHolo = true end
+            else
+                healed[targetCid] = entry
+            end
+        end
+        b.collected = healed
+    end
+
+    return b
 end
 
 --- Estatisticas especificas de um conjunto (ex: Jungle -> 12 de 64)
@@ -158,7 +209,8 @@ function TCG_BinderUI.getCollectionStatsForSet(binderItem, setId)
 
     if bData.collected then
         for cid, col in pairs(bData.collected) do
-            local s = cid:match("^([^-]+)%-")
+            local cidStr = tostring(cid)
+            local s = cidStr:match("^([^-]+)%-") or "base1"
             if s == setId and col and col.count and col.count > 0 then
                 count = count + 1
             end
@@ -232,7 +284,8 @@ function TCG_BinderUI.storeCard(binderItem, cardItem, playerObj)
     if not binderItem or not cardItem then return false end
     local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
     local md = cardItem:getModData()
-    local cid = md.cardId or (md.cardNumber and string.format("base1-%03d", md.cardNumber))
+    local sId = md.setId or "base1"
+    local cid = md.cardId or (md.cardNumber and string.format("%s-%03d", sId, md.cardNumber))
     if not cid then return false end
 
     if not bData.collected[cid] then
@@ -268,7 +321,7 @@ function TCG_BinderUI.storeCardsList(binderItem, cardItems, playerObj)
     end
 
     if storedCount > 0 then
-        TCG_Theme.playAudio("ItemPlacement", "PutItemInBag")
+        TCG_Theme.playCardSlot()
         local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
         local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
         local binderTitle = (bData.customName and bData.customName ~= "") and bData.customName or (isPT and "Fichario" or "Binder")
@@ -351,7 +404,7 @@ function TCG_BinderUI:onRenameConfirm(button)
                     self.binderItem:setName(baseLabel)
                 end
             end
-            TCG_Theme.playAudio("UI_ButtonSelect")
+            TCG_Theme.playButtonClick()
         end
     end
 end
@@ -390,7 +443,7 @@ function TCG_BinderUI:onMouseUp(x, y)
         -- Botao [IDIOMA: PT / EN] (x: width - 325 a width - 235, y: 8 a 32)
         if x >= (self.width - 325) and x <= (self.width - 235) and y >= 8 and y <= 32 then
             TCG_Config.toggleLanguage()
-            TCG_Theme.playAudio("UI_ButtonSelect")
+            TCG_Theme.playButtonClick()
             return true
         end
 
@@ -420,7 +473,7 @@ function TCG_BinderUI:onMouseUp(x, y)
                         self.selectedCard = nil
                         local bData = self:getBinderData()
                         bData.activeSet = sId
-                        TCG_Theme.playAudio("PageTurn", "BookOpen")
+                        TCG_Theme.playTabSwitch()
                     end
                     return true
                 end
@@ -433,7 +486,7 @@ function TCG_BinderUI:onMouseUp(x, y)
             if chipIdx >= 1 and chipIdx <= #TCG_Theme.THEME_KEYS then
                 local bData = self:getBinderData()
                 bData.themeColor = TCG_Theme.THEME_KEYS[chipIdx]
-                TCG_Theme.playAudio("UI_ButtonSelect")
+                TCG_Theme.playButtonClick()
                 return true
             end
         end
@@ -445,7 +498,7 @@ function TCG_BinderUI:onMouseUp(x, y)
             if self.currentPage > 1 then
                 self.currentPage = self.currentPage - 1
                 self.selectedCard = nil
-                TCG_Theme.playAudio("PageTurn", "BookOpen")
+                TCG_Theme.playPageTurn()
             end
             return true
         end
@@ -455,7 +508,7 @@ function TCG_BinderUI:onMouseUp(x, y)
             if self.currentPage < totalPages then
                 self.currentPage = self.currentPage + 1
                 self.selectedCard = nil
-                TCG_Theme.playAudio("PageTurn", "BookOpen")
+                TCG_Theme.playPageTurn()
             end
             return true
         end
@@ -480,7 +533,7 @@ function TCG_BinderUI:onMouseMove(dx, dy)
 end
 
 function TCG_BinderUI:closeUI()
-    TCG_Theme.playAudio("BookClose", "UI_ToggleOff")
+    TCG_Theme.playBookClose()
     self:setVisible(false)
     self:removeFromUIManager()
     instance = nil
@@ -573,7 +626,7 @@ function TCG_BinderUI:withdrawCard(cardId, amount)
         bData.collected[cardId] = nil
     end
 
-    TCG_Theme.playAudio("PageTurn", "PutItemInBag")
+    TCG_Theme.playCardWithdraw()
     local msg = ""
     if amount > 1 then
         msg = isPT and string.format("%dx Carta #%02d %s retiradas do fichario!", amount, num, displayName)

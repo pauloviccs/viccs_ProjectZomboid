@@ -935,12 +935,31 @@ TCG_CardRegistry.Sets["base1"] = {
     }
 }
 
---- Retorna a definicao de uma carta pelo ID
+--- Retorna a definicao de uma carta pelo ID (Blindado contra chaves numericas e saves legados)
 function TCG_CardRegistry.getCard(cardId)
     if not cardId then return nil end
-    local setId = cardId:match("^([^-]+)%-")
+    local strId = tostring(cardId)
+    local setId = strId:match("^([^-]+)%-")
+
+    -- Se veio apenas o numero (ex: 1 ou "001" de saves legados)
+    if not setId then
+        local num = tonumber(strId)
+        if num then
+            strId = string.format("base1-%03d", num)
+            setId = "base1"
+        end
+    end
+
     if setId and TCG_CardRegistry.Sets[setId] and TCG_CardRegistry.Sets[setId].cards then
-        return TCG_CardRegistry.Sets[setId].cards[cardId]
+        local found = TCG_CardRegistry.Sets[setId].cards[strId]
+        if found then return found end
+
+        -- Suporte para chaves sem zero a esquerda (ex: "base1-1" em vez de "base1-001")
+        local sNum = strId:match("%-(%d+)$")
+        if sNum and #sNum < 3 then
+            local normId = string.format("%s-%03d", setId, tonumber(sNum))
+            return TCG_CardRegistry.Sets[setId].cards[normId]
+        end
     end
     return nil
 end
@@ -987,7 +1006,7 @@ function TCG_CardRegistry.getCardsByRarity(setId, rarity)
     return matched
 end
 
---- Extrai e sanitiza os dados da carta a partir de um InventoryItem (Blindado contra nils e crashes)
+--- Extrai e sanitiza os dados da carta a partir de um InventoryItem (Blindado contra nils e crashes de saves legados)
 function TCG_CardRegistry.getCardFromItem(item)
     if not item then return nil end
     local md = item:getModData()
@@ -996,24 +1015,38 @@ function TCG_CardRegistry.getCardFromItem(item)
     local cardDef = nil
     if md.cardId then
         cardDef = TCG_CardRegistry.getCard(md.cardId)
-    elseif md.cardNumber then
-        local id = string.format("base1-%03d", md.cardNumber)
+    end
+    if not cardDef and md.cardNumber then
+        local setId = md.setId or "base1"
+        local id = string.format("%s-%03d", setId, md.cardNumber)
         cardDef = TCG_CardRegistry.getCard(id)
     end
 
     -- Fallback de seguranca caso o item tenha sido spawnado sem metadados
     if not cardDef then
         cardDef = TCG_CardRegistry.getCard("base1-001")
-        if cardDef then
-            md.cardId = cardDef.id
-            md.cardNumber = cardDef.number
-            md.setId = "base1"
-            md.cardName = cardDef.name.en
-            md.name_en = cardDef.name.en
-            md.name_pt = cardDef.name.pt
-            md.rarity = cardDef.rarity.en
-            md.isHolo = cardDef.isHolo
-        end
+    end
+
+    if cardDef then
+        -- Auto-heal retroativo dos metadados da carta no item existente
+        local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+        local sId = cardDef.setId or md.setId or "base1"
+        local setDef = TCG_CardRegistry.Sets and TCG_CardRegistry.Sets[sId]
+        local setTotal = setDef and setDef.total or 102
+        local nameEN = (type(cardDef.name) == "table") and cardDef.name.en or cardDef.name
+        local namePT = (type(cardDef.name) == "table") and cardDef.name.pt or cardDef.name
+        local displayName = isPT and namePT or nameEN
+
+        md.cardId = cardDef.id
+        md.cardNumber = cardDef.number
+        md.setId = sId
+        md.totalInSet = setTotal
+        md.cardName = displayName
+        md.name_en = nameEN
+        md.name_pt = namePT
+        md.rarity = (type(cardDef.rarity) == "table") and cardDef.rarity.en or cardDef.rarity
+        if md.isHolo == nil then md.isHolo = (cardDef.isHolo == true) end
+        if not md.condition then md.condition = 100 end
     end
 
     return cardDef, md.isHolo

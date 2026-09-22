@@ -31,7 +31,16 @@ function TCG_BoosterTimedAction:start()
     self.item:setJobDelta(0.0)
     self:setActionAnim("Loot")
     self:setAnimVariable("LootPosition", "Mid")
-    self.sound = self.character:playSound("PutItemInBag")
+    -- Som tatil customizado de rasgar o lacre metalizado / plastico do booster
+    if self.character.playSoundLocal then
+        self.sound = self.character:playSoundLocal("TCG_OpenBoosterpack")
+    end
+    if not self.sound or self.sound == 0 then
+        self.sound = self.character:playSound("TCG_OpenBoosterpack")
+    end
+    if not self.sound or self.sound == 0 then
+        self.sound = self.character:playSound("BandageTear")
+    end
 end
 
 function TCG_BoosterTimedAction:stop()

@@ -161,21 +161,102 @@ end
 --- Executa efeito sonoro do jogo de forma segura e encapsulada
 function TCG_Theme.playAudio(soundName, fallbackSound)
     pcall(function()
+        local player = getPlayer()
+        if player and player.playSoundLocal then
+            local snd = player:playSoundLocal(soundName)
+            if snd and snd ~= 0 then return end
+        end
+        if player and player.playSound then
+            local snd = player:playSound(soundName)
+            if snd and snd ~= 0 then return end
+        end
         local sm = getSoundManager()
         if sm and sm.playUISound then
             sm:playUISound(soundName)
             return
         end
-        local player = getPlayer()
-        if player and player.playSound then
-            player:playSound(soundName)
-            return
-        end
-        if fallbackSound and sm and sm.playUISound then
-            sm:playUISound(fallbackSound)
+        if fallbackSound then
+            if player and player.playSoundLocal then
+                player:playSoundLocal(fallbackSound)
+            elseif player and player.playSound then
+                player:playSound(fallbackSound)
+            elseif sm and sm.playUISound then
+                sm:playUISound(fallbackSound)
+            end
         end
     end)
 end
+
+--- Toca som de folhear folha / virar pagina
+function TCG_Theme.playPageTurn()
+    TCG_Theme.playAudio("TCG_TurnPageBinder", "PageTurn")
+end
+
+--- Toca som de abrir o fichario / livro
+function TCG_Theme.playBookOpen()
+    TCG_Theme.playAudio("TCG_OpenBinder", "BookOpen")
+end
+
+--- Toca som de fechar o fichario / livro
+function TCG_Theme.playBookClose()
+    TCG_Theme.playAudio("TCG_CloseBinder", "BookClose")
+end
+
+--- Toca som de colocar / encaixar carta no sleeve ou auto-guardar
+function TCG_Theme.playCardSlot()
+    TCG_Theme.playAudio("TCG_StoreAllCards", "ItemPlacement")
+end
+
+--- Toca som de retirar carta do fichario
+function TCG_Theme.playCardWithdraw()
+    TCG_Theme.playAudio("TCG_TakeCardBinder", "PutItemInBag")
+end
+
+--- Toca som de trocar de aba de expansao (folheamento de divisoria)
+function TCG_Theme.playTabSwitch()
+    TCG_Theme.playAudio("TCG_NextCategoryBinder", "PageTurn")
+end
+
+--- Toca som de clique tatica em botao
+function TCG_Theme.playButtonClick()
+    TCG_Theme.playAudio("TCG_ButtonDefault", "UI_ButtonSelect")
+end
+
+--- Toca som de inspecionar carta
+function TCG_Theme.playInspectCard(isHolo)
+    if isHolo then
+        TCG_Theme.playAudio("TCG_PrismaticCard", "GainExperienceLevel")
+    else
+        TCG_Theme.playAudio("TCG_InspectCard", "PageTurn")
+    end
+end
+
+--- Toca som de rasgar/abrir pacote booster
+function TCG_Theme.playOpenBooster()
+    TCG_Theme.playAudio("TCG_OpenBoosterpack", "BandageTear")
+end
+
+--- Toca som de avancar para a proxima carta no booster pack
+function TCG_Theme.playNextCard()
+    TCG_Theme.playAudio("TCG_NextCardBoosterpack", "PageTurn")
+end
+
+--- Toca som de revelacao baseado na raridade da carta
+function TCG_Theme.playRarityReveal(rarity, isHolo)
+    if isHolo then
+        TCG_Theme.playAudio("TCG_PrismaticCard", "GainExperienceLevel")
+        return
+    end
+    local r = tostring(rarity or "Common")
+    if r:find("Rare") or r:find("Rara") then
+        TCG_Theme.playAudio("TCG_CardThreeStar", "PageTurn")
+    elseif r:find("Uncommon") or r:find("Incomum") then
+        TCG_Theme.playAudio("TCG_CardTwoStar", "PageTurn")
+    else
+        TCG_Theme.playAudio("TCG_CardOneStar", "PageTurn")
+    end
+end
+
 
 --- Renderiza uma carta com simulacao fisica de perspectiva 3D, iluminacao especular e shimmer holografico
 function TCG_Theme.drawCardWith3DHover(panel, texture, cardX, cardY, cardW, cardH, mouseX, mouseY, isHolo, time)
