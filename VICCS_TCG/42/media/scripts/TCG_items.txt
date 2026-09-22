@@ -13,7 +13,71 @@ module Base
         Weight              = 0.05,
         StaticModel         = TCG_Boosterpack,
         WorldStaticModel    = TCG_Boosterpack,
-        Tags                = TCG;TCG_Booster,
+        Tags                = TCG;TCG_Booster;TCG_Booster_Base1,
+    }
+
+    item TCG_Booster_Jungle
+    {
+        DisplayCategory     = TCG,
+        Type                = Drainable,
+        ItemType            = base:drainable,
+        UseDelta            = 1.0,
+        UseWhileEquipped    = false,
+        cantBeConsolided    = true,
+        DisplayName         = Pacote TCG: Coleção Jungle 1999,
+        Icon                = tcg_booster_jungle,
+        Weight              = 0.05,
+        StaticModel         = TCG_Boosterpack_Jungle,
+        WorldStaticModel    = TCG_Boosterpack_Jungle,
+        Tags                = TCG;TCG_Booster;TCG_Booster_Jungle,
+    }
+
+    item TCG_Booster_Fossil
+    {
+        DisplayCategory     = TCG,
+        Type                = Drainable,
+        ItemType            = base:drainable,
+        UseDelta            = 1.0,
+        UseWhileEquipped    = false,
+        cantBeConsolided    = true,
+        DisplayName         = Pacote TCG: Coleção Fóssil 1999,
+        Icon                = tcg_booster_fossil,
+        Weight              = 0.05,
+        StaticModel         = TCG_Boosterpack_Fossil,
+        WorldStaticModel    = TCG_Boosterpack_Fossil,
+        Tags                = TCG;TCG_Booster;TCG_Booster_Fossil,
+    }
+
+    item TCG_Booster_TeamRocket
+    {
+        DisplayCategory     = TCG,
+        Type                = Drainable,
+        ItemType            = base:drainable,
+        UseDelta            = 1.0,
+        UseWhileEquipped    = false,
+        cantBeConsolided    = true,
+        DisplayName         = Pacote TCG: Coleção Equipe Rocket 2000,
+        Icon                = tcg_booster_teamrocket,
+        Weight              = 0.05,
+        StaticModel         = TCG_Boosterpack_TeamRocket,
+        WorldStaticModel    = TCG_Boosterpack_TeamRocket,
+        Tags                = TCG;TCG_Booster;TCG_Booster_TeamRocket,
+    }
+
+    item TCG_Booster_EeveeHeroes
+    {
+        DisplayCategory     = TCG,
+        Type                = Drainable,
+        ItemType            = base:drainable,
+        UseDelta            = 1.0,
+        UseWhileEquipped    = false,
+        cantBeConsolided    = true,
+        DisplayName         = Pacote TCG: Eevee Heroes (Japão 2021),
+        Icon                = tcg_booster_eeveeheroes,
+        Weight              = 0.05,
+        StaticModel         = TCG_Boosterpack_EeveeHeroes,
+        WorldStaticModel    = TCG_Boosterpack_EeveeHeroes,
+        Tags                = TCG;TCG_Booster;TCG_Booster_EeveeHeroes,
     }
 
     item TCG_Card

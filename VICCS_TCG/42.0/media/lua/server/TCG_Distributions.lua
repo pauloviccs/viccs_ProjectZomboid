@@ -130,25 +130,57 @@ function TCG_Distributions.init()
     -- 1. Lojas e Livrarias (Comercial)
     if TCG_Config.isCommercialAllowed() then
         insertLoot("BookstoreComics", "Base.TCG_Booster_Base1", 10.0, mult)
+        insertLoot("BookstoreComics", "Base.TCG_Booster_Jungle", 8.0, mult)
+        insertLoot("BookstoreComics", "Base.TCG_Booster_Fossil", 8.0, mult)
+        insertLoot("BookstoreComics", "Base.TCG_Booster_TeamRocket", 6.0, mult)
+        insertLoot("BookstoreComics", "Base.TCG_Booster_EeveeHeroes", 4.0, mult)
         insertLoot("BookstoreComics", "Base.TCG_Binder", 5.0, mult)
+
         insertLoot("BookstoreBooks", "Base.TCG_Booster_Base1", 4.0, mult)
+        insertLoot("BookstoreBooks", "Base.TCG_Booster_Jungle", 3.0, mult)
+        insertLoot("BookstoreBooks", "Base.TCG_Booster_Fossil", 3.0, mult)
+        insertLoot("BookstoreBooks", "Base.TCG_Booster_TeamRocket", 2.0, mult)
+        insertLoot("BookstoreBooks", "Base.TCG_Booster_EeveeHeroes", 1.5, mult)
+
         insertLoot("ToyStoreShelves", "Base.TCG_Booster_Base1", 15.0, mult)
+        insertLoot("ToyStoreShelves", "Base.TCG_Booster_Jungle", 12.0, mult)
+        insertLoot("ToyStoreShelves", "Base.TCG_Booster_Fossil", 12.0, mult)
+        insertLoot("ToyStoreShelves", "Base.TCG_Booster_TeamRocket", 10.0, mult)
+        insertLoot("ToyStoreShelves", "Base.TCG_Booster_EeveeHeroes", 6.0, mult)
         insertLoot("ToyStoreShelves", "Base.TCG_Binder", 8.0, mult)
     end
 
     -- 2. Escolas e Quartos Infantis
     if TCG_Config.isSchoolAllowed() then
         insertLoot("SchoolLockers", "Base.TCG_Booster_Base1", 5.0, mult)
+        insertLoot("SchoolLockers", "Base.TCG_Booster_Jungle", 4.0, mult)
+        insertLoot("SchoolLockers", "Base.TCG_Booster_Fossil", 4.0, mult)
+        insertLoot("SchoolLockers", "Base.TCG_Booster_TeamRocket", 3.0, mult)
+        insertLoot("SchoolLockers", "Base.TCG_Booster_EeveeHeroes", 1.5, mult)
         insertLoot("SchoolLockers", "Base.TCG_Card", 8.0, mult)
+
         insertLoot("WardrobeChild", "Base.TCG_Booster_Base1", 3.0, mult)
+        insertLoot("WardrobeChild", "Base.TCG_Booster_Jungle", 2.5, mult)
+        insertLoot("WardrobeChild", "Base.TCG_Booster_Fossil", 2.5, mult)
+        insertLoot("WardrobeChild", "Base.TCG_Booster_TeamRocket", 2.0, mult)
+        insertLoot("WardrobeChild", "Base.TCG_Booster_EeveeHeroes", 1.5, mult)
         insertLoot("WardrobeChild", "Base.TCG_Binder", 2.0, mult)
     end
 
     -- 3. Mesinhas Residenciais
     if TCG_Config.isResidentialAllowed() then
         insertLoot("LivingRoomSideTable", "Base.TCG_Booster_Base1", 1.5, mult)
+        insertLoot("LivingRoomSideTable", "Base.TCG_Booster_Jungle", 1.0, mult)
+        insertLoot("LivingRoomSideTable", "Base.TCG_Booster_Fossil", 1.0, mult)
+        insertLoot("LivingRoomSideTable", "Base.TCG_Booster_TeamRocket", 0.8, mult)
+        insertLoot("LivingRoomSideTable", "Base.TCG_Booster_EeveeHeroes", 0.4, mult)
         insertLoot("LivingRoomSideTable", "Base.TCG_Card", 3.0, mult)
+
         insertLoot("BedroomSideTable", "Base.TCG_Booster_Base1", 1.0, mult)
+        insertLoot("BedroomSideTable", "Base.TCG_Booster_Jungle", 0.7, mult)
+        insertLoot("BedroomSideTable", "Base.TCG_Booster_Fossil", 0.7, mult)
+        insertLoot("BedroomSideTable", "Base.TCG_Booster_TeamRocket", 0.5, mult)
+        insertLoot("BedroomSideTable", "Base.TCG_Booster_EeveeHeroes", 0.3, mult)
     end
 end
 

@@ -237,7 +237,11 @@ function TCG_CardInspectModal:prerender()
 
     -- Colecao e Numero
     infoY = infoY + 32
-    local setStr = string.format("%s - #%02d / 102", isPT and "Colecao Base (1999)" or "Base Set (1999)", num)
+    local setId = (card and card.setId) or "base1"
+    local setDef = TCG_CardRegistry.Sets and TCG_CardRegistry.Sets[setId]
+    local setName = setDef and (isPT and setDef.name.pt or setDef.name.en) or (isPT and "Colecao Base (1999)" or "Base Set (1999)")
+    local totalInSet = setDef and setDef.total or 102
+    local setStr = string.format("%s - #%02d / %d", setName, num, totalInSet)
     if self.binderItem and self.cardCount and self.cardCount > 0 then
         local inBinderStr = isPT and string.format("  [ No Fichario: x%d ]", self.cardCount)
                                  or string.format("  [ In Binder: x%d ]", self.cardCount)

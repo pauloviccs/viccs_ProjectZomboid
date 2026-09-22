@@ -1,5 +1,9 @@
 ItemName_PTBR = {
     ItemName_Base.TCG_Booster_Base1 = "Pacote TCG: Coleção Base 1999",
+    ItemName_Base.TCG_Booster_Jungle = "Pacote TCG: Coleção Jungle (1999)",
+    ItemName_Base.TCG_Booster_Fossil = "Pacote TCG: Coleção Fóssil (1999)",
+    ItemName_Base.TCG_Booster_TeamRocket = "Pacote TCG: Coleção Equipe Rocket (2000)",
+    ItemName_Base.TCG_Booster_EeveeHeroes = "Pacote TCG: Eevee Heroes (Japão 2021)",
     ItemName_Base.TCG_Card = "Carta Colecionável TCG",
     ItemName_Base.TCG_Binder = "Fichário de Colecionador TCG",
 }

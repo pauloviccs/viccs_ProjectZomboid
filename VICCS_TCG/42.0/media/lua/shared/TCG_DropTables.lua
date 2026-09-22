@@ -53,7 +53,7 @@ function TCG_DropTables.getPools(setId)
             table.insert(pools.energies, card)
         end
 
-        if card.isHolo or (num >= 1 and num <= 16) then
+        if card.isHolo then
             table.insert(pools.holos, card)
         elseif r == "Rare" then
             table.insert(pools.rares, card)

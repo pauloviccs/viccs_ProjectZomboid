@@ -41,4 +41,64 @@ module Base
         texture = WorldItems/boosterpack,
         scale = 1.0,
     }
+
+    /* --- JUNGLE (1999) --- */
+    model TCG_Boosterpack_Jungle
+    {
+        mesh = WorldItems/TCG_Boosterpack_Jungle,
+        texture = WorldItems/boosterpack_jungle,
+        scale = 1.0,
+    }
+
+    model TCG_Boosterpack_JungleGround
+    {
+        mesh = WorldItems/TCG_Boosterpack_Jungle,
+        texture = WorldItems/boosterpack_jungle,
+        scale = 1.0,
+    }
+
+    /* --- FOSSIL (1999) --- */
+    model TCG_Boosterpack_Fossil
+    {
+        mesh = WorldItems/TCG_Boosterpack_Fossil,
+        texture = WorldItems/boosterpack_fossil,
+        scale = 1.0,
+    }
+
+    model TCG_Boosterpack_FossilGround
+    {
+        mesh = WorldItems/TCG_Boosterpack_Fossil,
+        texture = WorldItems/boosterpack_fossil,
+        scale = 1.0,
+    }
+
+    /* --- TEAM ROCKET (2000) --- */
+    model TCG_Boosterpack_TeamRocket
+    {
+        mesh = WorldItems/TCG_Boosterpack_TeamRocket,
+        texture = WorldItems/boosterpack_teamrocket,
+        scale = 1.0,
+    }
+
+    model TCG_Boosterpack_TeamRocketGround
+    {
+        mesh = WorldItems/TCG_Boosterpack_TeamRocket,
+        texture = WorldItems/boosterpack_teamrocket,
+        scale = 1.0,
+    }
+
+    /* --- EEVEE HEROES (JAPAO 2021) --- */
+    model TCG_Boosterpack_EeveeHeroes
+    {
+        mesh = WorldItems/TCG_Boosterpack_EeveeHeroes,
+        texture = WorldItems/boosterpack_eeveeheroes,
+        scale = 1.0,
+    }
+
+    model TCG_Boosterpack_EeveeHeroesGround
+    {
+        mesh = WorldItems/TCG_Boosterpack_EeveeHeroes,
+        texture = WorldItems/boosterpack_eeveeheroes,
+        scale = 1.0,
+    }
 }

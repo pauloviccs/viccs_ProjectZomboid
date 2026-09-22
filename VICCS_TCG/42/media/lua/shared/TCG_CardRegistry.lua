@@ -4,6 +4,7 @@
 -- =============================================================================
 
 require "TCG_Config"
+require "TCG_CardRegistry_Expansions"
 
 TCG_CardRegistry = TCG_CardRegistry or {}
 TCG_CardRegistry.Sets = TCG_CardRegistry.Sets or {}

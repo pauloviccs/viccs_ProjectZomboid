@@ -1,5 +1,9 @@
 ItemName_EN = {
     ItemName_Base.TCG_Booster_Base1 = "TCG Booster Pack: 1999 Base Set",
+    ItemName_Base.TCG_Booster_Jungle = "TCG Booster Pack: 1999 Jungle Set",
+    ItemName_Base.TCG_Booster_Fossil = "TCG Booster Pack: 1999 Fossil Set",
+    ItemName_Base.TCG_Booster_TeamRocket = "TCG Booster Pack: 2000 Team Rocket Set",
+    ItemName_Base.TCG_Booster_EeveeHeroes = "TCG Booster Pack: Eevee Heroes (Japan 2021)",
     ItemName_Base.TCG_Card = "TCG Collectible Card",
     ItemName_Base.TCG_Binder = "TCG Collector Binder",
 }

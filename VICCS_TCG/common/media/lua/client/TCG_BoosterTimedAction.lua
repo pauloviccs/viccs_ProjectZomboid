@@ -45,14 +45,29 @@ end
 function TCG_BoosterTimedAction:perform()
     local inv = self.character:getInventory()
 
-    -- 1. Remove o booster consumido de forma segura
+    -- 1. Identifica o setId da colecao a partir do item
+    local fullType = self.item and self.item:getFullType() or ""
+    local setId = "base1"
+    if fullType:find("Jungle") then
+        setId = "jungle"
+    elseif fullType:find("Fossil") then
+        setId = "fossil"
+    elseif fullType:find("TeamRocket") or fullType:find("Rocket") then
+        setId = "rocket"
+    elseif fullType:find("Eevee") then
+        setId = "eeveeheroes"
+    end
+
+    -- 2. Remove o booster consumido de forma segura
     inv:Remove(self.item)
 
-    -- 2. Rola as 10 cartas no DropTable
-    local pulled = TCG_DropTables.openBooster("base1")
+    -- 3. Rola as 10 cartas no DropTable do conjunto
+    local pulled = TCG_DropTables.openBooster(setId)
     local isPT = (TCG_Config.getLanguage() == "PT")
+    local setDef = TCG_CardRegistry.Sets and TCG_CardRegistry.Sets[setId]
+    local totalInSet = setDef and setDef.total or 102
 
-    -- 3. Adiciona as cartas com seu respectivo ModData bilingue
+    -- 4. Adiciona as cartas com seu respectivo ModData bilingue
     local spawnedCards = {}
     for _, itemData in ipairs(pulled) do
         local card = itemData.card
@@ -64,8 +79,9 @@ function TCG_BoosterTimedAction:perform()
             local displayName = isPT and namePT or nameEN
 
             md.cardId = card.id
-            md.setId = "base1"
+            md.setId = setId
             md.cardNumber = card.number
+            md.totalInSet = totalInSet
             md.name_en = nameEN
             md.name_pt = namePT
             md.cardName = displayName
@@ -80,15 +96,15 @@ function TCG_BoosterTimedAction:perform()
                 prefix = itemData.isHolo and "* TCG Card (Holo): " or "TCG Card: "
             end
 
-            cardItem:setName(string.format("%s%s [#%02d/102]", prefix, displayName, card.number))
+            cardItem:setName(string.format("%s%s [#%02d/%d]", prefix, displayName, card.number, totalInSet))
             table.insert(spawnedCards, cardItem)
         end
     end
 
-    -- 4. Exibe a interface de revelacao Frameless Soft Glass
+    -- 5. Exibe a interface de revelacao Frameless Soft Glass
     TCG_RevealModal.show(pulled, self.character, spawnedCards)
 
-    -- 5. Conclui a Timed Action
+    -- 6. Conclui a Timed Action
     ISBaseTimedAction.perform(self)
 end
 
