@@ -235,6 +235,19 @@ function VICCS.UI.ScreenPlayer:onPlay()
     local y = self.deviceObj and self.deviceObj.getY and self.deviceObj:getY() or 0
     local z = self.deviceObj and self.deviceObj.getZ and self.deviceObj:getZ() or 0
     
+    -- Garante que o aparelho esteja ligado
+    if self.deviceObj then
+        pcall(function()
+            local dd = self.deviceObj.getDeviceData and self.deviceObj:getDeviceData()
+            if not dd and self.deviceObj.getItem and self.deviceObj:getItem() and self.deviceObj:getItem().getDeviceData then
+                dd = self.deviceObj:getItem():getDeviceData()
+            end
+            if dd and not dd:getIsTurnedOn() and dd.setIsTurnedOn then
+                dd:setIsTurnedOn(true)
+            end
+        end)
+    end
+    
     if isClient() then
         sendClientCommand("VICCS", "PlayMedia", {
             deviceId = self.deviceId,

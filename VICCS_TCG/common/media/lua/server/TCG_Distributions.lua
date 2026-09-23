@@ -5,13 +5,14 @@
 -- Descricao:
 --   Injeta pacotes de cartas, ficharios e cartas avulsas nos locais tematicos
 --   do mapa de Kentucky respeitando as SandboxVars (Frequencia e Locais de Spawn).
+--   Compativel com Servidores Dedicados Headless (Sem imports de UI/ISPanel).
 -- =============================================================================
 
 require "Items/ProceduralDistributions"
 require "TCG_Config"
 require "TCG_CardRegistry"
-require "TCG_Theme"
-require "TCG_BinderUI"
+require "TCG_BinderData"
+require "TCG_CompatHooks"
 
 TCG_Distributions = TCG_Distributions or {}
 
@@ -35,10 +36,10 @@ function TCG_Distributions.rollPreFilledBinder(binderItem)
     local cardCount = ZombRand(minVal, maxVal + 1)
     if cardCount < 1 then cardCount = 1 end
 
-    local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
+    local bData = TCG_BinderData.getBinderDataFromItem(binderItem)
 
     -- Sorteia uma cor de capa retro
-    local themes = TCG_Theme.THEME_KEYS
+    local themes = TCG_BinderData.THEME_KEYS
     if themes and #themes > 0 then
         bData.themeColor = themes[ZombRand(#themes) + 1]
     end
@@ -83,6 +84,10 @@ function TCG_Distributions.rollPreFilledBinder(binderItem)
             end
         end
     end
+
+    if isServer and isServer() and sendItemStats then
+        pcall(function() sendItemStats(binderItem) end)
+    end
 end
 
 local function onFillContainer(roomName, containerType, itemContainer)
@@ -117,6 +122,22 @@ local function insertLoot(distName, itemType, baseWeight, mult)
         table.insert(dist.items, itemType)
         table.insert(dist.items, finalWeight)
     end
+end
+
+local function insertSuburbsLoot(room, container, itemType, weight)
+    if not SuburbsDistributions then return end
+    local roomDef = SuburbsDistributions[room]
+    if not roomDef then return end
+    local contDef = roomDef[container]
+    if not contDef or not contDef.items then return end
+
+    for i = 1, #contDef.items, 2 do
+        if contDef.items[i] == itemType then
+            return
+        end
+    end
+    table.insert(contDef.items, itemType)
+    table.insert(contDef.items, weight)
 end
 
 function TCG_Distributions.init()
@@ -178,6 +199,21 @@ function TCG_Distributions.init()
         insertLoot("BedroomSideTable", "Base.TCG_Booster_TeamRocket", 0.5, mult)
         insertLoot("BedroomSideTable", "Base.TCG_Booster_EeveeHeroes", 0.3, mult)
     end
+
+    -- 4. Bolsos de Zumbis Nativos (Loot procedimental em zumbis spawnados pelo mapa)
+    insertSuburbsLoot("all", "inventorymale", "Base.TCG_Booster_Base1", 0.3 * mult)
+    insertSuburbsLoot("all", "inventorymale", "Base.TCG_Booster_Jungle", 0.25 * mult)
+    insertSuburbsLoot("all", "inventorymale", "Base.TCG_Booster_Fossil", 0.25 * mult)
+    insertSuburbsLoot("all", "inventorymale", "Base.TCG_Booster_TeamRocket", 0.2 * mult)
+    insertSuburbsLoot("all", "inventorymale", "Base.TCG_Booster_EeveeHeroes", 0.1 * mult)
+    insertSuburbsLoot("all", "inventorymale", "Base.TCG_Card", 0.8 * mult)
+
+    insertSuburbsLoot("all", "inventoryfemale", "Base.TCG_Booster_Base1", 0.3 * mult)
+    insertSuburbsLoot("all", "inventoryfemale", "Base.TCG_Booster_Jungle", 0.25 * mult)
+    insertSuburbsLoot("all", "inventoryfemale", "Base.TCG_Booster_Fossil", 0.25 * mult)
+    insertSuburbsLoot("all", "inventoryfemale", "Base.TCG_Booster_TeamRocket", 0.2 * mult)
+    insertSuburbsLoot("all", "inventoryfemale", "Base.TCG_Booster_EeveeHeroes", 0.1 * mult)
+    insertSuburbsLoot("all", "inventoryfemale", "Base.TCG_Card", 0.8 * mult)
 end
 
 if Events.OnPostDistributionMerge then
@@ -185,16 +221,62 @@ if Events.OnPostDistributionMerge then
 end
 
 --- Hook de salvaguarda para mundos existentes (Saves antigos com cidades ja looteadas)
---- Permite encontrar cartas e boosters raros nos bolsos de zumbis eliminados
+--- Permite encontrar cartas e boosters raros nos bolsos de zumbis eliminados.
+--- Executa exclusivamente no servidor autoritativo (ou singleplayer) com sincronizacao completa de rede.
 local function onZombieDead(zombie)
     if not zombie then return end
+    -- Em multiplayer, apenas o servidor gera itens autoritativos em corpos
+    if isClient and isClient() then return end
+
     local mult = TCG_Config.getSpawnMultiplier()
     if mult <= 0 then return end
 
-    local roll = ZombRand(1000) + 1
+    -- 1. Drop de Booster Packs (Configuravel via Sandbox)
+    local boosterChance = TCG_Config.getZombieBoosterChance()
+    if boosterChance > 0 then
+        local effectiveChance = boosterChance * mult
+        local rollBooster = (ZombRand(10000) + 1) / 100.0 -- Precisao de 0.01% ate 100.0%
+        local success = (rollBooster <= effectiveChance)
 
-    -- Chance de carta avulsa no bolso do zumbi (~0.8% * multiplicador)
-    if roll <= math.floor(8 * mult) then
+        local isDebug = (isDebugEnabled and isDebugEnabled()) or (getDebug and getDebug())
+        if isDebug then
+            print(string.format("[VICCS TCG] Morte de Zumbi -> Rolou: %.2f%% | Alvo: %.2f%% | %s",
+                rollBooster, effectiveChance, success and "SUCESSO (Dropou)" or "FALHA"))
+        end
+
+        if success then
+            local inv = zombie:getInventory()
+            if inv then
+                local cMin = TCG_Config.getZombieBoosterMin()
+                local cMax = TCG_Config.getZombieBoosterMax()
+                local minVal = math.max(1, math.min(cMin, cMax))
+                local maxVal = math.max(1, math.max(cMin, cMax))
+                local count = (minVal == maxVal) and minVal or ZombRand(minVal, maxVal + 1)
+
+                local boosterTypes = {
+                    "Base.TCG_Booster_Base1",
+                    "Base.TCG_Booster_Jungle",
+                    "Base.TCG_Booster_Fossil",
+                    "Base.TCG_Booster_TeamRocket",
+                    "Base.TCG_Booster_EeveeHeroes"
+                }
+
+                for _ = 1, count do
+                    local chosenBooster = boosterTypes[ZombRand(#boosterTypes) + 1]
+                    local boosterItem = inv:AddItem(chosenBooster)
+                    if boosterItem and isServer and isServer() and sendAddItemToContainer then
+                        pcall(function() sendAddItemToContainer(inv, boosterItem) end)
+                    end
+                end
+                print(string.format("[VICCS TCG] Drop de Booster confirmado: %d pacote(s) adicionado(s) ao corpo do zumbi.", count))
+            end
+        end
+    end
+
+
+    -- 2. Chance de carta avulsa no bolso do zumbi (~0.8% * multiplicador)
+    local rollCard = ZombRand(1000) + 1
+    if rollCard <= math.floor(8 * mult) then
         local inv = zombie:getInventory()
         if inv then
             local cardItem = inv:AddItem("Base.TCG_Card")
@@ -231,22 +313,17 @@ local function onZombieDead(zombie)
                     local prefix = isPT and (isHolo and "* Carta TCG (Holo): " or "Carta TCG: ")
                                         or (isHolo and "* TCG Card (Holo): " or "TCG Card: ")
                     cardItem:setName(string.format("%s%s [#%02d/%d]", prefix, displayName, cardDef.number, total))
+
+                    if isServer and isServer() then
+                        if sendAddItemToContainer then
+                            pcall(function() sendAddItemToContainer(inv, cardItem) end)
+                        end
+                        if sendItemStats then
+                            pcall(function() sendItemStats(cardItem) end)
+                        end
+                    end
                 end
             end
-        end
-    -- Chance de booster pack raro no zumbi (~0.2% * multiplicador, 1 em 500 zumbis)
-    elseif roll <= math.floor(10 * mult) then
-        local inv = zombie:getInventory()
-        if inv then
-            local boosterTypes = {
-                "Base.TCG_Booster_Base1",
-                "Base.TCG_Booster_Jungle",
-                "Base.TCG_Booster_Fossil",
-                "Base.TCG_Booster_TeamRocket",
-                "Base.TCG_Booster_EeveeHeroes"
-            }
-            local chosenBooster = boosterTypes[ZombRand(#boosterTypes) + 1]
-            inv:AddItem(chosenBooster)
         end
     end
 end

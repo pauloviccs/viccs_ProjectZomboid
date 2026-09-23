@@ -72,3 +72,33 @@ option VICCS_TCG.PreFilledCardsMax
     page = VICCS_TCG,
     translation = VICCS_TCG_PreFilledCardsMax,
 }
+
+option VICCS_TCG.ZombieBoosterDropChance
+{
+    type = integer,
+    min = 0,
+    max = 100,
+    default = 7,
+    page = VICCS_TCG,
+    translation = VICCS_TCG_ZombieBoosterDropChance,
+}
+
+option VICCS_TCG.ZombieBoosterMin
+{
+    type = integer,
+    min = 1,
+    max = 10,
+    default = 1,
+    page = VICCS_TCG,
+    translation = VICCS_TCG_ZombieBoosterMin,
+}
+
+option VICCS_TCG.ZombieBoosterMax
+{
+    type = integer,
+    min = 1,
+    max = 10,
+    default = 2,
+    page = VICCS_TCG,
+    translation = VICCS_TCG_ZombieBoosterMax,
+}

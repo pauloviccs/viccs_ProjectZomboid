@@ -172,5 +172,29 @@ function TCG_Config.getPreFilledCardsMax()
     return 12
 end
 
+--- Retorna a probabilidade percentual (0 a 100) de um zumbi dropar booster packs
+function TCG_Config.getZombieBoosterChance()
+    if SandboxVars and SandboxVars.VICCS_TCG and SandboxVars.VICCS_TCG.ZombieBoosterDropChance ~= nil then
+        return tonumber(SandboxVars.VICCS_TCG.ZombieBoosterDropChance) or 7
+    end
+    return 7
+end
+
+--- Retorna a quantidade minima de booster packs dropados por um zumbi
+function TCG_Config.getZombieBoosterMin()
+    if SandboxVars and SandboxVars.VICCS_TCG and SandboxVars.VICCS_TCG.ZombieBoosterMin ~= nil then
+        return tonumber(SandboxVars.VICCS_TCG.ZombieBoosterMin) or 1
+    end
+    return 1
+end
+
+--- Retorna a quantidade maxima de booster packs dropados por um zumbi
+function TCG_Config.getZombieBoosterMax()
+    if SandboxVars and SandboxVars.VICCS_TCG and SandboxVars.VICCS_TCG.ZombieBoosterMax ~= nil then
+        return tonumber(SandboxVars.VICCS_TCG.ZombieBoosterMax) or 2
+    end
+    return 2
+end
+
 Events.OnGameStart.Add(initModOptions)
 

@@ -296,6 +296,25 @@ function VICCS.UI.RadioDock:onPlay()
         z = self.deviceObj and self.deviceObj.getZ and self.deviceObj:getZ() or 0
     end
     
+    -- Garante que o aparelho esteja ligado
+    if self.deviceObj then
+        pcall(function()
+            local dd = self.deviceObj.getDeviceData and self.deviceObj:getDeviceData()
+            if not dd and self.deviceObj.getItem and self.deviceObj:getItem() and self.deviceObj:getItem().getDeviceData then
+                dd = self.deviceObj:getItem():getDeviceData()
+            end
+            if not dd and self.deviceObj.getPartById then
+                local radioPart = self.deviceObj:getPartById("Radio")
+                if radioPart and radioPart.getDeviceData then
+                    dd = radioPart:getDeviceData()
+                end
+            end
+            if dd and not dd:getIsTurnedOn() and dd.setIsTurnedOn then
+                dd:setIsTurnedOn(true)
+            end
+        end)
+    end
+    
     if isClient() then
         sendClientCommand("VICCS", "PlayMedia", {
             deviceId = self.deviceId,

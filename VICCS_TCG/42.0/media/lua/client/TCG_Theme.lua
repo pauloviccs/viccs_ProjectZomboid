@@ -192,6 +192,9 @@ function TCG_Theme.playPageTurn()
     TCG_Theme.playAudio("TCG_TurnPageBinder", "PageTurn")
 end
 
+-- Alias de compatibilidade para chamadas invertidas
+TCG_Theme.playTurnPage = TCG_Theme.playPageTurn
+
 --- Toca som de abrir o fichario / livro
 function TCG_Theme.playBookOpen()
     TCG_Theme.playAudio("TCG_OpenBinder", "BookOpen")
@@ -208,8 +211,8 @@ function TCG_Theme.playCardSlot()
 end
 
 --- Toca som de retirar carta do fichario
-function TCG_Theme.playCardWithdraw()
-    TCG_Theme.playAudio("TCG_TakeCardBinder", "PutItemInBag")
+function TCG_Theme.playCardTake()
+    TCG_Theme.playAudio("TCG_WithdrawCard", "ItemPickup")
 end
 
 --- Toca som de trocar de aba de expansao (folheamento de divisoria)
@@ -231,12 +234,12 @@ function TCG_Theme.playInspectCard(isHolo)
     end
 end
 
---- Toca som de rasgar/abrir pacote booster
-function TCG_Theme.playOpenBooster()
-    TCG_Theme.playAudio("TCG_OpenBoosterpack", "BandageTear")
+--- Toca som de abrir pacote de booster
+function TCG_Theme.playBoosterOpen()
+    TCG_Theme.playAudio("TCG_BoosterOpen", "OpenBag")
 end
 
---- Toca som de avancar para a proxima carta no booster pack
+--- Toca som de deslizar para a proxima carta do booster
 function TCG_Theme.playNextCard()
     TCG_Theme.playAudio("TCG_NextCardBoosterpack", "PageTurn")
 end
@@ -247,95 +250,252 @@ function TCG_Theme.playRarityReveal(rarity, isHolo)
         TCG_Theme.playAudio("TCG_PrismaticCard", "GainExperienceLevel")
         return
     end
-    local r = tostring(rarity or "Common")
-    if r:find("Rare") or r:find("Rara") then
-        TCG_Theme.playAudio("TCG_CardThreeStar", "PageTurn")
-    elseif r:find("Uncommon") or r:find("Incomum") then
-        TCG_Theme.playAudio("TCG_CardTwoStar", "PageTurn")
+    if rarity == "Rare Holo" or rarity == "Secret Rare" then
+        TCG_Theme.playAudio("TCG_PrismaticHolo", "Sparkle")
+    elseif rarity == "Rare" then
+        TCG_Theme.playAudio("TCG_CardThreeStar", "LevelUp")
+    elseif rarity == "Uncommon" then
+        TCG_Theme.playAudio("TCG_CardTwoStar", "GainExperience")
     else
-        TCG_Theme.playAudio("TCG_CardOneStar", "PageTurn")
+        TCG_Theme.playAudio("TCG_CardOneStar", "UI_ToggleOff")
     end
 end
 
+-- Aliases de compatibilidade total para invocacao de audio segura (previne crashes por chamada de nil)
+TCG_Theme.playTurnPage = TCG_Theme.playPageTurn
+TCG_Theme.playOpenBinder = TCG_Theme.playBookOpen
+TCG_Theme.playCloseBinder = TCG_Theme.playBookClose
+TCG_Theme.playCardWithdraw = TCG_Theme.playCardTake
+TCG_Theme.playTakeCard = TCG_Theme.playCardTake
+TCG_Theme.playNextCategory = TCG_Theme.playTabSwitch
+TCG_Theme.playOpenBooster = TCG_Theme.playBoosterOpen
 
---- Renderiza uma carta com simulacao fisica de perspectiva 3D, iluminacao especular e shimmer holografico
+--- Desenha um segmento de reta geometricamente fechado e com espessura uniforme,
+--- eliminando quaisquer artefatos de projecao ou linhas espelhadas na tela do jogo (DrawTexture degenerate quad bug).
+function TCG_Theme.drawSegment(panel, x1, y1, x2, y2, thickness, r, g, b, a)
+    if not panel or not panel.drawPolygon or not a or a <= 0.001 then return end
+    local dx = x2 - x1
+    local dy = y2 - y1
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len < 0.001 then return end
+    local halfW = (thickness or 1.0) * 0.5
+    local nx = (-dy / len) * halfW
+    local ny = (dx / len) * halfW
+    panel:drawPolygon(nil,
+        x1 - nx, y1 - ny,
+        x2 - nx, y2 - ny,
+        x2 + nx, y2 + ny,
+        x1 + nx, y1 + ny,
+        r, g, b, a
+    )
+end
+
+
+--- Renderiza uma carta com fisica 3D solida e rigida (Scrydex Rigid Card Engine),
+--- espessura fisica de cardstock chanfrada (3D bevel), brilho especular diagonal suave,
+--- dispersao de arco-iris holografica e particulas estelares.
 function TCG_Theme.drawCardWith3DHover(panel, texture, cardX, cardY, cardW, cardH, mouseX, mouseY, isHolo, time)
     time = time or 0
     local cx = cardX + (cardW / 2)
     local cy = cardY + (cardH / 2)
 
-    -- Detecta se o mouse esta em cima da carta
+    -- 1. Deteccao de Hover e coordenadas normalizadas (-1.0 a +1.0)
     local isHovered = (mouseX >= cardX and mouseX <= (cardX + cardW) and mouseY >= cardY and mouseY <= (cardY + cardH))
-    local normX = 0
-    local normY = 0
+    local targetPX = 0.0
+    local targetPY = 0.0
 
     if isHovered then
-        normX = math.max(-1.0, math.min(1.0, (mouseX - cx) / (cardW / 2)))
-        normY = math.max(-1.0, math.min(1.0, (mouseY - cy) / (cardH / 2)))
+        targetPX = math.max(-1.0, math.min(1.0, (mouseX - cx) / (cardW / 2)))
+        targetPY = math.max(-1.0, math.min(1.0, (mouseY - cy) / (cardH / 2)))
     end
 
-    -- Deslocamento 3D sutil baseado na inclinacao
-    local tiltX = math.floor(normX * 7)
-    local tiltY = math.floor(normY * 7)
-    local renderX = cardX + tiltX
-    local renderY = cardY + tiltY
+    -- Amortecimento suave de inercia (Spring Lerp) para transicao fluida e estavel
+    panel._tcgCurrentPX = (panel._tcgCurrentPX or 0.0) + ((targetPX - (panel._tcgCurrentPX or 0.0)) * 0.20)
+    panel._tcgCurrentPY = (panel._tcgCurrentPY or 0.0) + ((targetPY - (panel._tcgCurrentPY or 0.0)) * 0.20)
+    local hoverTarget = isHovered and 1.0 or 0.0
+    panel._tcgCurrentHover = (panel._tcgCurrentHover or 0.0) + ((hoverTarget - (panel._tcgCurrentHover or 0.0)) * 0.18)
 
-    -- 1. Sombra Dinamica Projetada
-    local shadowOffset = isHovered and 10 or 4
-    local shadowAlpha = isHovered and 0.45 or 0.25
-    panel:drawRect(renderX + (shadowOffset / 2), renderY + shadowOffset, cardW, cardH, shadowAlpha, 0, 0, 0)
+    local px = panel._tcgCurrentPX
+    local py = panel._tcgCurrentPY
+    local hFactor = panel._tcgCurrentHover
 
-    -- 2. Renderizacao da Textura da Carta
+    if not isHovered and math.abs(px) < 0.001 and math.abs(py) < 0.001 and hFactor < 0.005 then
+        px = 0.0
+        py = 0.0
+        hFactor = 0.0
+    end
+
+    -- 2. Transformacao 3D Rigida (Rigid Planar Card - Scrydex Engine)
+    -- Angulo sutil e refinado: ~7.5 graus maximos (0.13 rad). 
+    -- Usa projecao afim linear pura (ortografica 3D):
+    -- Mantem bordas opostas rigorosamente paralelas.
+    -- Elimina 100% qualquer distorcao diagonal de tecido/borracha
+    -- causada pela interpolacao afim dos 2 triangulos do SpriteRenderer do PZ.
+    local maxAngle = 0.13
+    local rotX = py * maxAngle
+    local rotY = -px * maxAngle
+    
+    local cosX, sinX = math.cos(rotX), math.sin(rotX)
+    local cosY, sinY = math.cos(rotY), math.sin(rotY)
+
+    local scale = 1.0 + (hFactor * 0.035)
+
+    local function project3D(X, Y, Z)
+        -- Rotacao pura Yaw (eixo Y)
+        local x1 = X * cosY + Z * sinY
+        local y1 = Y
+        local z1 = -X * sinY + Z * cosY
+
+        -- Rotacao pura Pitch (eixo X)
+        local x2 = x1
+        local y2 = y1 * cosX - z1 * sinX
+        local z2 = y1 * sinX + z1 * cosX
+
+        -- Projecao afim estritamente linear (Zero distorcao diagonal de tecido)
+        return cx + (x2 * scale), cy + (y2 * scale), z2
+    end
+
+    local w2 = cardW / 2
+    local h2 = cardH / 2
+    local cardThickness = 2.5 -- Espessura fina e precisa de cardstock em pixels 3D
+
+    -- 4 vertices da face frontal (Z = 0)
+    -- Ordem nativa PZ UIElement: Top-Left, Top-Right, Bottom-Right, Bottom-Left
+    local f1x, f1y = project3D(-w2, -h2, 0)
+    local f2x, f2y = project3D( w2, -h2, 0)
+    local f3x, f3y = project3D( w2,  h2, 0)
+    local f4x, f4y = project3D(-w2,  h2, 0)
+
+    -- 4 vertices da face traseira (Z = -cardThickness)
+    local b1x, b1y = project3D(-w2, -h2, -cardThickness)
+    local b2x, b2y = project3D( w2, -h2, -cardThickness)
+    local b3x, b3y = project3D( w2,  h2, -cardThickness)
+    local b4x, b4y = project3D(-w2,  h2, -cardThickness)
+
+    -- 3. Sombra Dinamica Projetada (Floating Drop Shadow)
+    -- A sombra se desloca no sentido oposto a inclinacao da carta
+    local sOffX = -px * 14
+    local sOffY = -py * 14 + (10 * hFactor)
+    local sAlpha = (0.22 + (0.22 * hFactor))
+
+    -- Sombra difusa externa
+    panel:drawPolygon(nil,
+        f1x + sOffX - 4, f1y + sOffY - 4,
+        f2x + sOffX + 4, f2y + sOffY - 4,
+        f3x + sOffX + 4, f3y + sOffY + 6,
+        f4x + sOffX - 4, f4y + sOffY + 6,
+        0, 0, 0, sAlpha * 0.45)
+
+    -- Sombra oclusiva de contato
+    panel:drawPolygon(nil,
+        f1x + sOffX, f1y + sOffY,
+        f2x + sOffX, f2y + sOffY,
+        f3x + sOffX, f3y + sOffY,
+        f4x + sOffX, f4y + sOffY,
+        0, 0, 0, sAlpha)
+
+    -- 4. Borda Chanfrada de Cardstock 3D (Physical Edge Bevel)
+    -- Desenhadas antes da face frontal (Painter's Algorithm)
+    if px > 0.02 then
+        -- Borda Esquerda exposta (relevo escurecido)
+        panel:drawPolygon(nil, f1x, f1y, b1x, b1y, b4x, b4y, f4x, f4y, 0.10, 0.11, 0.14, 0.95)
+    elseif px < -0.02 then
+        -- Borda Direita exposta (relevo escurecido)
+        panel:drawPolygon(nil, b2x, b2y, f2x, f2y, f3x, f3y, b3x, b3y, 0.10, 0.11, 0.14, 0.95)
+    end
+    if py > 0.02 then
+        -- Borda Superior exposta a iluminacao zenital
+        panel:drawPolygon(nil, f1x, f1y, f2x, f2y, b2x, b2y, b1x, b1y, 0.22, 0.24, 0.28, 0.95)
+    elseif py < -0.02 then
+        -- Borda Inferior sombreada
+        panel:drawPolygon(nil, b4x, b4y, b3x, b3y, f3x, f3y, f4x, f4y, 0.08, 0.09, 0.11, 0.95)
+    end
+
+    -- 5. Face Frontal da Carta (Mapeamento de Textura no Poligono 3D)
     if texture then
-        panel:drawTextureScaled(texture, renderX, renderY, cardW, cardH, 1.0)
+        panel:drawPolygon(texture, f1x, f1y, f2x, f2y, f3x, f3y, f4x, f4y, 1.0, 1.0, 1.0, 1.0)
     else
-        panel:drawRect(renderX, renderY, cardW, cardH, 0.90, 0.08, 0.09, 0.12)
-        panel:drawRectBorder(renderX, renderY, cardW, cardH, 0.40, 1, 1, 1)
+        panel:drawPolygon(nil, f1x, f1y, f2x, f2y, f3x, f3y, f4x, f4y, 0.08, 0.09, 0.12, 1.0)
     end
 
-    -- 3. Efeito de Brilho Especular (Gloss Glare)
-    if isHovered then
-        local glareX = renderX + (cardW * 0.5) + (normX * (cardW * 0.35)) - 30
-        local glareY = renderY + (cardH * 0.5) + (normY * (cardH * 0.35)) - 40
-        panel:drawRect(math.max(renderX, glareX), math.max(renderY, glareY), 60, 80, 0.12, 1.0, 1.0, 1.0)
+    -- Funcao utilitaria de interpolacao bilinear na malha trapezoidal 3D
+    local function interpUV(u, v)
+        local topX = f1x + (f2x - f1x) * u
+        local topY = f1y + (f2y - f1y) * u
+        local botX = f4x + (f3x - f4x) * u
+        local botY = f4y + (f3y - f4y) * u
+        return topX + (botX - topX) * v, topY + (botY - topY) * v
     end
 
-    -- 4. Efeito Foil / Holografico Prismatico
+    -- 6. Brilho Especular Diagonal (Scrydex Glass Glare)
+    if hFactor > 0.05 then
+        local centerU = (px + 1.0) * 0.5
+        local glareW = 0.16
+        local gU1 = math.max(0.0, math.min(1.0, centerU - 0.08 - glareW))
+        local gU2 = math.max(0.0, math.min(1.0, centerU - 0.08 + glareW))
+        local gU3 = math.max(0.0, math.min(1.0, centerU + 0.08 + glareW))
+        local gU4 = math.max(0.0, math.min(1.0, centerU + 0.08 - glareW))
+
+        local g1x, g1y = interpUV(gU1, 0.0)
+        local g2x, g2y = interpUV(gU2, 0.0)
+        local g3x, g3y = interpUV(gU3, 1.0)
+        local g4x, g4y = interpUV(gU4, 1.0)
+        panel:drawPolygon(nil, g1x, g1y, g2x, g2y, g3x, g3y, g4x, g4y, 1.0, 1.0, 1.0, 0.12 * hFactor)
+
+        -- Feixe central de alta intensidade (Core Glare)
+        local coreW = 0.04
+        local c1x, c1y = interpUV(math.max(0.0, math.min(1.0, centerU - 0.08 - coreW)), 0.0)
+        local c2x, c2y = interpUV(math.max(0.0, math.min(1.0, centerU - 0.08 + coreW)), 0.0)
+        local c3x, c3y = interpUV(math.max(0.0, math.min(1.0, centerU + 0.08 + coreW)), 1.0)
+        local c4x, c4y = interpUV(math.max(0.0, math.min(1.0, centerU + 0.08 - coreW)), 1.0)
+        panel:drawPolygon(nil, c1x, c1y, c2x, c2y, c3x, c3y, c4x, c4y, 1.0, 1.0, 1.0, 0.18 * hFactor)
+    end
+
+    -- 7. Efeito Holografico Foil Prismatico (Scrydex Holofoil)
     if isHolo then
-        -- Cores prismaticas do arco-iris
-        local r = 0.5 + 0.45 * math.sin(time * 2.5 + normX * 2.0)
-        local g = 0.5 + 0.45 * math.sin(time * 2.5 + normX * 2.0 + 2.09)
-        local b = 0.5 + 0.45 * math.sin(time * 2.5 + normX * 2.0 + 4.18)
+        local bandCount = 4
+        for k = 1, bandCount do
+            local phase = (time * 2.5) + (px * 2.5) + (py * 1.2) + (k * 1.3)
+            local r = 0.5 + 0.48 * math.sin(phase)
+            local g = 0.5 + 0.48 * math.sin(phase + 2.094)
+            local b = 0.5 + 0.48 * math.sin(phase + 4.188)
 
-        -- Shimmer sobre a arte da carta (area superior da carta)
-        local artX = renderX + 16
-        local artY = renderY + 34
-        local artW = cardW - 32
-        local artH = math.floor(cardH * 0.48)
-        local shimmerAlpha = isHovered and 0.32 or 0.18
+            local bPos = ((k - 1) / (bandCount - 1)) + (px * 0.12)
+            local bU1 = math.max(0.0, math.min(1.0, bPos - 0.16))
+            local bU2 = math.max(0.0, math.min(1.0, bPos - 0.03))
+            local bU3 = math.max(0.0, math.min(1.0, bPos + 0.10))
+            local bU4 = math.max(0.0, math.min(1.0, bPos - 0.03))
 
-        panel:drawRect(artX, artY, artW, artH, shimmerAlpha, r, g, b)
-        panel:drawRectBorder(artX, artY, artW, artH, 0.45, r, g, b)
+            local bk1x, bk1y = interpUV(bU1, 0.0)
+            local bk2x, bk2y = interpUV(bU2, 0.0)
+            local bk3x, bk3y = interpUV(bU3, 1.0)
+            local bk4x, bk4y = interpUV(bU4, 1.0)
 
-        -- Particulas de brilho estelar (Glimmer Sparks)
-        local sparkCount = 4
+            local holoAlpha = (0.09 + (0.10 * hFactor))
+            panel:drawPolygon(nil, bk1x, bk1y, bk2x, bk2y, bk3x, bk3y, bk4x, bk4y, r, g, b, holoAlpha)
+        end
+
+        -- Particulas estelares cintilantes (Glimmer Stars)
+        local sparkCount = 5
         for i = 1, sparkCount do
-            local phase = time * 4.0 + (i * 1.57)
-            local sparkAlpha = math.max(0.0, math.sin(phase))
-            if sparkAlpha > 0.3 then
-                local sx = artX + math.floor((artW * (0.2 + (0.6 * ((i * 37) % 100) / 100))))
-                local sy = artY + math.floor((artH * (0.2 + (0.6 * ((i * 59) % 100) / 100))))
-                panel:drawRect(sx, sy, 3, 3, sparkAlpha * 0.90, 1.0, 1.0, 1.0)
-                panel:drawRect(sx - 1, sy + 1, 5, 1, sparkAlpha * 0.60, 1.0, 1.0, 0.8)
-                panel:drawRect(sx + 1, sy - 1, 1, 5, sparkAlpha * 0.60, 1.0, 1.0, 0.8)
+            local uStar = 0.15 + (0.70 * ((i * 37) % 100) / 100)
+            local vStar = 0.12 + (0.50 * ((i * 59) % 100) / 100)
+            local phase = (time * 4.0) + (i * 1.57) + (px * 2.0)
+            local sAlpha = math.max(0.0, math.sin(phase))
+            if sAlpha > 0.35 then
+                local sx, sy = interpUV(uStar, vStar)
+                panel:drawPolygon(nil, sx - 3, sy, sx, sy - 3, sx + 3, sy, sx, sy + 3, 1.0, 1.0, 0.85, sAlpha * 0.85)
+                panel:drawPolygon(nil, sx - 1, sy - 1, sx + 1, sy - 1, sx + 1, sy + 1, sx - 1, sy + 1, 1.0, 1.0, 1.0, sAlpha)
             end
         end
 
-        -- Moldura dourada pulsante
+        -- Moldura dourada exterior conectando os vertices projetados da carta holografica
         local pulse = 0.65 + 0.35 * math.sin(time * 3.0)
-        panel:drawRectBorder(renderX - 2, renderY - 2, cardW + 4, cardH + 4, pulse, TCG_Theme.GOLD[1], TCG_Theme.GOLD[2], TCG_Theme.GOLD[3])
-    else
-        -- Borda suave comum
-        panel:drawRectBorder(renderX, renderY, cardW, cardH, isHovered and 0.45 or 0.20, 1.0, 1.0, 1.0)
+        local gr, gg, gb = TCG_Theme.GOLD[1], TCG_Theme.GOLD[2], TCG_Theme.GOLD[3]
+        local rimAlpha = math.min(1.0, pulse * 0.75)
+        TCG_Theme.drawSegment(panel, f1x, f1y, f2x, f2y, 1.2, gr, gg, gb, rimAlpha)
+        TCG_Theme.drawSegment(panel, f2x, f2y, f3x, f3y, 1.2, gr, gg, gb, rimAlpha)
+        TCG_Theme.drawSegment(panel, f3x, f3y, f4x, f4y, 1.2, gr, gg, gb, rimAlpha)
+        TCG_Theme.drawSegment(panel, f4x, f4y, f1x, f1y, 1.2, gr, gg, gb, rimAlpha)
     end
 end

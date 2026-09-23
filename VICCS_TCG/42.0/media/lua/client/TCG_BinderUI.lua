@@ -22,10 +22,12 @@ require "TCG_Theme"
 require "TCG_Config"
 require "TCG_CardRegistry"
 require "TCG_CardInspectModal"
+require "TCG_BinderData"
 
 TCG_BinderUI = ISPanel:derive("TCG_BinderUI")
 
 local instance = nil
+TCG_BinderUI.instance = nil
 
 local SLOTS_PER_PAGE = 18
 
@@ -101,6 +103,7 @@ function TCG_BinderUI.open(binderItem)
         instance:setVisible(false)
         instance:removeFromUIManager()
         instance = nil
+        TCG_BinderUI.instance = nil
     end
 
     instance = TCG_BinderUI:new(binderItem)
@@ -108,180 +111,26 @@ function TCG_BinderUI.open(binderItem)
     instance:instantiate()
     instance:addToUIManager()
     instance:setVisible(true)
+    TCG_BinderUI.instance = instance
 
     TCG_Theme.playBookOpen()
     return instance
 end
 
---- Inicializa e garante persistencia isolada por item fisico com Auto-Heal para saves legados
-function TCG_BinderUI.getBinderDataFromItem(binderItem)
-    if not binderItem then return { collected = {}, activeSet = "base1" } end
-    local md = binderItem:getModData()
-    if not md.TCG_Binder then
-        local uniqueId = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000, 999999))
-        md.TCG_Binder = {
-            uuid = uniqueId,
-            setId = "base1",
-            activeSet = "base1",
-            customName = "",
-            themeColor = "CYAN",
-            badge = "COLLECTOR",
-            collected = {}
-        }
-    end
-
-    local b = md.TCG_Binder
-    if not b.uuid then
-        b.uuid = tostring(getTimeInMillis()) .. "_" .. tostring(ZombRand(100000, 999999))
-    end
-    if not b.activeSet or b.activeSet == "" then
-        b.activeSet = b.setId or "base1"
-    end
-    if not b.themeColor or b.themeColor == "" then
-        b.themeColor = "CYAN"
-    end
-    if not b.badge or b.badge == "" then
-        b.badge = "COLLECTOR"
-    end
-    if not b.collected then
-        b.collected = {}
-    end
-
-    -- AUTO-HEAL: Migra formatos de saves anteriores (chaves numericas, sem zeros ou sem tabela)
-    local hasLegacyKeys = false
-    for k, v in pairs(b.collected) do
-        local sk = tostring(k)
-        if (type(k) == "number") or (not sk:find("-")) or (sk:match("%-(%d+)$") and #sk:match("%-(%d+)$") < 3) or (type(v) ~= "table") then
-            hasLegacyKeys = true
-            break
-        end
-    end
-
-    if hasLegacyKeys then
-        local healed = {}
-        for k, v in pairs(b.collected) do
-            local sk = tostring(k)
-            local targetCid = sk
-            if not sk:find("-") then
-                local num = tonumber(sk) or 1
-                targetCid = string.format("base1-%03d", num)
-            else
-                local sId, sNum = sk:match("^([^-]+)%-(%d+)$")
-                if sId and sNum and #sNum < 3 then
-                    targetCid = string.format("%s-%03d", sId, tonumber(sNum))
-                end
-            end
-
-            local entry = { number = 1, isHolo = false, count = 1 }
-            if type(v) == "table" then
-                entry.number = tonumber(v.number) or tonumber(targetCid:match("%-(%d+)$")) or 1
-                entry.isHolo = (v.isHolo == true)
-                entry.count = tonumber(v.count) or 1
-            elseif type(v) == "number" then
-                entry.number = tonumber(targetCid:match("%-(%d+)$")) or 1
-                entry.isHolo = false
-                entry.count = math.max(1, v)
-            elseif type(v) == "boolean" then
-                entry.number = tonumber(targetCid:match("%-(%d+)$")) or 1
-                entry.isHolo = v
-                entry.count = 1
-            end
-
-            if healed[targetCid] then
-                healed[targetCid].count = healed[targetCid].count + entry.count
-                if entry.isHolo then healed[targetCid].isHolo = true end
-            else
-                healed[targetCid] = entry
-            end
-        end
-        b.collected = healed
-    end
-
-    return b
-end
-
---- Estatisticas especificas de um conjunto (ex: Jungle -> 12 de 64)
-function TCG_BinderUI.getCollectionStatsForSet(binderItem, setId)
-    local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
-    local setDef = TCG_CardRegistry.Sets and TCG_CardRegistry.Sets[setId]
-    local setTotal = setDef and setDef.total or 102
-    local count = 0
-
-    if bData.collected then
-        for cid, col in pairs(bData.collected) do
-            local cidStr = tostring(cid)
-            local s = cidStr:match("^([^-]+)%-") or "base1"
-            if s == setId and col and col.count and col.count > 0 then
-                count = count + 1
-            end
-        end
-    end
-    local pct = (count / math.max(1, setTotal)) * 100.0
-    return count, setTotal, pct
-end
-
---- Estatisticas gerais somando todas as colecoes registradas (ex: 89 de 412)
-function TCG_BinderUI.getGrandTotalStats(binderItem)
-    local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
-    local availableSets = TCG_BinderUI.getAvailableSets()
-    local grandTotal = 0
-    local grandCount = 0
-
-    for _, sId in ipairs(availableSets) do
-        local setDef = TCG_CardRegistry.Sets and TCG_CardRegistry.Sets[sId]
-        if setDef and setDef.total then
-            grandTotal = grandTotal + setDef.total
-        end
-    end
-
-    if bData.collected then
-        for _, col in pairs(bData.collected) do
-            if col and col.count and col.count > 0 then
-                grandCount = grandCount + 1
-            end
-        end
-    end
-
-    local pct = (grandCount / math.max(1, grandTotal)) * 100.0
-    return grandCount, grandTotal, pct
-end
-
---- Compatibilidade legada para chamadas externas
-function TCG_BinderUI.getCollectionStatsForItem(binderItem)
-    local count, total, pct = TCG_BinderUI.getGrandTotalStats(binderItem)
-    return count, pct
-end
-
---- Varre o inventario e mochilas/bolsas equipadas do jogador em busca de ficharios fisicos
-function TCG_BinderUI.findPlayerBinders(playerObj)
-    if not playerObj then return {} end
-    local binders = {}
-    local inv = playerObj:getInventory()
-
-    local function scan(container)
-        if not container then return end
-        local items = container:getItems()
-        for i = 0, items:size() - 1 do
-            local it = items:get(i)
-            if it then
-                local fullType = it:getFullType()
-                if fullType == "Base.TCG_Binder" or fullType == "TCG_Binder" then
-                    table.insert(binders, it)
-                end
-                if it:IsInventoryContainer() and it:getItemContainer() then
-                    scan(it:getItemContainer())
-                end
-            end
-        end
-    end
-
-    scan(inv)
-    return binders
-end
+----- Delegacao direta para o modulo compartilhado TCG_BinderData (Server/Client unificados)
+TCG_BinderUI.getBinderDataFromItem = TCG_BinderData.getBinderDataFromItem
+TCG_BinderUI.getCollectionStatsForSet = TCG_BinderData.getCollectionStatsForSet
+TCG_BinderUI.getGrandTotalStats = TCG_BinderData.getGrandTotalStats
+TCG_BinderUI.getCollectionStatsForItem = TCG_BinderData.getCollectionStatsForItem
+TCG_BinderUI.findPlayerBinders = TCG_BinderData.findPlayerBinders
 
 --- Transfere uma carta de forma atomica para o fichario fisico especificado
 function TCG_BinderUI.storeCard(binderItem, cardItem, playerObj)
     if not binderItem or not cardItem then return false end
+    if isClient() then
+        return TCG_BinderUI.storeCardsList(binderItem, { cardItem }, playerObj) > 0
+    end
+
     local bData = TCG_BinderUI.getBinderDataFromItem(binderItem)
     local md = cardItem:getModData()
     local sId = md.setId or "base1"
@@ -291,7 +140,7 @@ function TCG_BinderUI.storeCard(binderItem, cardItem, playerObj)
     if not bData.collected[cid] then
         bData.collected[cid] = {
             number = md.cardNumber or 1,
-            isHolo = md.isHolo or false,
+            isHolo = (md.isHolo == true),
             count = 1
         }
     else
@@ -313,6 +162,40 @@ end
 --- Transfere uma lista de cartas para o fichario com efeito sonoro e feedback visual
 function TCG_BinderUI.storeCardsList(binderItem, cardItems, playerObj)
     if not binderItem or not cardItems or #cardItems == 0 then return 0 end
+    playerObj = playerObj or getPlayer()
+
+    -- Modo Multiplayer: delega armazenamento e remocao autoritativa para o servidor
+    if isClient() then
+        local cardsData = {}
+        for _, cardIt in ipairs(cardItems) do
+            if cardIt and (cardIt:getFullType() == "Base.TCG_Card" or cardIt:getFullType() == "TCG_Card") then
+                local md = cardIt:getModData()
+                local sId = md.setId or "base1"
+                local cid = md.cardId or (md.cardNumber and string.format("%s-%03d", sId, md.cardNumber))
+                if cid then
+                    table.insert(cardsData, {
+                        itemID = cardIt:getID(),
+                        cardId = cid,
+                        cardNumber = md.cardNumber or 1,
+                        isHolo = (md.isHolo == true),
+                        setId = sId
+                    })
+                end
+            end
+        end
+
+        if #cardsData > 0 then
+            sendClientCommand(playerObj, "TCG", "storeCards", {
+                binderID = binderItem:getID(),
+                cards = cardsData
+            })
+            TCG_Theme.playCardSlot()
+            return #cardsData
+        end
+        return 0
+    end
+
+    -- Modo Singleplayer: execucao local direta
     local storedCount = 0
     for _, cardIt in ipairs(cardItems) do
         if TCG_BinderUI.storeCard(binderItem, cardIt, playerObj) then
@@ -373,6 +256,13 @@ function TCG_BinderUI:cycleBadge()
     end
     bData.badge = nextBadge
     TCG_Theme.playAudio("UI_ButtonSelect")
+
+    if isClient() and self.binderItem then
+        sendClientCommand(getPlayer(), "TCG", "updateBinder", {
+            binderID = self.binderItem:getID(),
+            badge = nextBadge
+        })
+    end
 end
 
 function TCG_BinderUI:onRenameClick()
@@ -402,6 +292,13 @@ function TCG_BinderUI:onRenameConfirm(button)
                     self.binderItem:setName(string.format("%s: %s", baseLabel, text))
                 else
                     self.binderItem:setName(baseLabel)
+                end
+
+                if isClient() then
+                    sendClientCommand(getPlayer(), "TCG", "updateBinder", {
+                        binderID = self.binderItem:getID(),
+                        customName = text
+                    })
                 end
             end
             TCG_Theme.playButtonClick()
@@ -474,6 +371,13 @@ function TCG_BinderUI:onMouseUp(x, y)
                         local bData = self:getBinderData()
                         bData.activeSet = sId
                         TCG_Theme.playTabSwitch()
+
+                        if isClient() and self.binderItem then
+                            sendClientCommand(getPlayer(), "TCG", "updateBinder", {
+                                binderID = self.binderItem:getID(),
+                                activeSet = sId
+                            })
+                        end
                     end
                     return true
                 end
@@ -487,6 +391,13 @@ function TCG_BinderUI:onMouseUp(x, y)
                 local bData = self:getBinderData()
                 bData.themeColor = TCG_Theme.THEME_KEYS[chipIdx]
                 TCG_Theme.playButtonClick()
+
+                if isClient() and self.binderItem then
+                    sendClientCommand(getPlayer(), "TCG", "updateBinder", {
+                        binderID = self.binderItem:getID(),
+                        themeColor = bData.themeColor
+                    })
+                end
                 return true
             end
         end
@@ -537,6 +448,7 @@ function TCG_BinderUI:closeUI()
     self:setVisible(false)
     self:removeFromUIManager()
     instance = nil
+    TCG_BinderUI.instance = nil
 end
 
 --- Transfere automaticamente todas as cartas do inventario e mochilas para o fichario
@@ -566,7 +478,7 @@ function TCG_BinderUI:autoStoreCards()
     scan(inv)
 
     if #cardItems > 0 then
-        TCG_BinderUI.storeCardsList(self.binderItem, cardItems, player)
+        ISTimedActionQueue.add(TCG_StoreCardsTimedAction:new(player, self.binderItem, cardItems))
     else
         TCG_Theme.playAudio("UI_ToggleOff")
     end
@@ -576,7 +488,6 @@ end
 function TCG_BinderUI:withdrawCard(cardId, amount)
     local player = getPlayer()
     if not player then return 0 end
-    local inv = player:getInventory()
     local bData = self:getBinderData()
     local colInfo = bData.collected[cardId]
     if not colInfo or not colInfo.count or colInfo.count < 1 then
@@ -587,6 +498,19 @@ function TCG_BinderUI:withdrawCard(cardId, amount)
     amount = math.min(tonumber(amount) or 1, colInfo.count)
     if amount <= 0 then return 0 end
 
+    -- Modo Multiplayer: requisita saque autoritativo ao servidor
+    if isClient() then
+        sendClientCommand(player, "TCG", "withdrawCard", {
+            binderID = self.binderItem:getID(),
+            cardId = cardId,
+            amount = amount
+        })
+        TCG_Theme.playCardWithdraw()
+        return amount
+    end
+
+    -- Modo Singleplayer: execucao local direta
+    local inv = player:getInventory()
     local cardDef = TCG_CardRegistry.getCard(cardId)
     local num = (cardDef and cardDef.number) or colInfo.number or 1
     local setId = (cardDef and cardDef.setId) or (cardId:match("^([^-]+)%-")) or self.activeSet or "base1"
@@ -626,7 +550,11 @@ function TCG_BinderUI:withdrawCard(cardId, amount)
         bData.collected[cardId] = nil
     end
 
-    TCG_Theme.playCardWithdraw()
+    if TCG_Theme.playCardTake then
+        TCG_Theme.playCardTake()
+    elseif TCG_Theme.playCardWithdraw then
+        TCG_Theme.playCardWithdraw()
+    end
     local msg = ""
     if amount > 1 then
         msg = isPT and string.format("%dx Carta #%02d %s retiradas do fichario!", amount, num, displayName)
@@ -824,7 +752,12 @@ function TCG_BinderUI:render()
         local isTabHover = (mx >= tx and mx <= (tx + tabW) and my >= ty and my <= (ty + 24))
 
         local sName = TCG_BinderUI.getSetTabName(sId, isPT)
-        local sCount, sTotal = TCG_BinderUI.getCollectionStatsForSet(self.binderItem, sId)
+        local sCount, sTotal = 0, 102
+        if TCG_BinderUI.getCollectionStatsForSet then
+            local sc, st = TCG_BinderUI.getCollectionStatsForSet(self.binderItem, sId)
+            sCount = tonumber(sc) or 0
+            sTotal = tonumber(st) or 102
+        end
         local tabLabel = string.format("%s (%d/%d)", sName, sCount, sTotal)
 
         if isTabActive then
@@ -843,8 +776,22 @@ function TCG_BinderUI:render()
     end
 
     -- 3. Linha de Estatisticas & Chips de Tema (Linha 3, y: 64 a 82)
-    local curSetCount, curSetTotal, curSetPct = TCG_BinderUI.getCollectionStatsForSet(self.binderItem, self.activeSet)
-    local grandCount, grandTotal, grandPct = TCG_BinderUI.getGrandTotalStats(self.binderItem)
+    local curSetCount, curSetTotal, curSetPct = 0, 102, 0.0
+    if TCG_BinderUI.getCollectionStatsForSet then
+        local c, t, p = TCG_BinderUI.getCollectionStatsForSet(self.binderItem, self.activeSet)
+        curSetCount = tonumber(c) or 0
+        curSetTotal = tonumber(t) or 102
+        curSetPct = tonumber(p) or 0.0
+    end
+
+    local grandCount, grandTotal, grandPct = 0, 102, 0.0
+    if TCG_BinderUI.getGrandTotalStats then
+        local gc, gt, gp = TCG_BinderUI.getGrandTotalStats(self.binderItem)
+        grandCount = tonumber(gc) or 0
+        grandTotal = tonumber(gt) or 102
+        grandPct = tonumber(gp) or 0.0
+    end
+
     local setDef = self:getActiveSetDef()
     local setNameFull = setDef and (isPT and setDef.name.pt or setDef.name.en) or self.activeSet
 

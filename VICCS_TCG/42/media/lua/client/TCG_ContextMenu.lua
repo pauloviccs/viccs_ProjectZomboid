@@ -17,8 +17,96 @@ require "TCG_BinderUI"
 require "TCG_BoosterTimedAction"
 require "TCG_OpenBinderTimedAction"
 require "TCG_CardInspectModal"
+require "TCG_StoreCardsTimedAction"
+require "TimedActions/ISInventoryTransferAction"
 
 TCG_ContextMenu = TCG_ContextMenu or {}
+
+--- Garante que um item dentro de mochilas/bolsas seja transferido para a mao/inventario principal
+local function ensureItemInInventory(playerObj, item)
+    if not playerObj or not item then return end
+    local itemContainer = item:getContainer()
+    local playerInv = playerObj:getInventory()
+    if itemContainer and itemContainer ~= playerInv then
+        ISTimedActionQueue.add(ISInventoryTransferAction:new(playerObj, item, itemContainer, playerInv))
+    end
+end
+
+--- Busca recursiva de todos os pacotes de cartas de determinado tipo no inventario e mochilas
+function TCG_ContextMenu.findAllPlayerBoosters(playerObj, bType)
+    if not playerObj or not bType then return {} end
+    local inv = playerObj:getInventory()
+    if not inv then return {} end
+
+    local cleanType = bType:gsub("^Base%.", "")
+    local boosters = {}
+    local function scan(container)
+        if not container then return end
+        local items = container:getItems()
+        if not items then return end
+        for i = 0, items:size() - 1 do
+            local it = items:get(i)
+            if it then
+                local ft = (it:getFullType() or ""):gsub("^Base%.", "")
+                if ft == cleanType then
+                    table.insert(boosters, it)
+                end
+                if it.IsInventoryContainer and it:IsInventoryContainer() and it.getItemContainer and it:getItemContainer() then
+                    scan(it:getItemContainer())
+                end
+            end
+        end
+    end
+
+    scan(inv)
+    return boosters
+end
+
+TCG_ContextMenu.currentBatch = nil
+
+--- Chamado quando o jogador conclui a janela de revelacao de um pacote em lote
+function TCG_ContextMenu.onBatchPackFinished()
+    local batch = TCG_ContextMenu.currentBatch
+    if not batch then return end
+
+    local player = batch.player or getPlayer()
+    if not player or player:isDead() or player:getVehicle() then
+        TCG_ContextMenu.currentBatch = nil
+        return
+    end
+
+    if batch.openedCount >= batch.targetCount then
+        -- Lote de 10 pacotes completamente finalizado!
+        local totalDone = batch.targetCount
+        TCG_ContextMenu.currentBatch = nil
+        if player.setHaloNote then
+            local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+            local msg = isPT and string.format("[TCG] Todos os %d pacotes foram abertos com sucesso!", totalDone)
+                             or string.format("[TCG] All %d booster packs opened successfully!", totalDone)
+            pcall(function() player:setHaloNote(msg, 90, 220, 140, 250) end)
+        end
+        return
+    end
+
+    -- Avanca para o proximo pacote do lote
+    batch.openedCount = batch.openedCount + 1
+    local remainingPacks = TCG_ContextMenu.findAllPlayerBoosters(player, batch.boosterType)
+    if not remainingPacks or #remainingPacks == 0 then
+        -- Se os pacotes acabaram antes de completar a meta
+        local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
+        if player.setHaloNote then
+            local msg = isPT and string.format("[TCG] Pacotes esgotados! (%d/%d abertos)", batch.openedCount - 1, batch.targetCount)
+                             or string.format("[TCG] Out of packs! (%d/%d opened)", batch.openedCount - 1, batch.targetCount)
+            pcall(function() player:setHaloNote(msg, 240, 200, 80, 250) end)
+        end
+        TCG_ContextMenu.currentBatch = nil
+        return
+    end
+
+    local nextPack = remainingPacks[1]
+    ensureItemInInventory(player, nextPack)
+    ISTimedActionQueue.add(TCG_BoosterTimedAction:new(player, nextPack, 60, false, batch.openedCount, batch.targetCount))
+end
 
 function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, items)
     local ok, err = pcall(function()
@@ -82,15 +170,51 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                 bTitle = isPT and "Pacote Eevee Heroes (Japao 2021)" or "Eevee Heroes Booster Pack (Japan 2021)"
             end
 
+            -- 1.1 Abrir Pacote Individual (Com auto-transfer de mochilas)
             local label = string.format(isPT and "[TCG] Abrir %s" or "[TCG] Open %s", bTitle)
             local opt = context:addOption(label, playerObj, function()
                 if playerObj:getVehicle() then
                     playerObj:Say(isPT and "Nao posso abrir cartas dirigindo!" or "I can't open cards while driving!")
                     return
                 end
+                ensureItemInInventory(playerObj, boosterItem)
                 ISTimedActionQueue.add(TCG_BoosterTimedAction:new(playerObj, boosterItem, 60))
             end)
             opt.iconTexture = getTexture(iconPath)
+
+            -- 1.2 Abrir 10 Pacotes em Sequencia (Tempo individual x10, animacao contínua)
+            local allMatching = TCG_ContextMenu.findAllPlayerBoosters(playerObj, bType)
+            local totalMatching = #allMatching
+
+            if totalMatching >= 10 then
+                local label10 = string.format(isPT and "[TCG] Abrir 10 Pacotes (%s)" or "[TCG] Open 10 Packs (%s)", bTitle)
+                local opt10 = context:addOption(label10, playerObj, function()
+                    if playerObj:getVehicle() then
+                        playerObj:Say(isPT and "Nao posso abrir cartas dirigindo!" or "I can't open cards while driving!")
+                        return
+                    end
+                    local freshPacks = TCG_ContextMenu.findAllPlayerBoosters(playerObj, bType)
+                    if not freshPacks or #freshPacks == 0 then return end
+                    local countToOpen = math.min(10, #freshPacks)
+
+                    TCG_ContextMenu.currentBatch = {
+                        player = playerObj,
+                        boosterType = bType,
+                        targetCount = countToOpen,
+                        openedCount = 1
+                    }
+
+                    local firstPack = freshPacks[1]
+                    ensureItemInInventory(playerObj, firstPack)
+                    ISTimedActionQueue.add(TCG_BoosterTimedAction:new(playerObj, firstPack, 60, false, 1, countToOpen))
+                end)
+                opt10.iconTexture = getTexture(iconPath)
+            elseif totalMatching >= 2 and totalMatching < 10 then
+                local label10 = string.format(isPT and "[TCG] Abrir 10 Pacotes (%d/10)" or "[TCG] Open 10 Packs (%d/10)", totalMatching)
+                local opt10 = context:addOption(label10, playerObj, nil)
+                opt10.notAvailable = true
+                opt10.iconTexture = getTexture(iconPath)
+            end
         end
 
         -- Opcao 2: Fichario de Colecionador (Abrir com Barra de Progresso & Renomear)
@@ -101,6 +225,7 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                     playerObj:Say(isPT and "Nao posso abrir o fichario dirigindo!" or "I can't open the binder while driving!")
                     return
                 end
+                ensureItemInInventory(playerObj, binderItem)
                 ISTimedActionQueue.add(TCG_OpenBinderTimedAction:new(playerObj, binderItem, 50))
             end)
             optOpen.iconTexture = getTexture("media/textures/tcg_binder.png")
@@ -121,6 +246,13 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                                 binderItem:setName(string.format("%s: %s", baseLabel, text))
                             else
                                 binderItem:setName(baseLabel)
+                            end
+
+                            if isClient() then
+                                sendClientCommand(playerObj, "TCG", "updateBinder", {
+                                    binderID = binderItem:getID(),
+                                    customName = text
+                                })
                             end
                             TCG_Theme.playButtonClick()
                         end
@@ -157,7 +289,8 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                                  or string.format("[TCG] Store %d Cards in %s", #selectedCards, bName)
                 end
                 local optStore = context:addOption(label, playerObj, function()
-                    TCG_BinderUI.storeCardsList(targetBinder, selectedCards, playerObj)
+                    ensureItemInInventory(playerObj, targetBinder)
+                    ISTimedActionQueue.add(TCG_StoreCardsTimedAction:new(playerObj, targetBinder, selectedCards))
                 end)
                 optStore.iconTexture = getTexture("media/textures/tcg_binder.png")
             else
@@ -175,7 +308,8 @@ function TCG_ContextMenu.onFillInventoryObjectContextMenu(playerNum, context, it
                     local count, total = TCG_BinderUI.getGrandTotalStats(bIt)
                     local subLabel = string.format("%s (%d/%d)", bName, count, total)
                     local optSub = subMenu:addOption(subLabel, playerObj, function()
-                        TCG_BinderUI.storeCardsList(bIt, selectedCards, playerObj)
+                        ensureItemInInventory(playerObj, bIt)
+                        ISTimedActionQueue.add(TCG_StoreCardsTimedAction:new(playerObj, bIt, selectedCards))
                     end)
                     optSub.iconTexture = getTexture("media/textures/tcg_binder.png")
                 end

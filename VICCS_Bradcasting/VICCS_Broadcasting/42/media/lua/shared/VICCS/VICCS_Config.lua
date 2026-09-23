@@ -1,7 +1,7 @@
 VICCS = VICCS or {}
 VICCS.Config = {
-    Version = "1.0.0",
-    Protocol = 1,
+    Version = "1.2.3",
+    Protocol = 2,
     
     -- Caminhos de troca no disco (<User>/Zomboid/Lua/PZMusic/)
     OutPath = "PZMusic/game_to_app.json",

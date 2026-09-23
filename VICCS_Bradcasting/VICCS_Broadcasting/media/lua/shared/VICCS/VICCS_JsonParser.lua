@@ -116,7 +116,14 @@ function VICCS.JSON.encode(val)
     local t = type(val)
     if t == "nil" then return "null"
     elseif t == "boolean" then return tostring(val)
-    elseif t == "number" then return tostring(val)
+    elseif t == "number" then
+        if val ~= val then return "0" end
+        if val == math.huge or val == -math.huge then return "0" end
+        if math.floor(val) == val then
+            return string.format("%.0f", val)
+        else
+            return string.format("%.4f", val)
+        end
     elseif t == "string" then
         return string.format("%q", val):gsub("\\\n", "\\n")
     elseif t == "table" then

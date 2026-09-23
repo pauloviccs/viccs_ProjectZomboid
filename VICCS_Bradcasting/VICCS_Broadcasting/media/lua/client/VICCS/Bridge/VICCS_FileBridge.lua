@@ -76,4 +76,4 @@ local function onDisconnect()
 end
 Events.OnDisconnect.Add(onDisconnect)
 
-print("[VICCS] FileBridge v1.2.2 (Protocol v2) pronto.")
+print("[VICCS] FileBridge v1.2.3 (Protocol v2) pronto.")

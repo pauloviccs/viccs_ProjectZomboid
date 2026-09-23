@@ -37,14 +37,14 @@ Sandbox_EN = {
     Sandbox_VICCS_TCG_AllowCommercial_tooltip = "Allows boosters and binders to spawn in comic book shops, toy stores and bookstores.",
 
     -- Holo Probability
-    Sandbox_HoloChancePercent = "Holographic Foil Card Chance (%)",
-    Sandbox_VICCS_TCG_HoloChancePercent = "Holographic Foil Card Chance (%)",
-    Sandbox_HoloChancePercent_tooltip = "Probability (0% to 100%) for the booster's rare slot to be a Holo Foil card.",
-    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probability (0% to 100%) for the booster's rare slot to be a Holo Foil card.",
+    Sandbox_HoloChancePercent = "Holographic Foil Card Chance (Percentage)",
+    Sandbox_VICCS_TCG_HoloChancePercent = "Holographic Foil Card Chance (Percentage)",
+    Sandbox_HoloChancePercent_tooltip = "Probability (0 to 100 percent) for the booster's rare slot to be a Holo Foil card.",
+    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probability (0 to 100 percent) for the booster's rare slot to be a Holo Foil card.",
 
     -- Pre-Filled Binders
-    Sandbox_PreFilledBinderChance = "Chance of Abandoned Binder with Cards (%)",
-    Sandbox_VICCS_TCG_PreFilledBinderChance = "Chance of Abandoned Binder with Cards (%)",
+    Sandbox_PreFilledBinderChance = "Chance of Abandoned Binder with Cards (Percentage)",
+    Sandbox_VICCS_TCG_PreFilledBinderChance = "Chance of Abandoned Binder with Cards (Percentage)",
     Sandbox_PreFilledBinderChance_tooltip = "Probability that a binder found in the world already contains cards saved by a former collector.",
     Sandbox_VICCS_TCG_PreFilledBinderChance_tooltip = "Probability that a binder found in the world already contains cards saved by a former collector.",
 
@@ -57,4 +57,20 @@ Sandbox_EN = {
     Sandbox_VICCS_TCG_PreFilledCardsMax = "Maximum Cards in Abandoned Binder",
     Sandbox_PreFilledCardsMax_tooltip = "Maximum number of cards that can be pre-filled inside a found binder (max 102).",
     Sandbox_VICCS_TCG_PreFilledCardsMax_tooltip = "Maximum number of cards that can be pre-filled inside a found binder (max 102).",
+
+    -- Zombie Booster Pack Drops
+    Sandbox_ZombieBoosterDropChance = "Zombie Booster Pack Drop Chance (Percentage)",
+    Sandbox_VICCS_TCG_ZombieBoosterDropChance = "Zombie Booster Pack Drop Chance (Percentage)",
+    Sandbox_ZombieBoosterDropChance_tooltip = "Probability (from 0 to 100 percent) that a killed zombie contains booster packs in its corpse loot (0 = disabled).",
+    Sandbox_VICCS_TCG_ZombieBoosterDropChance_tooltip = "Probability (from 0 to 100 percent) that a killed zombie contains booster packs in its corpse loot (0 = disabled).",
+
+    Sandbox_ZombieBoosterMin = "Minimum Booster Packs per Zombie",
+    Sandbox_VICCS_TCG_ZombieBoosterMin = "Minimum Booster Packs per Zombie",
+    Sandbox_ZombieBoosterMin_tooltip = "Minimum number of booster packs that can drop on a lucky zombie corpse upon death.",
+    Sandbox_VICCS_TCG_ZombieBoosterMin_tooltip = "Minimum number of booster packs that can drop on a lucky zombie corpse upon death.",
+
+    Sandbox_ZombieBoosterMax = "Maximum Booster Packs per Zombie",
+    Sandbox_VICCS_TCG_ZombieBoosterMax = "Maximum Booster Packs per Zombie",
+    Sandbox_ZombieBoosterMax_tooltip = "Maximum number of booster packs that can drop on a lucky zombie corpse upon death.",
+    Sandbox_VICCS_TCG_ZombieBoosterMax_tooltip = "Maximum number of booster packs that can drop on a lucky zombie corpse upon death.",
 }

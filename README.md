@@ -52,10 +52,10 @@ A suíte VICCS reúne módulos independentes e altamente integrados projetados e
 
 | Módulo / Projeto | ID do Mod | Versão | Tipo | Descrição Breve |
 | :--- | :--- | :---: | :---: | :--- |
-| **🏠 Housing Care System** | `VICCS_HousingCareSystem` | `v1.5.8` | Mod In-Game | Sistema orgânico de conforto, insalubridade, tarefas domésticas, sono reparador e rotinas para bases. |
-| **🃏 Trading Card Game** | `VICCS_TCG` | `v1.0.1` | Mod In-Game | Coleção nostálgica de 102 cartas colecionáveis (Base Set 1999) com abertura animada e fichário de luxo. |
-| **📻 Media Broadcasting** | `VICCS_Broadcasting` | `v1.2.0` | Mod In-Game | Plataforma de streaming de áudio/vídeo sincronizado (YouTube/SoundCloud) com áudio 3D e atração de hordas. |
-| **🛰️ PZHub & Radar Bridge** | `VICCSRadarBridge` | `v1.0.0` | Desktop + Mod | Companion Desktop (Tauri/Rust) com mapa tático ao vivo, radar de esquadrão, rotas GPS e mod manager. |
+| **🏠 Housing Care System** | `VICCS_HousingCareSystem` | `v1.7.0` | Mod In-Game | Sistema orgânico de conforto, insalubridade, tarefas domésticas, lâmpadas, hidráulica e minigame de reparo estilo DBD. |
+| **🃏 Trading Card Game** | `VICCS_TCG` | `v1.0.4` | Mod In-Game | 5 grandes coleções (412 cartas), fichário com abas dinâmicas, abertura em lote de 10 pacotes, modelos 3D e 14 SFX dedicados. |
+| **📻 Media Broadcasting** | `VICCS_Broadcasting` | `v1.2.1` | Mod In-Game | Streaming multimídia sincronizado (YouTube/SoundCloud) com áudio 3D posicional, oclusão acústica e correção de proximidade MP. |
+| **🛰️ PZHub Desktop & Platform** | `VICCS_PZHub` | `v2.2.7` | Desktop + Web | Companion tático (Tauri v2 + Rust) com Tactical Expanding Dock, motor de sons táteis Web Audio, radar ao vivo e lançador Steam. |
 
 ---
 

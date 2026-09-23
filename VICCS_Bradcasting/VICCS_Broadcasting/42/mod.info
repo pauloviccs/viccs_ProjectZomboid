@@ -3,6 +3,6 @@ poster=poster.png
 id=VICCS_Broadcasting
 description=Sistema premium de streaming e midia sincronizada (YouTube, YT Music, SoundCloud) com audio 3D posicional, atracao de zumbis e HUD moderna translucida.
 versionMin=42.0
-modversion=1.2.0
+modversion=1.2.3
 pzversion=42
 author=VICCS

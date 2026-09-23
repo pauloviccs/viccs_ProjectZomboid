@@ -18,6 +18,7 @@ require "TCG_Config"
 require "TCG_CardRegistry"
 require "TCG_CardInspectModal"
 require "TCG_BinderUI"
+require "TCG_StoreCardsTimedAction"
 
 TCG_RevealModal = ISPanel:derive("TCG_RevealModal")
 
@@ -62,7 +63,9 @@ function TCG_RevealModal.show(cards, playerObj, spawnedCards)
     instance:setVisible(true)
 
     -- Audio customizado de abertura do pacote (rasgo metalico)
-    TCG_Theme.playOpenBooster()
+    if TCG_Theme.playBoosterOpen then
+        TCG_Theme.playBoosterOpen()
+    end
 
     -- Se a primeira carta ja for holo (raro), toca som prismatico
     if cards and cards[1] then
@@ -77,11 +80,15 @@ function TCG_RevealModal.show(cards, playerObj, spawnedCards)
     return instance
 end
 
-function TCG_RevealModal:closeModal()
+function TCG_RevealModal:closeModal(continueBatch)
     TCG_Theme.playBookClose()
     self:setVisible(false)
     self:removeFromUIManager()
     instance = nil
+
+    if continueBatch and TCG_ContextMenu and TCG_ContextMenu.onBatchPackFinished then
+        TCG_ContextMenu.onBatchPackFinished()
+    end
 end
 
 function TCG_RevealModal:onMouseDown(x, y)
@@ -105,7 +112,10 @@ function TCG_RevealModal:onMouseUp(x, y)
     if not wasDragging or (math.abs(x - self.downX) <= 6 and math.abs(y - self.downY) <= 6) then
         -- Botao [X] fechar (x: width - 34, y: 8, w: 26, h: 22)
         if x >= (self.width - 34) and x <= (self.width - 8) and y >= 8 and y <= 30 then
-            self:closeModal()
+            if TCG_ContextMenu then
+                TCG_ContextMenu.currentBatch = nil
+            end
+            self:closeModal(false)
             return true
         end
 
@@ -144,7 +154,7 @@ function TCG_RevealModal:onMouseUp(x, y)
             if self.currentIndex < #self.cards then
                 self:revealNext()
             else
-                self:closeModal()
+                self:closeModal(true)
             end
             return true
         end
@@ -166,7 +176,7 @@ function TCG_RevealModal:storeAndClose()
 
     if #binders > 0 and self.spawnedCards and #self.spawnedCards > 0 then
         local targetBinder = binders[1]
-        TCG_BinderUI.storeCardsList(targetBinder, self.spawnedCards, player)
+        ISTimedActionQueue.add(TCG_StoreCardsTimedAction:new(player, targetBinder, self.spawnedCards))
         self.spawnedCards = {}
     else
         if player and player.setHaloNote then
@@ -177,7 +187,7 @@ function TCG_RevealModal:storeAndClose()
         TCG_Theme.playCardSlot()
     end
 
-    self:closeModal()
+    self:closeModal(true)
 end
 
 function TCG_RevealModal:onMouseMove(dx, dy)
@@ -212,14 +222,20 @@ function TCG_RevealModal:render()
     if not self:getIsVisible() then return end
 
     local isPT = (TCG_Config and TCG_Config.getLanguage and TCG_Config.getLanguage() == "PT")
-    local mx = self.mouseX or -1
-    local my = self.mouseY or -1
+    local mx = self:getMouseX()
+    local my = self:getMouseY()
 
     -- 1. Fundo Soft Glass
     TCG_Theme.drawGlassBackdrop(self, 0, 0, self.width, self.height, true)
 
     -- Cabecalho
+    local isBatch = (TCG_ContextMenu and TCG_ContextMenu.currentBatch ~= nil)
+    local batch = isBatch and TCG_ContextMenu.currentBatch
     local headerTitle = isPT and "ABERTURA DE BOOSTER: BASE SET 1999" or "BOOSTER PACK OPENING: BASE SET 1999"
+    if isBatch and batch then
+        headerTitle = isPT and string.format("ABERTURA DE BOOSTER (PACOTE %d DE %d)", batch.openedCount, batch.targetCount)
+                           or string.format("BOOSTER PACK OPENING (PACK %d OF %d)", batch.openedCount, batch.targetCount)
+    end
     self:drawText(headerTitle, 16, 11, TCG_Theme.CYAN[1], TCG_Theme.CYAN[2], TCG_Theme.CYAN[3], 1.0, UIFont.Medium)
 
     -- Botoes do Topo: Grip [[M]] e Fechar [X]
@@ -321,9 +337,9 @@ function TCG_RevealModal:render()
     self:drawRectBorder(infoX, infoY, 305, 58, 0.15, 0.5, 0.6, 0.7)
     TCG_Theme.drawTextWrapped(self, details.flavor, infoX + 8, infoY + 6, 289, 0.80, 0.85, 0.90, 0.90, UIFont.Small)
 
-    -- Dica de Inspecao fora da caixa de Lore
-    local hintText = isPT and "* Clique na carta para inspecionar em tela cheia *" or "* Click on card to open Full Inspector *"
-    self:drawText(hintText, infoX + 6, infoY + 62, TCG_Theme.CYAN[1], TCG_Theme.CYAN[2], TCG_Theme.CYAN[3], 0.85, UIFont.Small)
+    -- Dica de Inspecao contida na coluna direita
+    local hintText = isPT and "* Clique na carta para inspecionar *" or "* Click on card to inspect *"
+    self:drawTextCentre(hintText, infoX + 152, infoY + 62, TCG_Theme.CYAN[1], TCG_Theme.CYAN[2], TCG_Theme.CYAN[3], 0.85, UIFont.Small)
 
     -- 4. Miniaturas das 10 Cartas do Pacote (Strip inferior interativa)
     local thumbY = 388
@@ -361,11 +377,23 @@ function TCG_RevealModal:render()
     end
 
     -- 5. Botoes Inferiores
+    local isBatch = (TCG_ContextMenu and TCG_ContextMenu.currentBatch ~= nil)
+    local batch = isBatch and TCG_ContextMenu.currentBatch
+    local isLastBatch = (not batch) or (batch.openedCount >= batch.targetCount)
+
     local btnY = 454
     local isNextHover = (mx >= 35 and mx <= 295 and my >= btnY and my <= (btnY + 32))
-    local nextLabel = (self.currentIndex < #self.cards)
-                        and (isPT and "REVELAR PROXIMA CARTA" or "REVEAL NEXT CARD")
-                        or (isPT and "CONCLUIR (MANTER NA MOCHILA)" or "DONE (KEEP IN BACKPACK)")
+    local nextLabel = ""
+    if self.currentIndex < #self.cards then
+        nextLabel = isPT and "REVELAR PROXIMA CARTA" or "REVEAL NEXT CARD"
+    else
+        if isBatch and not isLastBatch then
+            nextLabel = isPT and string.format("CONCLUIR E ABRIR %d/%d", batch.openedCount + 1, batch.targetCount)
+                             or string.format("DONE & OPEN %d/%d", batch.openedCount + 1, batch.targetCount)
+        else
+            nextLabel = isPT and "CONCLUIR (MANTER NA MOCHILA)" or "DONE (KEEP IN BACKPACK)"
+        end
+    end
     TCG_Theme.drawTacticalButton(self, nextLabel, 35, btnY, 260, 32, isNextHover, TCG_Theme.CYAN)
 
     local isStoreHover = (mx >= 315 and mx <= 585 and my >= btnY and my <= (btnY + 32))

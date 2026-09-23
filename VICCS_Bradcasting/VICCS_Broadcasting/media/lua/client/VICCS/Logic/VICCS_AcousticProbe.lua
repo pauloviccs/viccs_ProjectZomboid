@@ -216,4 +216,4 @@ function VICCS.AcousticProbe.invalidateCache()
     probeCache = {}
 end
 
-print("[VICCS] AcousticProbe v1.2.1 (Bresenham + Paredes Nativas + Limites de Cômodo) inicializado.")
+print("[VICCS] AcousticProbe v1.2.3 (Bresenham + Paredes Nativas + Limites de Cômodo) inicializado.")

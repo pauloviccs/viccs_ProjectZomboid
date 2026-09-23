@@ -15,5 +15,17 @@
     "Sandbox_VICCS_TCG_AllowCommercial": "Allow Spawn in Stores & Bookstores",
     "Sandbox_VICCS_TCG_AllowCommercial_tooltip": "Allows packs and binders to spawn in comic book shops, toy stores, and magazine racks.",
     "Sandbox_VICCS_TCG_HoloChancePercent": "Holographic Card Chance (%)",
-    "Sandbox_VICCS_TCG_HoloChancePercent_tooltip": "Chance (0-100%) that the rare slot in a booster pack turns into a holographic foil."
+    "Sandbox_VICCS_TCG_HoloChancePercent_tooltip": "Chance (0-100%) that the rare slot in a booster pack turns into a holographic foil.",
+    "Sandbox_VICCS_TCG_PreFilledBinderChance": "Chance of Abandoned Binder with Cards (%)",
+    "Sandbox_VICCS_TCG_PreFilledBinderChance_tooltip": "Probability that a binder found in the world already contains cards saved by a former collector.",
+    "Sandbox_VICCS_TCG_PreFilledCardsMin": "Minimum Cards in Abandoned Binder",
+    "Sandbox_VICCS_TCG_PreFilledCardsMin_tooltip": "Minimum number of cards that can be pre-filled inside a found binder (min 1).",
+    "Sandbox_VICCS_TCG_PreFilledCardsMax": "Maximum Cards in Abandoned Binder",
+    "Sandbox_VICCS_TCG_PreFilledCardsMax_tooltip": "Maximum number of cards that can be pre-filled inside a found binder (max 102).",
+    "Sandbox_VICCS_TCG_ZombieBoosterDropChance": "Zombie Booster Pack Drop Chance (%)",
+    "Sandbox_VICCS_TCG_ZombieBoosterDropChance_tooltip": "Probability (from 0% to 100%) that a killed zombie contains booster packs in its corpse loot (0% = disabled).",
+    "Sandbox_VICCS_TCG_ZombieBoosterMin": "Minimum Booster Packs per Zombie",
+    "Sandbox_VICCS_TCG_ZombieBoosterMin_tooltip": "Minimum number of booster packs that can drop on a lucky zombie corpse upon death.",
+    "Sandbox_VICCS_TCG_ZombieBoosterMax": "Maximum Booster Packs per Zombie",
+    "Sandbox_VICCS_TCG_ZombieBoosterMax_tooltip": "Maximum number of booster packs that can drop on a lucky zombie corpse upon death."
 }

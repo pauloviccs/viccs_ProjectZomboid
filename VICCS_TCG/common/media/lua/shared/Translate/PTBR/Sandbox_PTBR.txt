@@ -37,14 +37,14 @@ Sandbox_PTBR = {
     Sandbox_VICCS_TCG_AllowCommercial_tooltip = "Permite encontrar pacotes e ficharios em lojas de quadrinhos, brinquedos e livrarias.",
 
     -- Probabilidade Holografica
-    Sandbox_HoloChancePercent = "Chance de Carta Rara ser Holografica (%)",
-    Sandbox_VICCS_TCG_HoloChancePercent = "Chance de Carta Rara ser Holografica (%)",
-    Sandbox_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100%) da carta rara do pacote vir na versao Holografica brilhante.",
-    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100%) da carta rara do pacote vir na versao Holografica brilhante.",
+    Sandbox_HoloChancePercent = "Chance de Carta Rara ser Holografica (Porcentagem)",
+    Sandbox_VICCS_TCG_HoloChancePercent = "Chance de Carta Rara ser Holografica (Porcentagem)",
+    Sandbox_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100 por cento) da carta rara do pacote vir na versao Holografica brilhante.",
+    Sandbox_VICCS_TCG_HoloChancePercent_tooltip = "Probabilidade (de 0 a 100 por cento) da carta rara do pacote vir na versao Holografica brilhante.",
 
     -- Ficharios Pre-Preenchidos
-    Sandbox_PreFilledBinderChance = "Chance de Fichario Abandonado vir com Cartas (%)",
-    Sandbox_VICCS_TCG_PreFilledBinderChance = "Chance de Fichario Abandonado vir com Cartas (%)",
+    Sandbox_PreFilledBinderChance = "Chance de Fichario Abandonado vir com Cartas (Porcentagem)",
+    Sandbox_VICCS_TCG_PreFilledBinderChance = "Chance de Fichario Abandonado vir com Cartas (Porcentagem)",
     Sandbox_PreFilledBinderChance_tooltip = "Probabilidade de um fichario encontrado no mapa ja vir com uma colecao de cartas guardadas por um antigo dono.",
     Sandbox_VICCS_TCG_PreFilledBinderChance_tooltip = "Probabilidade de um fichario encontrado no mapa ja vir com uma colecao de cartas guardadas por um antigo dono.",
 
@@ -57,4 +57,20 @@ Sandbox_PTBR = {
     Sandbox_VICCS_TCG_PreFilledCardsMax = "Maximo de Cartas no Fichario Abandonado",
     Sandbox_PreFilledCardsMax_tooltip = "Quantidade maxima de cartas que podem vir dentro de um fichario preenchido (maximo 102).",
     Sandbox_VICCS_TCG_PreFilledCardsMax_tooltip = "Quantidade maxima de cartas que podem vir dentro de um fichario preenchido (maximo 102).",
+
+    -- Drop de Booster Packs em Zumbis
+    Sandbox_ZombieBoosterDropChance = "Chance de Booster Pack em Zumbis (Porcentagem)",
+    Sandbox_VICCS_TCG_ZombieBoosterDropChance = "Chance de Booster Pack em Zumbis (Porcentagem)",
+    Sandbox_ZombieBoosterDropChance_tooltip = "Probabilidade (de 0 a 100 por cento) de um zumbi eliminado conter pacotes de cartas colecionaveis em seu corpo (0 = desativado).",
+    Sandbox_VICCS_TCG_ZombieBoosterDropChance_tooltip = "Probabilidade (de 0 a 100 por cento) de um zumbi eliminado conter pacotes de cartas colecionaveis em seu corpo (0 = desativado).",
+
+    Sandbox_ZombieBoosterMin = "Minimo de Booster Packs por Zumbi",
+    Sandbox_VICCS_TCG_ZombieBoosterMin = "Minimo de Booster Packs por Zumbi",
+    Sandbox_ZombieBoosterMin_tooltip = "Quantidade minima de pacotes que um zumbi premiado pode carregar em seu corpo ao ser eliminado.",
+    Sandbox_VICCS_TCG_ZombieBoosterMin_tooltip = "Quantidade minima de pacotes que um zumbi premiado pode carregar em seu corpo ao ser eliminado.",
+
+    Sandbox_ZombieBoosterMax = "Maximo de Booster Packs por Zumbi",
+    Sandbox_VICCS_TCG_ZombieBoosterMax = "Maximo de Booster Packs por Zumbi",
+    Sandbox_ZombieBoosterMax_tooltip = "Quantidade maxima de pacotes que um zumbi premiado pode carregar em seu corpo ao ser eliminado.",
+    Sandbox_VICCS_TCG_ZombieBoosterMax_tooltip = "Quantidade maxima de pacotes que um zumbi premiado pode carregar em seu corpo ao ser eliminado.",
 }

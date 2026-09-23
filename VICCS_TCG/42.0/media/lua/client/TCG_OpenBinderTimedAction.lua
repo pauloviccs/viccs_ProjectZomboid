@@ -15,7 +15,9 @@ require "TCG_Theme"
 TCG_OpenBinderTimedAction = ISBaseTimedAction:derive("TCG_OpenBinderTimedAction")
 
 function TCG_OpenBinderTimedAction:isValid()
-    return self.character:getInventory():contains(self.item)
+    if not self.item or not self.character then return false end
+    local inv = self.character:getInventory()
+    return inv:contains(self.item) or inv:containsRecursive(self.item)
 end
 
 function TCG_OpenBinderTimedAction:update()

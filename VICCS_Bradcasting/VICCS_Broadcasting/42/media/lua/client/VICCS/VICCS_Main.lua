@@ -89,10 +89,19 @@ function VICCS.Main.registerPlayingDevice(id, deviceObj, x, y, z, baseVolume, ur
         end
     end)
     
-    -- Garante que o aparelho esteja ligado para o consumo de energia vanilla
-    if devRecord.deviceType == "TELEVISION" and deviceObj then
+    -- Garante que o aparelho esteja ligado para o funcionamento e consumo de energia vanilla
+    if deviceObj then
         pcall(function()
             local dd = deviceObj.getDeviceData and deviceObj:getDeviceData()
+            if not dd and deviceObj.getItem and deviceObj:getItem() and deviceObj:getItem().getDeviceData then
+                dd = deviceObj:getItem():getDeviceData()
+            end
+            if not dd and deviceObj.getPartById then
+                local radioPart = deviceObj:getPartById("Radio")
+                if radioPart and radioPart.getDeviceData then
+                    dd = radioPart:getDeviceData()
+                end
+            end
             if dd and not dd:getIsTurnedOn() and dd.setIsTurnedOn then
                 dd:setIsTurnedOn(true)
             end
@@ -403,22 +412,38 @@ local function onTick()
                 if not dd and dev.obj.getItem and dev.obj:getItem() and dev.obj:getItem().getDeviceData then
                     dd = dev.obj:getItem():getDeviceData()
                 end
+                if not dd and dev.obj.getPartById then
+                    local radioPart = dev.obj:getPartById("Radio")
+                    if radioPart and radioPart.getDeviceData then
+                        dd = radioPart:getDeviceData()
+                    end
+                end
                 
                 if dd then
                     if not dd:getIsTurnedOn() then
-                        stillPowered = false
-                    end
-                    if dd.getDeviceVolume then
-                        if VICCS.SilentChannel and VICCS.SilentChannel.isSilentChannel(dd) then
-                            if VICCS.SilentChannel.isMuted(dd) then
-                                vanillaVol = 0.0
-                            else
-                                vanillaVol = VICCS.SilentChannel.getUserVolume(dd)
-                            end
-                        else
-                            vanillaVol = dd:getDeviceVolume()
+                        -- Se o aparelho foi desligado, tenta religar se tiver energia
+                        local hasPwr = true
+                        if VICCS.Compat and VICCS.Compat.hasDevicePower then
+                            hasPwr = VICCS.Compat.hasDevicePower(dev.obj)
+                        end
+                        if hasPwr and dd.setIsTurnedOn then
+                            dd:setIsTurnedOn(true)
+                        elseif not isClient() then
+                            -- Em Single Player desliga se realmente perdeu energia.
+                            -- No Multiplayer (isClient), o servidor (VICCS_ServerSync) é a autoridade absoluta
+                            -- via SyncMedia STOPPED para evitar auto-kill prematuro local.
+                            stillPowered = false
                         end
                     end
+                    
+                    if VICCS.SilentChannel and VICCS.SilentChannel.isMuted and VICCS.SilentChannel.isMuted(dd) then
+                        vanillaVol = 0.0
+                    elseif VICCS.SilentChannel and VICCS.SilentChannel.hasUserVolume and VICCS.SilentChannel.hasUserVolume(dd) then
+                        vanillaVol = VICCS.SilentChannel.getUserVolume(dd)
+                    else
+                        vanillaVol = 1.0
+                    end
+                    
                     if VICCS.SilentChannel and VICCS.SilentChannel.silenceDeviceIfOnChannel then
                         VICCS.SilentChannel.silenceDeviceIfOnChannel(dd)
                     end
