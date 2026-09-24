@@ -1,0 +1,77 @@
+VERSION = 1,
+
+option VICCSSpores.Enabled
+{
+    type = boolean,
+    default = true,
+    page = VICCSSpores,
+    translation = VICCSSpores_Enabled,
+}
+
+option VICCSSpores.CarrierChance
+{
+    type = double,
+    min = 0.0,
+    max = 1.0,
+    default = 0.08,
+    page = VICCSSpores,
+    translation = VICCSSpores_CarrierChance,
+}
+
+option VICCSSpores.DoseThreshold
+{
+    type = double,
+    min = 10.0,
+    max = 1000.0,
+    default = 120.0,
+    page = VICCSSpores,
+    translation = VICCSSpores_DoseThreshold,
+}
+
+option VICCSSpores.DoseRecoveryPerMinute
+{
+    type = double,
+    min = 0.0,
+    max = 20.0,
+    default = 1.0,
+    page = VICCSSpores,
+    translation = VICCSSpores_DoseRecovery,
+}
+
+option VICCSSpores.CorpseDecayDays
+{
+    type = integer,
+    min = 1,
+    max = 30,
+    default = 5,
+    page = VICCSSpores,
+    translation = VICCSSpores_CorpseDecayDays,
+}
+
+option VICCSSpores.DecontamBleachPower
+{
+    type = double,
+    min = 10.0,
+    max = 100.0,
+    default = 50.0,
+    page = VICCSSpores,
+    translation = VICCSSpores_DecontamPower,
+}
+
+option VICCSSpores.MaxActiveCells
+{
+    type = integer,
+    min = 50,
+    max = 2000,
+    default = 400,
+    page = VICCSSpores,
+    translation = VICCSSpores_MaxActiveCells,
+}
+
+option VICCSSpores.ReduceVisualEffects
+{
+    type = boolean,
+    default = false,
+    page = VICCSSpores,
+    translation = VICCSSpores_ReduceFX,
+}

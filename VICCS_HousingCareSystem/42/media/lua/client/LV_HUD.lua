@@ -25,6 +25,20 @@ LV_HUD = ISPanel:derive("LV_HUD")
 
 local instance = nil
 
+LV_HUD.KEYBIND_NAME = "Toggle Living House HUD"
+LV_HUD.DEFAULT_KEY = Keyboard.KEY_BACKSLASH or 43
+
+if keyBinding then
+    table.insert(keyBinding, { value = "[Living House]" })
+    table.insert(keyBinding, { value = LV_HUD.KEYBIND_NAME, key = LV_HUD.DEFAULT_KEY })
+end
+
+function LV_HUD.getToggleKey()
+    local k = getCore():getKey(LV_HUD.KEYBIND_NAME)
+    if k == nil or k == 0 then return LV_HUD.DEFAULT_KEY end
+    return k
+end
+
 local FONT_S = UIFont.Small
 local PAD = 8
 local ACCENT_CYAN = {0.36, 0.76, 0.86}
@@ -43,7 +57,7 @@ local ICON_DENTAL     = "media/ui/Moodles/32/Mood_Unhappy.png"
 function LV_HUD:new(x, y, width)
     local tm = getTextManager()
     local hgt = tm:getFontHeight(FONT_S)
-    local o = ISPanel:new(x, y, width or 265, 100)
+    local o = ISPanel:new(x, y, width or 280, 100)
     setmetatable(o, self)
     self.__index = self
 
@@ -73,10 +87,30 @@ end
 
 function LV_HUD:onMouseUp(x, y)
     if self.isDragging and math.abs(x - self.downX) <= 4 and math.abs(y - self.downY) <= 4 then
-        -- Clique rapido no cabecalho alterna modos
+        -- Clique rapido no cabecalho
         if y <= self.headerH + PAD then
-            -- Clique no botao [BASE] abre/fecha o Dashboard de Infraestrutura
-            if x >= (self.width - PAD - 64) and x <= (self.width - PAD - 20) then
+            -- 1. Clique no botao [X] (Ocultar Totalmente a HUD)
+            if x >= (self.width - PAD - 20) and x <= (self.width - PAD + 4) then
+                LV_HUD.hideHUD()
+                local p = getPlayer()
+                if p and p.setHaloNote then
+                    local keyName = (getKeyName and getKeyName(LV_HUD.getToggleKey())) or "\\"
+                    local note = getText("UI_LV_HUD_HiddenNote", keyName)
+                    p:setHaloNote(note, 200, 220, 240, 220)
+                end
+                self.isDragging = false
+                return true
+            end
+
+            -- 2. Clique no botao [-] / [+] (Recolher / Expandir)
+            if x >= (self.width - PAD - 44) and x < (self.width - PAD - 20) then
+                self.collapsed = not self.collapsed
+                self.isDragging = false
+                return true
+            end
+
+            -- 3. Clique no botao [BASE] abre/fecha o Dashboard de Infraestrutura
+            if x >= (self.width - PAD - 90) and x < (self.width - PAD - 44) then
                 if LV_HouseDashboard and LV_HouseDashboard.toggle then
                     LV_HouseDashboard.toggle()
                 end
@@ -84,8 +118,8 @@ function LV_HUD:onMouseUp(x, y)
                 return true
             end
 
-            -- Clique no botao [APPL] abre/fecha a Telemetria de Aparelhos
-            if x >= (self.width - PAD - 114) and x <= (self.width - PAD - 66) then
+            -- 4. Clique no botao [APPL] abre/fecha a Telemetria de Aparelhos
+            if x >= (self.width - PAD - 136) and x < (self.width - PAD - 90) then
                 if LV_ApplianceDashboard and LV_ApplianceDashboard.toggle then
                     LV_ApplianceDashboard.toggle()
                 end
@@ -93,8 +127,8 @@ function LV_HUD:onMouseUp(x, y)
                 return true
             end
 
-            -- Clique no botao [K] abre/fecha o Painel de Inspecao do Comodo
-            if x >= (self.width - PAD - 148) and x <= (self.width - PAD - 116) then
+            -- 5. Clique no botao [K] abre/fecha o Painel de Inspecao do Comodo
+            if x >= (self.width - PAD - 172) and x < (self.width - PAD - 136) then
                 if LV_RoomInspectorDashboard and LV_RoomInspectorDashboard.toggle then
                     LV_RoomInspectorDashboard.toggle()
                 end
@@ -102,15 +136,10 @@ function LV_HUD:onMouseUp(x, y)
                 return true
             end
 
+            -- Clique em outra area do cabecalho alterna modo Auto-Fade / Always
             if self.fadeMode == "auto" then
                 self.fadeMode = "always"
-            elseif self.fadeMode == "always" then
-                self.collapsed = not self.collapsed
-                if not self.collapsed then
-                    self.fadeMode = "auto"
-                end
             else
-                self.collapsed = false
                 self.fadeMode = "auto"
             end
         end
@@ -252,18 +281,38 @@ function LV_HUD:render()
     end
     self:shadowText(title, PAD + 4, curY, acc[1], acc[2], acc[3], 0.95 * a)
 
+    local btnX = self.width - PAD
+    local mx = self:getMouseX()
+    local my = self:getMouseY()
+    local isOverClose = (isOver and my <= (self.headerH + PAD) and mx >= (btnX - 20) and mx <= (btnX + 4))
+    local cr, cg, cb = isOverClose and 0.95 or 0.70, isOverClose and 0.35 or 0.70, isOverClose and 0.35 or 0.70
+
+    -- Botao [X] (Ocultar Totalmente)
+    self:shadowTextRight("[X]", btnX, curY, cr, cg, cb, (isOverClose and 1.0 or 0.85) * a)
+    btnX = btnX - 24
+
+    -- Botao [-] / [+]
     if self.collapsed then
-        self:shadowTextRight("[+]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.8 * a)
-        self:shadowTextRight("[BASE]", self.width - PAD - 20, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.85 * a)
-        self:shadowTextRight("[APPL]", self.width - PAD - 66, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.85 * a)
-        self:shadowTextRight("[K]", self.width - PAD - 116, curY, 0.85, 0.75, 0.40, 0.85 * a)
+        self:shadowTextRight("[+]", btnX, curY, 0.75, 0.75, 0.75, 0.85 * a)
+    else
+        self:shadowTextRight("[-]", btnX, curY, 0.75, 0.75, 0.75, 0.70 * a)
+    end
+    btnX = btnX - 24
+
+    -- Botao [BASE]
+    self:shadowTextRight("[BASE]", btnX, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.90 * a)
+    btnX = btnX - 46
+
+    -- Botao [APPL]
+    self:shadowTextRight("[APPL]", btnX, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.90 * a)
+    btnX = btnX - 46
+
+    -- Botao [K]
+    self:shadowTextRight("[K]", btnX, curY, 0.85, 0.75, 0.40, 0.90 * a)
+
+    if self.collapsed then
         self:setHeight(curY + self.fontH + PAD)
         return
-    else
-        self:shadowTextRight("[-]", self.width - PAD, curY, 0.7, 0.7, 0.7, 0.6 * a)
-        self:shadowTextRight("[BASE]", self.width - PAD - 20, curY, ACCENT_CYAN[1], ACCENT_CYAN[2], ACCENT_CYAN[3], 0.90 * a)
-        self:shadowTextRight("[APPL]", self.width - PAD - 66, curY, ACCENT_AMBER[1], ACCENT_AMBER[2], ACCENT_AMBER[3], 0.90 * a)
-        self:shadowTextRight("[K]", self.width - PAD - 116, curY, 0.85, 0.75, 0.40, 0.90 * a)
     end
 
     curY = curY + self.fontH + 3
@@ -389,7 +438,7 @@ end
 function LV_HUD.showHUD()
     if not instance then
         local screenW = getCore():getScreenWidth()
-        local hudW = 265
+        local hudW = 280
         local x = screenW - hudW - 20
         local y = 200
         instance = LV_HUD:new(x, y, hudW)
@@ -401,15 +450,31 @@ function LV_HUD.showHUD()
     else
         instance.userHidden = false
         instance:setVisible(true)
+        instance:bringToTop()
     end
 end
 
---- Alterna visibilidade da HUD (tecla K)
+--- Oculta totalmente a HUD da tela
+function LV_HUD.hideHUD()
+    if instance then
+        instance.userHidden = true
+        instance:setVisible(false)
+    end
+end
+
+--- Alterna visibilidade da HUD (Toggle / Atalho de Teclado)
 function LV_HUD.toggleHUD()
     if not instance then
         LV_HUD.showHUD()
     else
         instance.userHidden = not instance.userHidden
         instance:setVisible(not instance.userHidden)
+        if not instance.userHidden then
+            instance:bringToTop()
+        end
     end
+end
+
+function LV_HUD.getInstance()
+    return instance
 end

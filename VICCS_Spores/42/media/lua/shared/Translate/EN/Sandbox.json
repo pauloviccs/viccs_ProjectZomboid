@@ -1,0 +1,19 @@
+{
+    "Sandbox_VICCSSpores": "VICCS Spores (Airborne Infection)",
+    "Sandbox_VICCSSpores_Enabled": "Enable Spores Mod",
+    "Sandbox_VICCSSpores_Enabled_tooltip": "Enables or disables airborne spore simulation and biohazard risk.",
+    "Sandbox_VICCSSpores_CarrierChance": "Carrier Zombie Chance",
+    "Sandbox_VICCSSpores_CarrierChance_tooltip": "Probability (0 to 1) of a zombie emitting airborne spores when moving.",
+    "Sandbox_VICCSSpores_DoseThreshold": "Lethal Inhalation Tolerance",
+    "Sandbox_VICCSSpores_DoseThreshold_tooltip": "Total quantity of spores your lungs can endure before irreversible zombification.",
+    "Sandbox_VICCSSpores_DoseRecovery": "Lung Recovery Per Minute",
+    "Sandbox_VICCSSpores_DoseRecovery_tooltip": "Amount of accumulated spore dose purged when breathing 100% clean air.",
+    "Sandbox_VICCSSpores_CorpseDecayDays": "Corpse Emission Days",
+    "Sandbox_VICCSSpores_CorpseDecayDays_tooltip": "How many in-game days an infected carcass continues emitting spores.",
+    "Sandbox_VICCSSpores_DecontamPower": "Bleach Decontamination Power",
+    "Sandbox_VICCSSpores_DecontamPower_tooltip": "Reduction of spore concentration in a cell when spraying bleach.",
+    "Sandbox_VICCSSpores_MaxActiveCells": "Max Active Simulated Cells",
+    "Sandbox_VICCSSpores_MaxActiveCells_tooltip": "Performance safety cap to prevent CPU stuttering in busy worlds and servers.",
+    "Sandbox_VICCSSpores_ReduceFX": "Reduce Visual Effects",
+    "Sandbox_VICCSSpores_ReduceFX_tooltip": "Disables dense ground spore fog rendering for visual sensitivity or FPS boost."
+}

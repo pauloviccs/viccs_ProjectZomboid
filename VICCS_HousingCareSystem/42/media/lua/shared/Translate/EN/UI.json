@@ -74,5 +74,9 @@
     "UI_LV_SkillCheck_FailSpeech4": "Grime splashed everywhere!",
     "UI_LV_SkillCheck_BuffElectricity": "Wired Mind (+50% Electricity XP)",
     "UI_LV_SkillCheck_BuffMaintenance": "Handy Hands (+50% Maintenance XP)",
-    "UI_LV_SkillCheck_BuffMechanics": "Home Ingenuity (+50% Mechanics XP)"
+    "UI_LV_SkillCheck_BuffMechanics": "Home Ingenuity (+50% Mechanics XP)",
+    "UI_optionscreen_binding_[Living House]": "[Living House]",
+    "UI_optionscreen_binding_Toggle Living House HUD": "Toggle Living House HUD",
+    "UI_LV_HUD_HiddenNote": "Living House: HUD hidden. Press [%s] or type /lv_hud to show.",
+    "UI_LV_HUD_ShownNote": "Living House: HUD shown."
 }

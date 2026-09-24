@@ -1,0 +1,23 @@
+{
+    "UI_VICCS_HUD_Title": "BIORISCO // ESPOROS",
+    "UI_VICCS_HUD_Lungs": "PULMÕES",
+    "UI_VICCS_HUD_Air": "AR LOCAL",
+    "UI_VICCS_HUD_Mask": "MÁSCARA",
+    "UI_VICCS_Air_Pure": "Puro",
+    "UI_VICCS_Air_Light": "Leve",
+    "UI_VICCS_Air_Moderate": "Tóxico",
+    "UI_VICCS_Air_Dangerous": "Denso",
+    "UI_VICCS_Air_Lethal": "Crítico",
+    "UI_VICCS_Mask_Active": "Ativa (%d%%)",
+    "UI_VICCS_Mask_Partial": "Parcial (%d%%)",
+    "UI_VICCS_Mask_None": "Sem Máscara!",
+    "UI_VICCS_Lungs_Infected": "INFECTADO (LETAL)",
+    "UI_VICCS_Lungs_Safe": "Limpos",
+    "UI_VICCS_Lungs_Recovering": "Recuperando",
+    "UI_ContextMenu_VICCS_Decontaminate": "Descontaminar Área (Água Sanitária)",
+    "UI_ContextMenu_VICCS_Decontaminate_NoBleach": "Descontaminar Área (Requer Água Sanitária)",
+    "UI_ContextMenu_VICCS_CleanAir": "O ar nesta área já está descontaminado",
+    "UI_VICCS_Action_Decontaminating": "Descontaminando ar com produto químico...",
+    "UI_VICCS_Warning_SourceActive": "Área desinfetada, mas ainda há cadáveres emitindo esporos por perto!",
+    "UI_VICCS_Warning_WindDispersion": "O vento forte dispersou o produto químico rapidamente!"
+}

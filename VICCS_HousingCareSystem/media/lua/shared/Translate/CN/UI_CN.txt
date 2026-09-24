@@ -77,4 +77,9 @@ UI_CN = {
     UI_LV_SkillCheck_BuffElectricity = "心领神会 (+50%% 电工经验)",
     UI_LV_SkillCheck_BuffMaintenance = "巧手灵心 (+50%% 维护经验)",
     UI_LV_SkillCheck_BuffMechanics = "居家匠心 (+50%% 机械经验)",
+
+    ["UI_optionscreen_binding_[Living House]"] = "[Living House]",
+    ["UI_optionscreen_binding_Toggle Living House HUD"] = "切换 Living House HUD",
+    ["UI_LV_HUD_HiddenNote"] = "Living House: HUD 已隐藏。按 [%s] 或输入 /lv_hud 重新显示。",
+    ["UI_LV_HUD_ShownNote"] = "Living House: HUD 已显示。",
 }

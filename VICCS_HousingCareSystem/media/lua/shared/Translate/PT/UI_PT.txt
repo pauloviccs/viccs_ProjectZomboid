@@ -78,5 +78,10 @@ UI_PT = {
     UI_LV_SkillCheck_BuffElectricity = "Mente Conectada (+50%% XP Eletrica)",
     UI_LV_SkillCheck_BuffMaintenance = "Maos Habeis (+50%% XP Manutencao)",
     UI_LV_SkillCheck_BuffMechanics = "Engenhosidade Residencial (+50%% XP)",
+
+    ["UI_optionscreen_binding_[Living House]"] = "[Living House]",
+    ["UI_optionscreen_binding_Toggle Living House HUD"] = "Alternar HUD do Living House",
+    ["UI_LV_HUD_HiddenNote"] = "Living House: HUD oculta. Pressione [%s] ou digite /lv_hud para reexibir.",
+    ["UI_LV_HUD_ShownNote"] = "Living House: HUD reexibida.",
 }
 

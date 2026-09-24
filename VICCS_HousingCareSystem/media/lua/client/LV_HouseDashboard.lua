@@ -656,10 +656,14 @@ local function onAddChatMessage(chatMessage, tabId)
         end
     end
 
-    if text and LV_Config and LV_Config.get("ServerTelemetryEnabled") then
+    if text then
         local lower = text:lower()
         local trimmed = lower:match("^%s*(.-)%s*$")
-        if trimmed == "/lv_status" or trimmed == "/lv" or trimmed == "/livinghouse" then
+        if trimmed == "/lv_hud" then
+            if LV_HUD and LV_HUD.toggleHUD then
+                LV_HUD.toggleHUD()
+            end
+        elseif (trimmed == "/lv_status" or trimmed == "/lv" or trimmed == "/livinghouse") and LV_Config and LV_Config.get("ServerTelemetryEnabled") then
             local player = getPlayer()
             if player then
                 LV_HouseDashboard.printStatusReport(player)

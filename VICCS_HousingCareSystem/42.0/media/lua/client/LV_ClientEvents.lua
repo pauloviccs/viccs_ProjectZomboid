@@ -164,8 +164,18 @@ local function onGameReady()
     end
 end
 
---- Captura de atalhos de teclado (Tecla 'K' = Keycode 37).
+--- Captura de atalhos de teclado (HUD e Painel de Inspecao).
 local function onKeyPressed(key)
+    -- Nao intercepta teclas enquanto o jogador estiver digitando no chat MP
+    if ISChat and ISChat.instance and ISChat.instance.isTyping then return end
+
+    -- Atalho dedicado da HUD Living House (configuravel em Opcoes -> Teclas)
+    if LV_HUD and LV_HUD.getToggleKey and key == LV_HUD.getToggleKey() then
+        LV_HUD.toggleHUD()
+        return
+    end
+
+    -- Tecla 'K' = Keycode 37: Alterna Painel de Inspecao do Comodo
     if key == 37 then
         local player = getPlayer()
         if player then
@@ -342,9 +352,13 @@ Events.OnGameStart.Add(function()
     onGameReady()
 end)
 Events.OnCreatePlayer.Add(function(pNum, player)
+    if pNum ~= 0 then return end
     if not player then player = getPlayer() end
     if player then
         pcall(function() LV_ComfortScanner.startScan(player, true) end)
+        if LV_HUD and LV_HUD.showHUD then
+            pcall(LV_HUD.showHUD)
+        end
     end
 end)
 Events.OnKeyPressed.Add(onKeyPressed)

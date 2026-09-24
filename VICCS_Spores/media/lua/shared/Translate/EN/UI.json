@@ -1,0 +1,23 @@
+{
+    "UI_VICCS_HUD_Title": "BIOHAZARD // SPORES",
+    "UI_VICCS_HUD_Lungs": "LUNGS",
+    "UI_VICCS_HUD_Air": "LOCAL AIR",
+    "UI_VICCS_HUD_Mask": "MASK",
+    "UI_VICCS_Air_Pure": "Pure",
+    "UI_VICCS_Air_Light": "Light",
+    "UI_VICCS_Air_Moderate": "Toxic",
+    "UI_VICCS_Air_Dangerous": "Dense",
+    "UI_VICCS_Air_Lethal": "Critical",
+    "UI_VICCS_Mask_Active": "Active (%d%%)",
+    "UI_VICCS_Mask_Partial": "Partial (%d%%)",
+    "UI_VICCS_Mask_None": "No Mask!",
+    "UI_VICCS_Lungs_Infected": "INFECTED (LETHAL)",
+    "UI_VICCS_Lungs_Safe": "Clean",
+    "UI_VICCS_Lungs_Recovering": "Purging",
+    "UI_ContextMenu_VICCS_Decontaminate": "Decontaminate Area (Bleach)",
+    "UI_ContextMenu_VICCS_Decontaminate_NoBleach": "Decontaminate Area (Requires Bleach)",
+    "UI_ContextMenu_VICCS_CleanAir": "Air in this area is already pure",
+    "UI_VICCS_Action_Decontaminating": "Decontaminating airborne spores with chemical spray...",
+    "UI_VICCS_Warning_SourceActive": "Area sprayed, but nearby active corpses are still emitting spores!",
+    "UI_VICCS_Warning_WindDispersion": "Strong outdoor wind rapidly dispersed the chemical bleach!"
+}
